@@ -19,12 +19,9 @@ public class GenPathFromDriving : MonoBehaviour {
 		if(car != null)
 		{
             string filename = Application.dataPath + "/Resources/" + outputFilename;
-            
-			writer = new StreamWriter(filename);
-
+ 			writer = new StreamWriter(filename);
 			Debug.Log("Opening file for path at: " + filename);
 		}
-
 	}
 	
 	// Update is called once per frame
