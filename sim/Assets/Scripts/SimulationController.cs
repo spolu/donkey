@@ -12,7 +12,7 @@ public class SimMessage
 }
 
 [RequireComponent (typeof(SocketIOComponent))]
-public class SimulationClient : MonoBehaviour
+public class SimulationController : MonoBehaviour
 {
 
 	public GameObject carObject;
@@ -23,9 +23,9 @@ public class SimulationClient : MonoBehaviour
 	private SocketIOComponent _socket;
 	private bool connected = false;
 
-	private float stepInterval = 0.10f;
+	private float stepInterval = 0.05f;
 	private float lastResume = 0.0f;
-	private float lastPause = 999.0f;
+	private float lastPause = 0.0f;
 
 
 	void Start()
@@ -35,12 +35,12 @@ public class SimulationClient : MonoBehaviour
 
 	private void OnEnable()
 	{
-		Debug.Log("SimulationClient enabling");
+		Debug.Log("SimulationController enabling");
 	}
 
 	private void OnDisable()
 	{
-		Debug.Log ("SimulationClient disabling");
+		Debug.Log ("SimulationController disabling");
 
 		car.RequestFootBrake(1.0f);
 	}
@@ -50,13 +50,13 @@ public class SimulationClient : MonoBehaviour
 		if (messages != null)
 			return;
 
-		Debug.Log ("SimulationClient initializing");
+		Debug.Log ("SimulationController initializing");
 
 		_socket = GetComponent<SocketIOComponent>();
 		_socket.On ("open", OnOpen);
 		_socket.On ("step", OnStep);
 		_socket.On ("exit", OnExit);
-		// _socket.On("reset", OnReset);
+		_socket.On("reset", OnReset);
 
 		messages = new List<SimMessage>();
 
@@ -77,20 +77,22 @@ public class SimulationClient : MonoBehaviour
 
 	void Pause()
 	{
+		Debug.Log ("Pause: time=" + Time.time);
 		lastPause = Time.time;
-		Time.timeScale = 0;
+		Time.timeScale = 0.0f;
 	}
 	void Resume()
 	{
+		Debug.Log ("Resume: time=" + Time.time);
 		lastResume = Time.time;
-		Time.timeScale = 1;
+		Time.timeScale = 1.0f;
 	}
 
 	private void Update()
 	{
 		if (connected)
 		{
-			if (Time.time >= lastResume + stepInterval && Time.time < lastPause) 
+			if (Time.time >= lastResume + stepInterval) 
 			{
 				Debug.Log ("Sending Telemetry: connected=" + connected + 
 					" time=" + Time.time + " last_resume="+ lastResume + " last_pause=" + lastPause);
@@ -116,17 +118,27 @@ public class SimulationClient : MonoBehaviour
 	void OnOpen(SocketIOEvent ev)
 	{
 		Debug.Log ("Received: type=open");
+	}
+
+	void OnReset(SocketIOEvent ev)
+	{		
+		Debug.Log ("Received: type=reset sid=" + _socket.sid);
+
+		// TODO: reset simulation to initial state?
+
 		connected = true;
+		lastPause = Time.time + 999.0f;
+		lastResume = 0.0f;
+		Time.timeScale = 1.0f;
 	}
 
 	void OnStep(SocketIOEvent ev)
 	{
-		Debug.Log ("Received: type=step sid=" + _socket.sid);
-		JSONObject jsonObject = ev.data;
-
-		float steeringReq = float.Parse(jsonObject.GetField("steering_angle").str);
-		float throttleReq = float.Parse(jsonObject.GetField("throttle").str);
-		float breakReq = float.Parse(jsonObject.GetField("break").str);
+		Debug.Log ("Received: type=step sid=" + _socket.sid + " step=" + ev.data);
+						
+		float steeringReq = float.Parse(ev.data.GetField("steering").str);
+		float throttleReq = float.Parse(ev.data.GetField("throttle").str);
+		float breakReq = float.Parse(ev.data.GetField("break").str);
 
 		car.RequestSteering (steeringReq);
 		car.RequestThrottle (throttleReq);
