@@ -19,13 +19,13 @@ public class SimulationClient : MonoBehaviour
 	public Camera camSensor;
 
 	private ICar car;
-	private Thread sendThread;
 	private List<SimMessage> messages;
 	private SocketIOComponent _socket;
 	private bool connected = false;
 
 	private float stepInterval = 0.10f;
 	private float lastResume = 0.0f;
+	private float lastPause = 999.0f;
 
 
 	void Start()
@@ -35,29 +35,27 @@ public class SimulationClient : MonoBehaviour
 
 	private void OnEnable()
 	{
-		Debug.Log("SimulationClient SendThread starting");
-
-		sendThread = new Thread(SendThread);
-		sendThread.Start();
+		Debug.Log("SimulationClient enabling");
 	}
 
 	private void OnDisable()
 	{
+		Debug.Log ("SimulationClient disabling");
+
 		car.RequestFootBrake(1.0f);
-		sendThread.Abort();
 	}
 
 	private void Init()
 	{
-		Debug.Log("SimulationClient initializing");
-
 		if (messages != null)
 			return;
 
+		Debug.Log ("SimulationClient initializing");
+
 		_socket = GetComponent<SocketIOComponent>();
-		_socket.On("open", OnOpen);
-		_socket.On("step", OnStep);
-		_socket.On("exit", OnExit);
+		_socket.On ("open", OnOpen);
+		_socket.On ("step", OnStep);
+		_socket.On ("exit", OnExit);
 		// _socket.On("reset", OnReset);
 
 		messages = new List<SimMessage>();
@@ -65,38 +63,21 @@ public class SimulationClient : MonoBehaviour
 		car = carObject.GetComponent<ICar>();
 	}
 
-	// SEND THREAD
-
-	public void SendThread()
-	{
-		lock (messages)
-		{
-			if(messages.Count != 0 && connected)
-			{
-				foreach(SimMessage m in messages)
-				{
-					Debug.Log("SendThread sending: type=" + m.type);
-
-					_socket.Emit(m.type, m.json);
-				}
-
-				messages.Clear();
-			}
-		}
-	}
-
 	public void Send(SimMessage m)
 	{
-		lock (messages)
-		{
-			messages.Add(m);
-		}
+		Debug.Log ("Direct sending: type=" + m.type);
+		_socket.Emit (m.type, m.json);
+		// lock (this)
+		// {
+		// 	messages.Add (m);
+		// }
 	}
 
 	// TELEMETRY / UPDATE / TIMESCALE
 
 	void Pause()
 	{
+		lastPause = Time.time;
 		Time.timeScale = 0;
 	}
 	void Resume()
@@ -109,52 +90,55 @@ public class SimulationClient : MonoBehaviour
 	{
 		if (connected)
 		{
-			if (Time.time >= lastResume + stepInterval) {
+			if (Time.time >= lastResume + stepInterval && Time.time < lastPause) 
+			{
+				Debug.Log ("Sending Telemetry: connected=" + connected + 
+					" time=" + Time.time + " last_resume="+ lastResume + " last_pause=" + lastPause);
 
 				SimMessage m = new SimMessage();
 				m.json = new JSONObject(JSONObject.Type.OBJECT);
 
 				m.type = "telemetry";
 
-				m.json.AddField("steering_angle", car.GetSteering());
-				m.json.AddField("throttle", car.GetThrottle());
-				m.json.AddField("speed", car.GetVelocity().magnitude);
-				m.json.AddField("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
+				m.json.AddField ("steering_angle", car.GetSteering());
+				m.json.AddField ("throttle", car.GetThrottle());
+				m.json.AddField ("speed", car.GetVelocity().magnitude);
+				m.json.AddField ("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
 
-				Send(m);
-				Pause();
+				Send (m);
+				Pause ();
 			}
 		}
 	}
 
 	// SOCKET IO HANDLERS
 
-	void OnOpen(SocketIOEvent obj)
+	void OnOpen(SocketIOEvent ev)
 	{
-		Debug.Log("Received: type=open");
+		Debug.Log ("Received: type=open");
 		connected = true;
 	}
 
-	void OnStep(SocketIOEvent obj)
+	void OnStep(SocketIOEvent ev)
 	{
-		Debug.Log("Received: type=step");
-		JSONObject jsonObject = obj.data;
+		Debug.Log ("Received: type=step sid=" + _socket.sid);
+		JSONObject jsonObject = ev.data;
 
 		float steeringReq = float.Parse(jsonObject.GetField("steering_angle").str);
 		float throttleReq = float.Parse(jsonObject.GetField("throttle").str);
 		float breakReq = float.Parse(jsonObject.GetField("break").str);
 
-		car.RequestSteering(steeringReq);
-		car.RequestThrottle(throttleReq);
-		car.RequestFootBrake(breakReq);
-		car.RequestHandBrake(0.0f);
+		car.RequestSteering (steeringReq);
+		car.RequestThrottle (throttleReq);
+		car.RequestFootBrake (breakReq);
+		car.RequestHandBrake (0.0f);
 
-		Resume();
+		Resume ();
 	}
 
-	void OnExit(SocketIOEvent obj)
+	void OnExit(SocketIOEvent ev)
 	{
-		Debug.Log("Received: type=exit");
-		Application.Quit();
+		Debug.Log ("Received: type=exit sid=" + _socket.sid);
+		Application.Quit ();
 	}
 }
