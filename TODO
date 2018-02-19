@@ -9,9 +9,10 @@
 - [ ] donkey.py interface
   - [ ] observations (camera, position, velocity, acceleration, track shape)
   - [ ] step (steering, throttle, brakes)
+  - [ ] end conditions (go out of track or completed N runs)
+  - [ ] reward function?
 
 # model
 
 - [ ] multi-process donkey environment
-- [ ] reward function
 - [ ] model dumping and replay
