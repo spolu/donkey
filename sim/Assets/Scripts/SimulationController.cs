@@ -19,18 +19,33 @@ public class SimulationController : MonoBehaviour
 	public Camera camSensor;
 
 	private ICar car;
-	private List<SimMessage> messages;
 	private SocketIOComponent _socket;
 	private bool connected = false;
+	private int clientID = 0;
 
 	private float stepInterval = 0.05f;
 	private float lastResume = 0.0f;
+	private float lastTelemetry = 0.0f;
 	private float lastPause = 0.0f;
 
 
 	void Start()
 	{
-		Init();
+		Debug.Log ("SimulationController initializing");
+
+		string[] args = System.Environment.GetCommandLineArgs ();
+		if (args.Length > 0) {
+			Debug.Log ("Arguments: args=" + args);
+		}
+
+		_socket = GetComponent<SocketIOComponent>();
+
+		_socket.On ("open", OnOpen);
+		_socket.On ("step", OnStep);
+		_socket.On ("exit", OnExit);
+		_socket.On ("reset", OnReset);
+
+		car = carObject.GetComponent<ICar>();
 	}
 
 	private void OnEnable()
@@ -44,33 +59,11 @@ public class SimulationController : MonoBehaviour
 
 		car.RequestFootBrake(1.0f);
 	}
-
-	private void Init()
-	{
-		if (messages != null)
-			return;
-
-		Debug.Log ("SimulationController initializing");
-
-		_socket = GetComponent<SocketIOComponent>();
-		_socket.On ("open", OnOpen);
-		_socket.On ("step", OnStep);
-		_socket.On ("exit", OnExit);
-		_socket.On("reset", OnReset);
-
-		messages = new List<SimMessage>();
-
-		car = carObject.GetComponent<ICar>();
-	}
-
+		
 	public void Send(SimMessage m)
 	{
 		Debug.Log ("Direct sending: type=" + m.type);
 		_socket.Emit (m.type, m.json);
-		// lock (this)
-		// {
-		// 	messages.Add (m);
-		// }
 	}
 
 	// TELEMETRY / UPDATE / TIMESCALE
@@ -92,8 +85,9 @@ public class SimulationController : MonoBehaviour
 	{
 		if (connected)
 		{
-			if (Time.time >= lastResume + stepInterval) 
+			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry) 
 			{
+				lastTelemetry = Time.time;
 				Debug.Log ("Sending Telemetry: connected=" + connected + 
 					" time=" + Time.time + " last_resume="+ lastResume + " last_pause=" + lastPause);
 
@@ -102,7 +96,7 @@ public class SimulationController : MonoBehaviour
 
 				m.type = "telemetry";
 
-				m.json.AddField ("steering_angle", car.GetSteering());
+				m.json.AddField ("steering", car.GetSteering());
 				m.json.AddField ("throttle", car.GetThrottle());
 				m.json.AddField ("speed", car.GetVelocity().magnitude);
 				m.json.AddField ("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
@@ -118,6 +112,12 @@ public class SimulationController : MonoBehaviour
 	void OnOpen(SocketIOEvent ev)
 	{
 		Debug.Log ("Received: type=open");
+
+		SimMessage m = new SimMessage();
+		m.json = new JSONObject(JSONObject.Type.OBJECT);
+		m.type = "hello";
+		m.json.AddField ("id", clientID);
+		Send (m);
 	}
 
 	void OnReset(SocketIOEvent ev)
@@ -128,7 +128,8 @@ public class SimulationController : MonoBehaviour
 
 		connected = true;
 		lastPause = Time.time + 999.0f;
-		lastResume = 0.0f;
+		lastResume = Time.time;
+		lastTelemetry = 0.0f;
 		Time.timeScale = 1.0f;
 	}
 
