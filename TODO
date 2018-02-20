@@ -1,6 +1,7 @@
 # simulation
 
 - [x] command line control
+- [x] Makefile and headless build
 - [ ] sim_client interface
   - [ ] Makefile to build simulation from console
   - [ ] headless option
