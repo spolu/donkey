@@ -66,13 +66,13 @@ def input_thread():
             step = {
                 "steering": "-5.0",
                 "throttle": "0.0",
-                "break": "1.0",
+                "break": "0.0",
             }
         if key == 'd':
             step = {
                 "steering": "5.0",
                 "throttle": "0.0",
-                "break": "1.0",
+                "break": "0.0",
             }
         print("key", key)
 
