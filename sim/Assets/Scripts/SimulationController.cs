@@ -102,10 +102,16 @@ public class SimulationController : MonoBehaviour
 
 				m.type = "telemetry";
 
+				m.json.AddField ("time", Time.time);				
 				m.json.AddField ("steering_angle", car.GetSteering());
 				m.json.AddField ("throttle", car.GetThrottle());
 				m.json.AddField ("speed", car.GetVelocity().magnitude);
 				m.json.AddField ("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
+				JSONObject position = new JSONObject(JSONObject.Type.OBJECT);
+				position.AddField ("x", car.GetPosition().x);
+				position.AddField ("y", car.GetPosition().y);
+				position.AddField ("z", car.GetPosition().z);
+				m.json.AddField ("position", position);
 
 				Send (m);
 				Pause ();

@@ -16,9 +16,9 @@ public interface ICar
 	float GetFootBrake();
 	float GetHandBrake();
 
-
 	// Query state.
 	Transform GetTransform();
+	Vector3 GetPosition();
 	Vector3 GetVelocity();
 	Vector3 GetAccel();
 

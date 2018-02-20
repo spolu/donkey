@@ -38,7 +38,10 @@ def disconnect(sid):
 @sio.on('telemetry')
 def telemetry(sid, data):
     print("telemetry", sid)
-    # print("DATA: {}".format(data))
+    print("position DATA: {}", format(data['position']))
+    # with open("donkey_path.txt", "a") as myfile:
+    #     position = format(data['position']['x']) + "," + format(data['position']['y']) + "," + format(data['position']['z']) + "," + format(data['time']) + "\n"
+    #     myfile.write(position)
 
     global step
     print ("SENDING: {}".format(step))

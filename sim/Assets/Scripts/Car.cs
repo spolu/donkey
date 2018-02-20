@@ -155,6 +155,12 @@ public class Car : MonoBehaviour, ICar {
 		return this.transform;
 	}
 
+	public Vector3 GetPosition()
+	{
+		return this.transform.position;
+	}
+
+
 	public bool IsStill()
 	{
 		return rb.IsSleeping();
