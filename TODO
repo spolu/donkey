@@ -1,9 +1,8 @@
 # simulation
 
 - [x] command line control
-- [x] Makefile and headless build
+- [x] Makefile to build simulation from console
 - [ ] sim_client interface
-  - [ ] Makefile to build simulation from console
   - [ ] headless option
   - [ ] spawns a new simulation on creation
   - [ ] cleans up after itself on destruction

@@ -28,12 +28,13 @@ def getchar():
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("connect ", sid)
+    # print("connect ", sid)
     sio.emit('reset', data={}, skip_sid=True)
 
 @sio.on('disconnect')
 def disconnect(sid):
-    print('disconnect ', sid)
+    # print('disconnect ', sid)
+    pass
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -44,7 +45,7 @@ def telemetry(sid, data):
     #     myfile.write(position)
 
     global step
-    print ("SENDING: {}".format(step))
+    # print ("SENDING: {}".format(step))
     sio.emit('step', step, skip_sid=True)
 
 def input_thread():
@@ -67,14 +68,14 @@ def input_thread():
             }
         if key == 'a':
             step = {
-                "steering": "-5.0",
-                "throttle": "0.0",
+                "steering": "-10.0",
+                "throttle": "0.5",
                 "break": "0.0",
             }
         if key == 'd':
             step = {
-                "steering": "5.0",
-                "throttle": "0.0",
+                "steering": "10.0",
+                "throttle": "0.5",
                 "break": "0.0",
             }
         print("key", key)
