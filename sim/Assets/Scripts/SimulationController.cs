@@ -82,7 +82,7 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("Resume: time=" + Time.time);
 		lastResume = Time.time;
-		Time.timeScale = 10.0f;
+		Time.timeScale = 1.0f;
 	}
 
 	private void Update()

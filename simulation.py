@@ -77,6 +77,7 @@ def init_server():
         return
 
     # This threading call is imported from eventlet.green. Magic!
+    # See http://eventlet.net/doc/patching.html#monkeypatching-the-standard-library
     threading.Thread(target = run_server).start()
     inited = True
 
