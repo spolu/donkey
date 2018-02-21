@@ -9,9 +9,24 @@ import subprocess
 
 from flask import Flask
 
-sio = socketio.Server()
+"""
+Shared underlying socket.io server
+"""
+
+sio = socketio.Server(logging=True, engineio_logger=True)
 app = Flask(__name__)
 inited = False
+
+clients = []
+lock = threading.Lock()
+
+def client_for_id(client_id):
+    global lock
+    global clients
+    client = None
+    with lock:
+        client = clients[client_id]
+    return client
 
 @sio.on('connect')
 def connect(sid, environ):
@@ -24,35 +39,33 @@ def disconnect(sid):
 @sio.on('telemetry')
 def telemetry(sid, data):
     print("Received telemetry: sid={}".format(sid))
-    # print("DATA: {}".format(data))
-    ##global step
-    ### print ("SENDING: {}".format(step))
-    # sio.emit('step', {}, sid=True)
-    pass
+
+    # Record telemetry on the client and notify.
+    client = client_for_id(int(data['id']))
+    client['condition'].acquire()
+    client['telemetry'] = data
+    client['condition'].notify()
+    client['condition'].release()
 
 @sio.on('hello')
 def hello(sid, data):
     print("Received hello: sid={} id={}".format(sid, data['id']))
 
-    client = None
-    with lock:
-        client = CLIENTS[int(data['id'])]
-
+    # Record sid on the client and notify.
+    client = client_for_id(int(data['id']))
     client['condition'].acquire()
     client['sid'] = sid
     client['condition'].notify()
     client['condition'].release()
 
-    sio.emit('reset', data={}, sid=sid)
-
 def run_server():
     global app
-    print("Starting socket.IO server: port=9090")
+    print("Starting shared server: port=9090")
     address = ('0.0.0.0', 9090)
     try:
         eventlet.wsgi.server(eventlet.listen(address), app)
     except KeyboardInterrupt:
-        print("Stopping socket.IO server")
+        print("Stopping shared server")
 
 def init_server():
     global app
@@ -66,42 +79,51 @@ def init_server():
     threading.Thread(target = run_server).start()
     inited = True
 
-CLIENTS = []
-lock = threading.Lock()
+"""
+Simulation interface
+"""
+
+Command = collections.namedtuple(
+    'Command',
+    'steering throttle brake',
+)
 
 class Simulation:
-    def __init__(self, headless=True):
+    def __init__(self, launch=True, headless=True):
         global lock
-        global CLIENTS
+        global clients
         self.headless = headless
+        self.launch = launch
         self.env = os.environ.copy()
+        self.process = None
 
         with lock:
             self.client = {
-                'id': len(CLIENTS),
+                'id': len(clients),
                 'condition': threading.Condition(),
                 'sid': "",
             }
-            CLIENTS.append(self.client)
+            clients.append(self.client)
 
     def start(self):
         global lock
-        global CLIENTS
+        global sio
 
         # Lazily init the shared socket.IO server.
         with lock:
             init_server()
 
         # Start simulation.
-        cmd = [
-            self.env['SIM_PATH'],
-            "-simulationClientID",
-            str(self.client['id']),
-        ]
-        if self.headless:
-            cmd.append('-batchmode')
+        if self.launch:
+            cmd = [
+                self.env['SIM_PATH'],
+                "-simulationClientID",
+                str(self.client['id']),
+            ]
+            if self.headless:
+                cmd.append('-batchmode')
 
-        self.process = subprocess.Popen(cmd, env=self.env)
+            self.process = subprocess.Popen(cmd, env=self.env)
 
         self.client['condition'].acquire()
         self.client['condition'].wait()
@@ -110,15 +132,42 @@ class Simulation:
             self.client['id'], self.client['sid'],
         ))
 
+        with lock:
+            sio.emit('reset', data={}, room=self.client['sid'])
+
+        self.client['condition'].acquire()
+        self.client['condition'].wait()
+        self.client['condition'].release()
+        print("Received initial telemetry: id={} sid={}".format(
+            self.client['id'], self.client['sid'],
+        ))
+
     def stop(self):
-        self.process.terminate()
+        if self.launch:
+            self.process.terminate()
+
         print("Simulation stopped: id={} sid={}".format(
             self.client['id'], self.client['sid'],
         ))
 
     def step(self, command):
-        # send command and waits for telemetry to be received
-        pass
+        global lock
+        global sio
+
+        # Send command.
+        with lock:
+            sio.emit('step', data={
+                'steering': command.steering,
+                'throttle': command.throttle,
+                'brake': command.brake,
+            }, room=self.client['sid'])
+
+        print(self.client['condition'])
+
+        # Wait for telemetry to be received.
+        self.client['condition'].acquire()
+        self.client['condition'].wait()
+        self.client['condition'].release()
 
 step = {
     "steering": "0.0",
@@ -127,8 +176,23 @@ step = {
 }
 
 def main():
-    c0 = Simulation(headless=True)
+    c0 = Simulation(launch=False, headless=False)
     c0.start()
+
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 0")
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 1")
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 2")
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 3")
+    time.sleep(2)
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 4")
+    c0.step(Command(0.0,1.0,0.0))
+    print("Command 5")
+
     # c0.stop()
 
     # c1 = Simulation(headless=False)

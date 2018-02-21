@@ -34,7 +34,7 @@ public class SimulationController : MonoBehaviour
 		Debug.Log ("SimulationController initializing");
 
 		string[] args = System.Environment.GetCommandLineArgs ();
-		if (args.Length > 0) {
+		if (args.Length >= 3) {
 			if (args[1] == "-simulationClientID") {
 				clientID = int.Parse(args[2]);
 			}
@@ -65,6 +65,8 @@ public class SimulationController : MonoBehaviour
 	public void Send(SimMessage m)
 	{
 		Debug.Log ("Direct sending: type=" + m.type);
+
+		m.json.AddField ("id", clientID);
 		_socket.Emit (m.type, m.json);
 	}
 
@@ -137,7 +139,6 @@ public class SimulationController : MonoBehaviour
 		SimMessage m = new SimMessage ();
 		m.json = new JSONObject (JSONObject.Type.OBJECT);
 		m.type = "hello";
-		m.json.AddField ("id", clientID);
 
 		Send (m);
 	}
