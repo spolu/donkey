@@ -9,10 +9,6 @@ import subprocess
 
 from flask import Flask
 
-# Oh boy did it take time, but this is the best way I found to be able to run
-# the flask server in a separate thread and yet notify back to our objects.
-eventlet.monkey_patch()
-
 """
 Shared underlying socket.io server
 """
@@ -79,6 +75,11 @@ def init_server():
 
     if inited:
         return
+
+    # Oh boy did it take time, but this is the best way I found to be able to
+    # run the flask server in a separate thread and yet notify back to our
+    # objects.
+    eventlet.monkey_patch()
 
     threading.Thread(target = run_server).start()
     inited = True
