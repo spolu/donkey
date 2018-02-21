@@ -7,6 +7,10 @@ Launch the new python environment `source activate dr1ve`
 Install missing modules: `python-socketio`, `eventlet`, `flask`
 (When could not find a version that satisfies the requirement `conda install web.py` . I ran `conda install -c conda-forge web.py`)
 
+### Building
+
+Run 'make simulation' in terminal to build the donkey simulator
+
 ### Activating Environment 
 
 To activate this environment, use `source activate dr1ve`
