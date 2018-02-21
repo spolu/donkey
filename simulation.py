@@ -6,7 +6,6 @@ import eventlet.wsgi
 import collections
 import os
 import subprocess
-# import tty, termios, sys
 
 from flask import Flask
 
@@ -16,8 +15,7 @@ inited = False
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("connect ", sid)
-    sio.emit('reset', data={}, sid=sid)
+    print("connect", sid)
 
 @sio.on('disconnect')
 def disconnect(sid):
@@ -30,11 +28,12 @@ def telemetry(sid, data):
     # print("DATA: {}".format(data))
     ##global step
     ### print ("SENDING: {}".format(step))
-    sio.emit('step', {}, sid=True)
+    # sio.emit('step', {}, sid=True)
+    pass
 
 @sio.on('hello')
 def hello(sid, data):
-    # print("hello", sid, data['id'])
+    print("hello", sid, data['id'])
 
     client = None
     with lock:
@@ -44,6 +43,8 @@ def hello(sid, data):
     client['sid'] = sid
     client['condition'].notify()
     client['condition'].release()
+
+    sio.emit('reset', data={}, sid=sid)
 
 def run_server():
     global app
@@ -94,7 +95,12 @@ class Simulation:
         # Start simulation
         cmd = [
             self.env['SIM_PATH'],
+            "-simulationClientID",
+            str(self.client['id']),
         ]
+        if self.headless:
+            cmd.append('-batchmode')
+
         proc = subprocess.Popen(cmd, env=self.env)
 
         print("waiting on client condition {}".format(self.client['id']))
@@ -116,8 +122,11 @@ step = {
 }
 
 def main():
-    c = Simulation()
-    c.init()
+    c0 = Simulation(headless=True)
+    c0.init()
+
+    # c1 = Simulation(headless=False)
+    # c1.init()
 
 if __name__ == "__main__":
     main()

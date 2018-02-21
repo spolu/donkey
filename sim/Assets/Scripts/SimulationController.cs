@@ -35,7 +35,9 @@ public class SimulationController : MonoBehaviour
 
 		string[] args = System.Environment.GetCommandLineArgs ();
 		if (args.Length > 0) {
-			Debug.Log ("Arguments: args=" + args);
+			if (args[1] == "-simulationClientID") {
+				clientID = int.Parse(args[2]);
+			}
 		}
 
 		_socket = GetComponent<SocketIOComponent>();
@@ -83,10 +85,8 @@ public class SimulationController : MonoBehaviour
 
 	private void Update()
 	{
-		if (connected)
-		{
-			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry) 
-			{
+		if (connected) {
+			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry) {
 				lastTelemetry = Time.time;
 				Debug.Log ("Sending Telemetry: connected=" + connected + 
 					" time=" + Time.time + " last_resume="+ lastResume + " last_pause=" + lastPause);
@@ -99,13 +99,24 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField ("time", Time.time);				
 				m.json.AddField ("steering", car.GetSteering());
 				m.json.AddField ("throttle", car.GetThrottle());
-				m.json.AddField ("speed", car.GetVelocity().magnitude);
+				m.json.AddField ("brake", car.GetHandBrake());
+
 				m.json.AddField ("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
+
 				JSONObject position = new JSONObject(JSONObject.Type.OBJECT);
 				position.AddField ("x", car.GetPosition().x);
 				position.AddField ("y", car.GetPosition().y);
 				position.AddField ("z", car.GetPosition().z);
 				m.json.AddField ("position", position);
+
+				JSONObject velocity = new JSONObject(JSONObject.Type.OBJECT);
+				velocity.AddField ("x", car.GetVelocity().x);
+				velocity.AddField ("y", car.GetVelocity().y);
+				velocity.AddField ("z", car.GetVelocity().z);
+				m.json.AddField ("velocity", velocity);
+
+				m.json.AddField ("speed", car.GetVelocity().magnitude);
+
 
 				Send (m);
 				Pause ();
@@ -117,12 +128,17 @@ public class SimulationController : MonoBehaviour
 
 	void OnOpen(SocketIOEvent ev)
 	{
-		Debug.Log ("Received: type=open");
+		if (_socket.sid == null) {
+			return;
+		}
+			
+		Debug.Log ("Received: type=open sid=" + _socket.sid);
 
-		SimMessage m = new SimMessage();
-		m.json = new JSONObject(JSONObject.Type.OBJECT);
+		SimMessage m = new SimMessage ();
+		m.json = new JSONObject (JSONObject.Type.OBJECT);
 		m.type = "hello";
 		m.json.AddField ("id", clientID);
+
 		Send (m);
 	}
 
@@ -145,11 +161,11 @@ public class SimulationController : MonoBehaviour
 						
 		float steeringReq = float.Parse(ev.data.GetField("steering").str);
 		float throttleReq = float.Parse(ev.data.GetField("throttle").str);
-		float breakReq = float.Parse(ev.data.GetField("break").str);
+		float brakeReq = float.Parse(ev.data.GetField("brake").str);
 
 		car.RequestSteering (steeringReq);
 		car.RequestThrottle (throttleReq);
-		car.RequestFootBrake (breakReq);
+		car.RequestFootBrake (brakeReq);
 		car.RequestHandBrake (0.0f);
 
 		Resume ();

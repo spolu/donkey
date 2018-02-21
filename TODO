@@ -3,9 +3,10 @@
 - [x] command line control
 - [x] Makefile to build simulation from console
 - [ ] sim_client interface
-  - [ ] headless option
-  - [ ] spawns a new simulation on creation
-  - [ ] cleans up after itself on destruction
+  - [x] headless option
+  - [x] spawns a new simulation on creation
+  - [x] cleans up after itself on destruction
+  - [ ] step API with appropriate conditions wait
 - [ ] donkey.py interface
   - [ ] observations (camera, position, velocity, acceleration, track shape)
   - [ ] step (steering, throttle, brakes)
