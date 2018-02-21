@@ -20,7 +20,7 @@ public interface ICar
 	Transform GetTransform();
 	Vector3 GetPosition();
 	Vector3 GetVelocity();
-	Vector3 GetAccel();
+	Vector3 GetAccelleration();
 
 	// Mark the current activity for partial selections when creating training sets later.
 	string GetActivity();

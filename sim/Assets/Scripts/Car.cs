@@ -139,7 +139,7 @@ public class Car : MonoBehaviour, ICar {
 		return rb.velocity;
 	}
 
-	public Vector3 GetAccel()
+	public Vector3 GetAccelleration()
 	{
 		return acceleration;
 	}
