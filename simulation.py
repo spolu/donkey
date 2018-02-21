@@ -1,4 +1,3 @@
-import threading
 import time
 import socketio
 import eventlet
@@ -8,6 +7,7 @@ import os
 import subprocess
 
 from flask import Flask
+from eventlet.green import threading
 
 """
 Shared underlying socket.io server
@@ -76,11 +76,7 @@ def init_server():
     if inited:
         return
 
-    # Oh boy did it take time, but this is the best way I found to be able to
-    # run the flask server in a separate thread and yet notify back to our
-    # objects.
-    eventlet.monkey_patch()
-
+    # This threading call is imported from eventlet.green. Magic!
     threading.Thread(target = run_server).start()
     inited = True
 
