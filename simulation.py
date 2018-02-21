@@ -9,11 +9,15 @@ import subprocess
 
 from flask import Flask
 
+# Oh boy did it take time, but this is the best way I found to be able to run
+# the flask server in a separate thread and yet notify back to our objects.
+eventlet.monkey_patch()
+
 """
 Shared underlying socket.io server
 """
 
-sio = socketio.Server(logging=True, engineio_logger=True)
+sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
 inited = False
 
@@ -62,6 +66,7 @@ def run_server():
     global app
     print("Starting shared server: port=9090")
     address = ('0.0.0.0', 9090)
+    app = socketio.Middleware(sio, app)
     try:
         eventlet.wsgi.server(eventlet.listen(address), app)
     except KeyboardInterrupt:
@@ -75,7 +80,6 @@ def init_server():
     if inited:
         return
 
-    app = socketio.Middleware(sio, app)
     threading.Thread(target = run_server).start()
     inited = True
 
@@ -157,43 +161,31 @@ class Simulation:
         # Send command.
         with lock:
             sio.emit('step', data={
-                'steering': command.steering,
-                'throttle': command.throttle,
-                'brake': command.brake,
+                'steering': str(command.steering),
+                'throttle': str(command.throttle),
+                'brake': str(command.brake),
             }, room=self.client['sid'])
-
-        print(self.client['condition'])
 
         # Wait for telemetry to be received.
         self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
 
-step = {
-    "steering": "0.0",
-    "throttle": "0.0",
-    "brake": "0.0",
-}
+    def telemetry(self):
+        self.client['condition'].acquire()
+        telemetry = self.client['telemetry']
+        self.client['condition'].release()
+        return telemetry
 
 def main():
-    c0 = Simulation(launch=False, headless=False)
+    c0 = Simulation(launch=True, headless=False)
     c0.start()
 
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 0")
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 1")
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 2")
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 3")
-    time.sleep(2)
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 4")
-    c0.step(Command(0.0,1.0,0.0))
-    print("Command 5")
+    for i in range(500):
+        c0.step(Command(0.0,1.0,0.0))
+        print("Command", c0.telemetry()['position'])
 
-    # c0.stop()
+    c0.stop()
 
     # c1 = Simulation(headless=False)
     # c1.start()

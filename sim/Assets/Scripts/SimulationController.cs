@@ -23,7 +23,7 @@ public class SimulationController : MonoBehaviour
 	private bool connected = false;
 	private int clientID = 0;
 
-	private float stepInterval = 0.05f;
+	private float stepInterval = 0.10f;
 	private float lastResume = 0.0f;
 	private float lastTelemetry = 0.0f;
 	private float lastPause = 0.0f;
@@ -82,7 +82,7 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("Resume: time=" + Time.time);
 		lastResume = Time.time;
-		Time.timeScale = 1.0f;
+		Time.timeScale = 10.0f;
 	}
 
 	private void Update()
@@ -158,7 +158,7 @@ public class SimulationController : MonoBehaviour
 
 	void OnStep(SocketIOEvent ev)
 	{
-		Debug.Log ("Received: type=step sid=" + _socket.sid + " step=" + ev.data);
+		Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
 						
 		float steeringReq = float.Parse(ev.data.GetField("steering").str);
 		float throttleReq = float.Parse(ev.data.GetField("throttle").str);
