@@ -15,16 +15,15 @@ inited = False
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("connect", sid)
+    print("Received connect: sid={}".format(sid))
 
 @sio.on('disconnect')
 def disconnect(sid):
-    # print('disconnect ', sid)
-    pass
+    print("Received disconnect: sid={}".format(sid))
 
 @sio.on('telemetry')
 def telemetry(sid, data):
-    # print("telemetry", sid)
+    print("Received telemetry: sid={}".format(sid))
     # print("DATA: {}".format(data))
     ##global step
     ### print ("SENDING: {}".format(step))
@@ -33,7 +32,7 @@ def telemetry(sid, data):
 
 @sio.on('hello')
 def hello(sid, data):
-    print("hello", sid, data['id'])
+    print("Received hello: sid={} id={}".format(sid, data['id']))
 
     client = None
     with lock:
@@ -48,12 +47,12 @@ def hello(sid, data):
 
 def run_server():
     global app
-    print("starting server thread")
+    print("Starting socket.IO server: port=9090")
     address = ('0.0.0.0', 9090)
     try:
         eventlet.wsgi.server(eventlet.listen(address), app)
     except KeyboardInterrupt:
-        print('stopping')
+        print("Stopping socket.IO server")
 
 def init_server():
     global app
@@ -85,14 +84,15 @@ class Simulation:
             }
             CLIENTS.append(self.client)
 
-    def init(self):
+    def start(self):
         global lock
         global CLIENTS
 
+        # Lazily init the shared socket.IO server.
         with lock:
             init_server()
 
-        # Start simulation
+        # Start simulation.
         cmd = [
             self.env['SIM_PATH'],
             "-simulationClientID",
@@ -101,13 +101,18 @@ class Simulation:
         if self.headless:
             cmd.append('-batchmode')
 
-        proc = subprocess.Popen(cmd, env=self.env)
+        self.process = subprocess.Popen(cmd, env=self.env)
 
-        print("waiting on client condition {}".format(self.client['id']))
         self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
-        print("Received client notify {} {}".format(
+        print("Simulation started: id={} sid={}".format(
+            self.client['id'], self.client['sid'],
+        ))
+
+    def stop(self):
+        self.process.terminate()
+        print("Simulation stopped: id={} sid={}".format(
             self.client['id'], self.client['sid'],
         ))
 
@@ -123,10 +128,11 @@ step = {
 
 def main():
     c0 = Simulation(headless=True)
-    c0.init()
+    c0.start()
+    # c0.stop()
 
     # c1 = Simulation(headless=False)
-    # c1.init()
+    # c1.start()
 
 if __name__ == "__main__":
     main()
