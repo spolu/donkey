@@ -174,19 +174,3 @@ class Simulation:
         telemetry = self.client['telemetry']
         self.client['condition'].release()
         return telemetry
-
-def main():
-    c0 = Simulation(launch=True, headless=False)
-    c0.start()
-
-    for i in range(500):
-        c0.step(Command(0.0,1.0,0.0))
-        print("Command", c0.telemetry()['position'])
-
-    c0.stop()
-
-    # c1 = Simulation(headless=False)
-    # c1.start()
-
-if __name__ == "__main__":
-    main()

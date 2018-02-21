@@ -2,7 +2,7 @@
 
 - [x] command line control
 - [x] Makefile to build simulation from console
-- [x] sim_client interface
+- [x] simulation interface
   - [x] headless option
   - [x] spawns a new simulation on creation
   - [x] cleans up after itself on destruction
