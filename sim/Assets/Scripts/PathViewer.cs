@@ -36,6 +36,7 @@ public class PathViewer : MonoBehaviour {
 		if(doShowPath)
 		{
 			string dump = "";
+
 			line.positionCount = path.nodes.Count;
 			for(int iN = 0; iN < path.nodes.Count; iN++)
 			{
@@ -43,6 +44,7 @@ public class PathViewer : MonoBehaviour {
 				line.SetPosition (iN, np);
 				dump += string.Format("{0}\n", np);
 			}
+
 			Debug.Log(string.Format("Path dump:\n{0}", dump));
 		}
 	}
