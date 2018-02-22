@@ -35,13 +35,15 @@ public class PathViewer : MonoBehaviour {
 		}
 		if(doShowPath)
 		{
+			string dump = "";
 			line.positionCount = path.nodes.Count;
 			for(int iN = 0; iN < path.nodes.Count; iN++)
 			{
 				Vector3 np = path.nodes[iN].pos;
 				line.SetPosition (iN, np);
-				Debug.Log(string.Format("added {0} path points", np));
+				dump += string.Format("{0}\n", np);
 			}
+			Debug.Log(string.Format("Path dump:\n{0}", dump));
 		}
 	}
 
@@ -76,8 +78,6 @@ public class PathViewer : MonoBehaviour {
 			return;
 
 		string[] lines = bindata.text.Split('\n');
-
-		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
 
 		path = new CarPath();
 

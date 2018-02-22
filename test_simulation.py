@@ -22,7 +22,7 @@ def input_thread():
         if key.strip() == 'q':
             break
         if key == 'w':
-            cmd = simulation.Command(0.0, 0.5, 0.0)
+            cmd = simulation.Command(0.0, 1.0, 0.0)
         if key == 's':
             cmd = simulation.Command(0.0, 0.0, 0.0)
         if key == 'a':
