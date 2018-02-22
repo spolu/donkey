@@ -97,5 +97,4 @@ public class CarPath
 		err = errVec.magnitude * sign;
 		return true;
 	}
-
 }

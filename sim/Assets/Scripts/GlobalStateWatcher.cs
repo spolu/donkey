@@ -15,7 +15,5 @@ public class GlobalStateWatcher : MonoBehaviour {
 
         if (GlobalState.bAutoConnectToWebSocket && networkObj != null)
             networkObj.SetActive(true);
-
     }
-	
 }

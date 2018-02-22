@@ -4,9 +4,7 @@ using System.Collections;
 public class CollisionSensor : MonoBehaviour {
 
 	public delegate void OnCollideCB(string objType);
-
 	public OnCollideCB collideCB;
-
 
 	public void OnCollisionEnter(Collision collision)
 	{
