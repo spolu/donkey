@@ -1,5 +1,4 @@
 import numpy as np
-from io import StringIO
 
 """
 Track interface
@@ -25,6 +24,8 @@ class Track:
     	deltas = self.points - point
     	sq_distances = np.sum(deltas**2, axis=1)
     	minIndex = np.argmin(sq_distances)
+
+        #TODO doesn't handle well the last iteam of the array
     	tangent = self.points[minIndex+1] - self.points[minIndex]
         normalized_tangent = tangent/np.sqrt(np.sum(tangent**2))
     	vector_from_track = point - self.points[minIndex]
@@ -38,3 +39,7 @@ track = Track(np.array(trackPoints))
 point = track.closest_point([61.0,0.0,41.0])
 distance = track.distance_to_closest([61.0,0.0,41.0])
 scalar = track.scalar_to_direction([61.0,0.0,41.0])
+
+# print(distance)
+# print(point)
+# print(scalar)
