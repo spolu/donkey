@@ -22,20 +22,22 @@ def input_thread():
         if key.strip() == 'q':
             break
         if key == 'w':
-            cmd = simulation.Command(0.0, 1.0, 0.0)
+            cmd = simulation.Command(0.0, 0.5, 0.0)
         if key == 's':
-            cmd = simulation.Command(0.0, 0.0, 1.0)
+            cmd = simulation.Command(0.0, 0.0, 0.0)
         if key == 'a':
-            cmd = simulation.Command(-10.0, 0.5, 0.0)
+            cmd = simulation.Command(-10.0, 0.0, 0.0)
         if key == 'd':
-            cmd = simulation.Command(10.0, 0.5, 0.0)
+            cmd = simulation.Command(10.0, 0.0, 0.0)
+        if key == 'b':
+            cmd = simulation.Command(0.0, 0.0, 1.0)
         print("key", key)
 
 def main():
     global cmd
     threading.Thread(target = input_thread).start()
 
-    c = simulation.Simulation(launch=True, headless=False)
+    c = simulation.Simulation(launch=False, headless=False)
     c.start()
 
     while True:

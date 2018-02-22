@@ -5,63 +5,34 @@ using UnityEngine;
 public class PathViewer : MonoBehaviour {
 
 	public CarPath path;
-
 	public GameObject prefab;
-
 	public LineRenderer line;
-
 	public Transform startPos;
-
 	Vector3 span = Vector3.zero;
 
 	public float spanDist = 5f;
 
-	public int numSpans = 100;
-
-	public float turnInc = 1f;
-
-	public bool sameRandomPath = true;
-
-	public int randSeed = 2;
-
-	public bool doMakeRandomPath = false;
-
 	public bool doLoadScriptPath = false;
-
 	public bool doLoadPointPath = true;
-
-	public bool doChangeLanes = false;
-
-	public int smoothPathIter = 0;
-
 	public bool doShowPath = false;
 
 	public string pathToLoad = "none";
 
-	public string pathFilename = "warehouse_path";
-
-	void Awake () 
+	void Awake () 	
 	{
-		if(sameRandomPath)
-			Random.InitState(randSeed);
-
 		InitNewRoad();			
 	}
 
 	public void InitNewRoad()
 	{
-		if(doMakeRandomPath)
-		{
-			MakeRandomPath();
-		}
-		else if(doLoadPointPath)
+		if(doLoadPointPath)
 		{
 			MakePointPath();
 		}
-
-		if(smoothPathIter > 0)
-			SmoothPath();
-
+		else if(doLoadScriptPath)
+		{
+			MakeScriptedPath();
+		}
 		if(doShowPath)
 		{
 			line.positionCount = path.nodes.Count;
@@ -97,18 +68,9 @@ public class PathViewer : MonoBehaviour {
 		return path.nodes[iN].pos;
 	}
 
-	void SmoothPath()
-	{
-		while(smoothPathIter > 0)
-		{
-			path.SmoothPath();
-			smoothPathIter--;
-		}
-	}
-
 	void MakePointPath()
 	{
-		TextAsset bindata = Resources.Load(pathFilename) as TextAsset;
+		TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
 
 		if(bindata == null)
 			return;
@@ -139,75 +101,62 @@ public class PathViewer : MonoBehaviour {
 
 	}
 
-
-
-	void MakeRandomPath()
+	void MakeScriptedPath()
 	{
-		path = new CarPath();
+		TrackScript script = new TrackScript();
 
-		Vector3 s = startPos.position;
-		float turn = 0f;
-		s.y = 0.5f;
-
-		span.x = 0f;
-		span.y = 0f;
-		span.z = spanDist;
-
-		for(int iS = 0; iS < numSpans; iS++)
+		if(script.Read(pathToLoad))
 		{
-			Vector3 np = s;
-			PathNode p = new PathNode();
-			p.pos = np;
-			path.nodes.Add(p);
+			path = new CarPath();
+			TrackParams tparams = new TrackParams();
+			tparams.numToSet = 0;
+			tparams.rotCur = Quaternion.identity;
+			tparams.lastPos = startPos.position;
 
-			float t = Random.Range(-1.0f * turnInc, turnInc);
+			float dY = 0.0f;
+			float turn = 0f;
 
-			turn += t;
+			Vector3 s = startPos.position;
+			s.y = 0.5f;
+			span.x = 0f;
+			span.y = 0f;
+			span.z = spanDist;
+			float turnVal = 10.0f;
 
-			Quaternion rot = Quaternion.Euler(0.0f, turn, 0f);
-			span = rot * span.normalized;
-
-			if(SegmentCrossesPath( np + (span.normalized * 100.0f), 90.0f ))
+			foreach(TrackScriptElem se in script.track)
 			{
-				//turn in the opposite direction if we think we are going to run over the path
-				turn *= -0.5f;
-				rot = Quaternion.Euler(0.0f, turn, 0f);
-				span = rot * span.normalized;
+				if(se.state == TrackParams.State.AngleDY)
+				{
+					turnVal = se.value;
+				}
+				else if(se.state == TrackParams.State.CurveY)
+				{
+					turn = 0.0f;
+					dY = se.value * turnVal;
+				}
+				else
+				{
+					dY = 0.0f;
+					turn = 0.0f;
+				}
+
+				for(int i = 0; i < se.numToSet; i++)
+				{
+
+					Vector3 np = s;
+					PathNode p = new PathNode();
+					p.pos = np;
+					path.nodes.Add(p);
+
+					turn = dY;
+
+					Quaternion rot = Quaternion.Euler(0.0f, turn, 0f);
+					span = rot * span.normalized;
+					span *= spanDist;
+					s = s + span;
+				}
+
 			}
-
-			span *= spanDist;
-
-			s = s + span;
-		}
-	}
-
-	public bool SegmentCrossesPath(Vector3 posA, float rad)
-	{
-		foreach(PathNode pn in path.nodes)
-		{
-			float d = (posA - pn.pos).magnitude;
-
-			if(d < rad)
-				return true;
-		}
-
-		return false;
-	}
-
-	public void SetPath(CarPath p)
-	{
-		path = p;
-
-		GameObject[] prev = GameObject.FindGameObjectsWithTag("pathNode");
-
-		Debug.Log(string.Format("Cleaning up {0} old nodes. {1} new ones.", prev.Length, p.nodes.Count));
-
-		DestroyRoad();
-
-		foreach(PathNode pn in path.nodes)
-		{
-			GameObject go = Instantiate(prefab, pn.pos, Quaternion.identity) as GameObject;
-			go.tag = "pathNode";
 		}
 	}
 }
