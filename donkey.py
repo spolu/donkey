@@ -1,8 +1,13 @@
 import simulation
 import track
+import base64
+import cv2
+import numpy as np
+
 
 MAX_GAME_TIME = 120
 OFF_TRACK_DISTANCE = 6.0
+CAMERA_SIZE = 120 * 160
 
 class Donkey:
     def __init__(self, headless=True):
@@ -11,8 +16,32 @@ class Donkey:
         self.track = track.Track()
 
     def observation_from_telemetry(self, telemetry):
-        # TODO: parse PNG -> scaled BW
-        pass
+        """
+        Returns a float numpy array of size 1x(CAMERA_SIZE+3+3):
+        - the camera black and white image
+        - the current car velocity
+        - the current car acceleration
+        """
+        camera = cv2.imdecode(
+            np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
+            cv2.IMREAD_GRAYSCALE,
+        ).astype(np.float)
+        camera = camera / 255.0
+        camera = camera.reshape(1,CAMERA_SIZE)
+
+        velocity = np.array([[
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+        ]])
+
+        acceleration = np.array([[
+            telemetry['acceleration']['x'],
+            telemetry['acceleration']['y'],
+            telemetry['acceleration']['z'],
+        ]])
+
+        return np.concatenate((camera, velocity, acceleration), axis=1)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -64,7 +93,7 @@ class Donkey:
         - throttle is clamped to [0;1]
         - brake is clamped to [0;1]
         It returns:
-        - an observation float numpy array of size 1x(S+3+3) representing:
+        - an observation float numpy array of size 1x(CAMERA_SIZE+3+3):
           - the camera black and white image
           - the current car velocity
           - the current car acceleration
