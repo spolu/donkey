@@ -241,7 +241,7 @@ class A2C:
             self.actor_critic.cuda()
             self.rollouts.cuda()
 
-    def batch_train(self, full_coverage):
+    def batch_train(self):
         for step in range(self.rollout_size):
             value, action, hidden, action_log_prob, dist_entropy = self.actor_critic.action(
                 autograd.Variable(self.rollouts.observations[step], requires_grad=False),
@@ -250,10 +250,7 @@ class A2C:
             )
 
             a = action.data.cpu().numpy()
-            observations, reward, done, coverages = self.envs.step(a)
-
-            for c in coverages:
-                full_coverage.add(c)
+            observations, reward, done = self.envs.step(a)
 
             observations = torch.from_numpy(observations).float()
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()

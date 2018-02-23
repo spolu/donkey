@@ -6,14 +6,9 @@ import os.path
 
 import torch
 
-from coverage import *
 from config import *
 
-from models.generative_recurrent import *
-from models.competing_recurrent import *
-from models.self_play_recurrent import *
-from models.a2c_recurrent import *
-from models.a2c_coverage import *
+from models.a2c import *
 
 def run(main_args):
     cfg = Config(main_args.config_path)
@@ -33,7 +28,7 @@ def run(main_args):
     model.initialize()
 
     while True:
-        running = model.batch_train(coverage)
+        running = model.batch_train()
 
         print('STAT %d %f' % (
             episode,
