@@ -1,0 +1,15 @@
+{
+  "model": "a2c",
+  "cuda": false,
+  "seed": 0,
+  "rollout_size": 20,
+  "worker_count": 16,
+  "hidden_size": 128,
+  "learning_rate": 0.0004,
+  "gamma": 0.99,
+  "tau": 0.95,
+  "action_loss_coeff": 1.0,
+  "value_loss_coeff": 0.5,
+  "entropy_loss_coeff": 0.01,
+  "max_grad_norm": 50.0
+}

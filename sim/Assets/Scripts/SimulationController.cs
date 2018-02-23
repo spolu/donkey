@@ -33,13 +33,7 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("SimulationController initializing");
 
-		string[] args = System.Environment.GetCommandLineArgs ();
-		if (args.Length >= 3) {
-			if (args[1] == "-simulationClientID") {
-				clientID = int.Parse(args[2]);
-			}
-		}
-
+``
 		_socket = GetComponent<SocketIOComponent>();
 
 		_socket.On ("open", OnOpen);
