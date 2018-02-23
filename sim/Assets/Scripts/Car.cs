@@ -9,6 +9,7 @@ public class Car : MonoBehaviour, ICar {
 
 	public float maxTorque = 50f;
 	public float maxSpeed = 10f;
+	public float maxSteer = 16.0f;
 
 	public Transform centrOfMass;
 
@@ -30,12 +31,6 @@ public class Car : MonoBehaviour, ICar {
 	public float lastSteer = 0.0f;
 	public float lastAccel = 0.0f;
 
-	//when the car is doing multiple things, we sometimes want to sort out parts of the training
-	//use this label to pull partial training samples from a run 
-	public string activity = "keep_lane";
-
-    public float maxSteer = 16.0f;
-
 	// Use this for initialization
 	void Awake () 
 	{
@@ -50,8 +45,6 @@ public class Car : MonoBehaviour, ICar {
 		requestSteering = 0f;
 
 		SavePosRot();
-
-        maxSteer = PlayerPrefs.GetFloat("max_steer", 16.0f);       
 	}
 
 	public void SavePosRot()
@@ -69,26 +62,11 @@ public class Car : MonoBehaviour, ICar {
 	{
 		requestTorque = val;
 		requestBrake = 0f;
-		//Debug.Log("request throttle: " + val);
 	}
-
-    public void SetMaxSteering(float val)
-    {
-        maxSteer = val;
-
-        PlayerPrefs.SetFloat("max_steer", maxSteer);
-        PlayerPrefs.Save();
-    }
-
-    public float GetMaxSteering()
-    {
-        return maxSteer;
-    }
 
 	public void RequestSteering(float val)
 	{
-		requestSteering = Mathf.Clamp(val, -maxSteer, maxSteer);
-		//Debug.Log("request steering: " + val);
+		requestSteering = Mathf.Clamp(val * maxSteer, -maxSteer, maxSteer);
 	}
 
 	public void Set(Vector3 pos, Quaternion rot)
@@ -169,16 +147,6 @@ public class Car : MonoBehaviour, ICar {
 		UpdateWheelPositions();
 	}
 
-	public string GetActivity()
-	{
-		return activity;
-	}
-
-	public void SetActivity(string act)
-	{
-		activity = act;
-	}
-
 	void FixedUpdate()
 	{
 		lastSteer = requestSteering;
@@ -187,7 +155,6 @@ public class Car : MonoBehaviour, ICar {
 		float throttle = requestTorque * maxTorque;
 		float steerAngle = requestSteering;
         float brake = requestBrake;
-
 
 		//front two tires.
 		wheelColliders[2].steerAngle = steerAngle;

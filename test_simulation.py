@@ -29,9 +29,9 @@ def input_thread():
         if key == 's':
             cmd = simulation.Command(0.0, 0.0, 0.0)
         if key == 'a':
-            cmd = simulation.Command(-10.0, 0.0, 0.0)
+            cmd = simulation.Command(-0.8, 0.0, 0.0)
         if key == 'd':
-            cmd = simulation.Command(10.0, 0.0, 0.0)
+            cmd = simulation.Command(0.8, 0.0, 0.0)
         if key == 'b':
             cmd = simulation.Command(0.0, 0.0, 1.0)
         if key == 'r':
