@@ -9,7 +9,7 @@ Track interface
 class Track:
     def __init__(self):
         self.points = np.array(
-            np.loadtxt('track_coordinates.txt', delimiter=','),
+            np.loadtxt('track.coordinates', delimiter=','),
         )
 
     def closest_pair(self, position):

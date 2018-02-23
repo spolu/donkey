@@ -15,7 +15,6 @@ public static class CameraHelper
 
     byte[] image = texture2D.EncodeToJPG();
     //byte[] image = texture2D.EncodeToPNG();
-
     //byte[] image = texture2D.GetRawTextureData();
 
     Object.DestroyImmediate(texture2D); // Required to prevent leaking the texture
