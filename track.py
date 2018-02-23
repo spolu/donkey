@@ -48,20 +48,32 @@ class Track:
             ]
 
     def distance(self, position):
+        """
+        Returns the distance of the position to the track.
+        """
         closests = self.closest_pair(position)
         u = self.points[closests[0]] - position
         v = self.points[closests[1]] - position
         return np.linalg.norm(np.cross(u, v)) / np.linalg.norm(u-v)
 
     def speed(self, position, velocity):
+        """
+        Returns the linear speed along the track given a position and a
+        velocity.
+        """
         closests = self.closest_pair(position)
         u = self.points[closests[0]]
         v = self.points[closests[1]]
         t = (v-u) / np.linalg.norm(v-u)
         return np.dot(t, velocity)
 
-    def finish_line(self, prev_position, next_position):
-        pass
+    # TODO(stan): this won't work until we prevent a,b from being returned in
+    #             the following situation (where b,c should be returned):
+    #             (a)-(b)--(p)-------(c)
+    # def finish_line(self, prev_position, next_position):
+    #     prev_closests = self.closest_pair(prev_position)
+    #     next_closests = self.closest_pair(next_position)
+    #     return prev_closests[1] == 0 and next_closests[0] == 0
 
 def main():
     # loading the track points
@@ -70,11 +82,13 @@ def main():
 
     distance = track.distance([60.35,0.5,35.6])
     speed = track.speed([61.0,0.0,41.0], [0.0, 0.0, 4.0])
+    finish_line = track.finish_line([46.8,0.633,50.1], [46.9,0.633,53.0])
+    speed = track.speed([46.8,0.633,50.1], [0.0, 0.0, 2.0])
 
-    track.closest_pair([61.0,0.0,41.0])
 
     print(distance)
     print(speed)
+    print(finish_line)
 
 if __name__ == "__main__":
     main()
