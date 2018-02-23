@@ -18,12 +18,10 @@ public class Car : MonoBehaviour, ICar {
 	public float requestSteering = 0f;
 
 	public Vector3 acceleration = Vector3.zero;
-	public Vector3 prevVel = Vector3.zero;
+	public Vector3 prevVelocity = Vector3.zero;
 
 	public Vector3 startPos;
 	public Quaternion startRot;
-
-	public float length = 1.7f;
 
 	Rigidbody rb;
 
@@ -175,7 +173,7 @@ public class Car : MonoBehaviour, ICar {
 			wc.brakeTorque = 400f * brake;
 		}
 
-		acceleration = rb.velocity - prevVel;
+		acceleration = rb.velocity - prevVelocity / Time.fixedDeltaTime;
 	}
 
 	void FlipUpright()

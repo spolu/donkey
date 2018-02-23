@@ -45,7 +45,7 @@ def main():
 
     threading.Thread(target = input_thread).start()
 
-    c = simulation.Simulation(launch=False, headless=False)
+    c = simulation.Simulation(launch=True, headless=False)
     c.start()
 
     while True:
@@ -54,6 +54,7 @@ def main():
             c.reset()
         else:
             c.step(cmd)
+            print(c.telemetry())
 
 if __name__ == "__main__":
     main()

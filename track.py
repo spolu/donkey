@@ -7,8 +7,10 @@ Track interface
 # import pdb; pdb.set_trace()
 
 class Track:
-    def __init__(self, points):
-        self.points = points
+    def __init__(self):
+        self.points = np.array(
+            np.loadtxt('track_coordinates.txt', delimiter=','),
+        )
 
     def closest_pair(self, position):
         """
@@ -75,20 +77,19 @@ class Track:
     #     next_closests = self.closest_pair(next_position)
     #     return prev_closests[1] == 0 and next_closests[0] == 0
 
-def main():
-    # loading the track points
-    trackPoints = np.loadtxt('track_coordinates.txt',delimiter=',')
-    track = Track(np.array(trackPoints))
-
-    distance = track.distance([60.35,0.5,35.6])
-    speed = track.speed([61.0,0.0,41.0], [0.0, 0.0, 4.0])
-    finish_line = track.finish_line([46.8,0.633,50.1], [46.9,0.633,53.0])
-    speed = track.speed([46.8,0.633,50.1], [0.0, 0.0, 2.0])
-
-
-    print(distance)
-    print(speed)
-    print(finish_line)
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     # loading the track points
+#     track = Track()
+#
+#     distance = track.distance([60.35,0.5,35.6])
+#     speed = track.speed([61.0,0.0,41.0], [0.0, 0.0, 4.0])
+#     finish_line = track.finish_line([46.8,0.633,50.1], [46.9,0.633,53.0])
+#     speed = track.speed([46.8,0.633,50.1], [0.0, 0.0, 2.0])
+#
+#
+#     print(distance)
+#     print(speed)
+#     print(finish_line)
+#
+# if __name__ == "__main__":
+#     main()

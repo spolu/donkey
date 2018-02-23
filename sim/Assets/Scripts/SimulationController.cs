@@ -100,7 +100,8 @@ public class SimulationController : MonoBehaviour
 
 				m.type = "telemetry";
 
-				m.json.AddField ("time", Time.time);				
+				m.json.AddField ("time", Time.time);	
+
 				m.json.AddField ("steering", car.GetSteering());
 				m.json.AddField ("throttle", car.GetThrottle());
 				m.json.AddField ("brake", car.GetHandBrake());
@@ -119,8 +120,11 @@ public class SimulationController : MonoBehaviour
 				velocity.AddField ("z", car.GetVelocity().z);
 				m.json.AddField ("velocity", velocity);
 
-				m.json.AddField ("speed", car.GetVelocity().magnitude);
-
+				JSONObject acceleration = new JSONObject(JSONObject.Type.OBJECT);
+				acceleration.AddField ("x", car.GetAccelleration().x);
+				acceleration.AddField ("y", car.GetAccelleration().y);
+				acceleration.AddField ("z", car.GetAccelleration().z);
+				m.json.AddField ("acceleration", acceleration);
 
 				Send (m);
 				Pause ();

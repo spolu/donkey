@@ -7,11 +7,14 @@
   - [x] spawns a new simulation on creation
   - [x] cleans up after itself on destruction
   - [x] step API with appropriate conditions wait
+
+# environment
+
 - [ ] donkey.py interface
-  - [ ] observations (camera, position, velocity, acceleration, track shape)
+  - [x] observations (camera, velocity, acceleration)
   - [ ] step (steering, throttle, brakes)
-  - [ ] end conditions (go out of track or completed N runs)
-  - [ ] reward function?
+  - [x] end conditions (go out of track or completed N runs)
+  - [x] reward function
 
 # model
 
