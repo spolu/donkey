@@ -48,6 +48,8 @@ public class SimulationController : MonoBehaviour
 		_socket.On ("reset", OnReset);
 
 		car = carObject.GetComponent<ICar>();
+
+		car.SavePosRot ();
 	}
 
 	private void OnEnable()
@@ -147,13 +149,14 @@ public class SimulationController : MonoBehaviour
 	{		
 		Debug.Log ("Received: type=reset sid=" + _socket.sid);
 
-		// TODO: reset simulation to initial state?
-
 		connected = true;
 		lastPause = Time.time + 999.0f;
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
 		Time.timeScale = 1.0f;
+
+		// Reset the car to its initial state.
+		car.RestorePosRot ();
 	}
 
 	void OnStep(SocketIOEvent ev)

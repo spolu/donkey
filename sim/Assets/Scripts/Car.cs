@@ -93,27 +93,14 @@ public class Car : MonoBehaviour, ICar {
 
 	public void Set(Vector3 pos, Quaternion rot)
 	{
+		rb.isKinematic = true;
+
 		rb.position = pos;
 		rb.rotation = rot;
 
-		//just setting it once doesn't seem to work. Try setting it multiple times..
-		StartCoroutine(KeepSetting(pos, rot, 10));
+		rb.isKinematic = false;
 	}
-
-	IEnumerator KeepSetting(Vector3 pos, Quaternion rot, int numIter)
-	{
-		while(numIter > 0)
-		{
-			rb.position = pos;
-			rb.rotation = rot;
-			transform.position = pos;
-			transform.rotation = rot;
-
-			numIter--;
-			yield return new WaitForFixedUpdate();
-		}
-	}
-
+		
 	public float GetSteering()
 	{
 		return requestSteering;

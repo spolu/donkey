@@ -4,6 +4,7 @@ import tty, termios, sys
 import simulation
 
 cmd = simulation.Command(0.0, 0.0, 0.0)
+reset = False
 
 def getchar():
     fd = sys.stdin.fileno()
@@ -17,6 +18,8 @@ def getchar():
 
 def input_thread():
     global cmd
+    global reset
+
     while True:
         key = getchar()
         if key.strip() == 'q':
@@ -31,17 +34,26 @@ def input_thread():
             cmd = simulation.Command(10.0, 0.0, 0.0)
         if key == 'b':
             cmd = simulation.Command(0.0, 0.0, 1.0)
+        if key == 'r':
+            reset = True;
+
         print("key", key)
 
 def main():
     global cmd
+    global reset
+
     threading.Thread(target = input_thread).start()
 
     c = simulation.Simulation(launch=False, headless=False)
     c.start()
 
     while True:
-        c.step(cmd)
+        if reset:
+            reset = False
+            c.reset()
+        else:
+            c.step(cmd)
 
 if __name__ == "__main__":
     main()

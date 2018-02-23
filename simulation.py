@@ -152,6 +152,17 @@ class Simulation:
             self.client['id'], self.client['sid'],
         ))
 
+    def reset(self):
+        with lock:
+            sio.emit('reset', data={}, room=self.client['sid'])
+
+        self.client['condition'].acquire()
+        self.client['condition'].wait()
+        self.client['condition'].release()
+        print("Received initial telemetry: id={} sid={}".format(
+            self.client['id'], self.client['sid'],
+        ))
+
     def step(self, command):
         global lock
         global sio
