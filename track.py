@@ -10,12 +10,6 @@ class Track:
     def __init__(self, points):
         self.points = points
 
-    def closest_point(self, point):
-        deltas = self.points - point
-        sq_distances = np.sum(deltas**2, axis=1)
-        closest = np.argmin(sq_distances)
-        return self.points[closest]
-
     def closest_pair(self, position):
         """
         Returns the ordered closest pair of track point to the provided
@@ -57,29 +51,17 @@ class Track:
         closests = self.closest_pair(position)
         u = self.points[closests[0]] - position
         v = self.points[closests[1]] - position
-        return np.linalg.norm(np.cross(u, v)) / np.linalg.norm(u - v)
+        return np.linalg.norm(np.cross(u, v)) / np.linalg.norm(u-v)
 
     def speed(self, position, velocity):
         closests = self.closest_pair(position)
         u = self.points[closests[0]]
         v = self.points[closests[1]]
-        t = (v - u) / np.linalg.norm(v - u)
+        t = (v-u) / np.linalg.norm(v-u)
         return np.dot(t, velocity)
 
     def finish_line(self, prev_position, next_position):
         pass
-
-    def scalar_to_direction(self, point):
-        deltas = self.points - point
-        sq_distances = np.sum(deltas**2, axis=1)
-        minIndex = np.argmin(sq_distances)
-
-        #TODO doesn't handle well the last iteam of the array
-        tangent = self.points[minIndex+1] - self.points[minIndex]
-        normalized_tangent = tangent/np.sqrt(np.sum(tangent**2))
-        vector_from_track = point - self.points[minIndex]
-        scalar = np.dot(tangent,vector_from_track)
-        return scalar
 
 def main():
     # loading the track points
