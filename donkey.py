@@ -8,6 +8,8 @@ import numpy as np
 MAX_GAME_TIME = 120
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_SIZE = 120 * 160
+OBSERVATION_SIZE = CAMERA_SIZE + 3 * 2
+CONTROL_SIZE = 3
 
 class Donkey:
     def __init__(self, headless=True):

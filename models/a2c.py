@@ -88,14 +88,14 @@ class A2CEnvs:
         return np.stack(observations), np.stack(rewards), np.stack(dones)
 
 class A2CStorage:
-    def __init__(self, config, dictionary):
+    def __init__(self, config):
         self.rollout_size = config.get('rollout_size')
         self.worker_count = config.get('worker_count')
         self.hidden_size = config.get('hidden_size')
         self.gamma = config.get('gamma')
         self.tau = config.get('tau')
 
-        self.observations = torch.zeros(self.rollout_size + 1, self.worker_count, PATH_MAP_SIZE)
+        self.observations = torch.zeros(self.rollout_size + 1, self.worker_count, donkey.OBSERVATION_SIZE)
         self.hiddens = torch.zeros(self.rollout_size + 1, self.worker_count, self.hidden_size)
         self.rewards = torch.zeros(self.rollout_size, self.worker_count, 1)
         self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
@@ -141,14 +141,14 @@ class A2CStorage:
         self.masks[0].copy_(self.masks[-1])
 
 class A2CGRUPolicy(nn.Module):
-    def __init__(self, config, dictionary):
+    def __init__(self, config):
         super(A2CGRUPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
 
-        self.linear1 = nn.Linear(PATH_MAP_SIZE, self.hidden_size)
+        self.linear1 = nn.Linear(donkey.OBSERVATION_SIZE, self.hidden_size)
         self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
-        self.actor = nn.Linear(self.hidden_size, dictionary.size())
+        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE)
         self.critic = nn.Linear(self.hidden_size, 1)
 
         self.train()
@@ -216,15 +216,13 @@ class A2C:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.max_grad_norm = config.get('max_grad_norm')
 
-        self.dictionary = Dictionary(config.get('dictionary'))
-
-        self.envs = A2CEnvs(config, args, self.dictionary)
-        self.actor_critic = A2CGRUPolicy(config, self.dictionary)
+        self.envs = A2CEnvs(config)
+        self.actor_critic = A2CGRUPolicy(config)
         self.optimizer = optim.Adam(
             self.actor_critic.parameters(),
             self.learning_rate,
         )
-        self.rollouts = A2CStorage(config, self.dictionary)
+        self.rollouts = A2CStorage(config)
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])

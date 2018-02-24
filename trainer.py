@@ -39,7 +39,6 @@ def run(main_args):
         episode += 1
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
     os.environ['OMP_NUM_THREADS'] = '1'
 
     parser = argparse.ArgumentParser(description="")
