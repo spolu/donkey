@@ -3,12 +3,10 @@ import random
 import argparse
 import signal
 import os.path
-
 import torch
 
-from config import *
-
-from models.a2c import *
+from utils import Config
+from models.a2c import A2C
 
 def run(main_args):
     cfg = Config(main_args.config_path)

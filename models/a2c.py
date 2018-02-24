@@ -25,7 +25,7 @@ class A2CWorker(threading.Thread):
         self.observations = None
         self.reward = 0.0
         self.done = False
-        self.donkey = donkey.Donkey()
+        self.donkey = donkey.Donkey(headless=False)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -36,6 +36,7 @@ class A2CWorker(threading.Thread):
 
     def run(self):
         while True:
+            print (">>> WORKER WAITING")
             # Wait for the controls to be set.
             self.condition.acquire()
             self.condition.wait()
@@ -47,6 +48,7 @@ class A2CWorker(threading.Thread):
             self.reward = reward
             self.done = done
 
+            print (">>> WORKER NOTIFY")
             # Notify that we are done.
             self.condition.acquire()
             self.condition.notify()
@@ -57,6 +59,8 @@ class A2CEnvs:
         self.worker_count = config.get('worker_count')
         self.config = config
         self.workers = [A2CWorker() for _ in range(self.worker_count)]
+        for w in self.workers:
+            w.start()
 
     def reset(self):
         for w in self.workers:
@@ -65,11 +69,12 @@ class A2CEnvs:
 
         return np.stack(observations)
 
-    def step(self, actions):
+    def step(self, controls):
         for i in range(len(self.workers)):
             w = self.workers[i]
             w.controls = controls[i]
 
+            print (">>> ENV NOTIFY")
             # Release the workers.
             w.condition.acquire()
             w.condition.notify()
@@ -77,6 +82,7 @@ class A2CEnvs:
 
         # Wait for the workers to finish.
         for w in self.workers:
+            print (">>> ENV WAITING")
             w.condition.acquire()
             w.condition.wait()
             w.condition.release()
@@ -95,7 +101,9 @@ class A2CStorage:
         self.gamma = config.get('gamma')
         self.tau = config.get('tau')
 
-        self.observations = torch.zeros(self.rollout_size + 1, self.worker_count, donkey.OBSERVATION_SIZE)
+        self.observations = torch.zeros(
+            self.rollout_size + 1, self.worker_count, donkey.OBSERVATION_SIZE,
+        )
         self.hiddens = torch.zeros(self.rollout_size + 1, self.worker_count, self.hidden_size)
         self.rewards = torch.zeros(self.rollout_size, self.worker_count, 1)
         self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)

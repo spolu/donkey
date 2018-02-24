@@ -29,21 +29,21 @@ class Donkey:
             cv2.IMREAD_GRAYSCALE,
         ).astype(np.float)
         camera = camera / 255.0
-        camera = camera.reshape(1,CAMERA_SIZE)
+        camera = camera.reshape(CAMERA_SIZE)
 
-        velocity = np.array([[
+        velocity = np.array([
             telemetry['velocity']['x'],
             telemetry['velocity']['y'],
             telemetry['velocity']['z'],
-        ]])
+        ])
 
-        acceleration = np.array([[
+        acceleration = np.array([
             telemetry['acceleration']['x'],
             telemetry['acceleration']['y'],
             telemetry['acceleration']['z'],
-        ]])
+        ])
 
-        return np.concatenate((camera, velocity, acceleration), axis=1)
+        return np.concatenate((camera, velocity, acceleration), axis=0)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -105,6 +105,8 @@ class Donkey:
         steering = np.clip(controls[0][0], -1, 1)
         throttle = np.clip(controls[0][0], 0, 1)
         brake = np.clip(controls[0][0], 0, 1)
+
+        print("RECEIVED {} {} {}", steering, throttle, brake)
 
         command = simulation.Command(steering, throttle, brake)
 

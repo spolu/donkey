@@ -3,7 +3,7 @@
   "cuda": false,
   "seed": 0,
   "rollout_size": 20,
-  "worker_count": 16,
+  "worker_count": 1,
   "hidden_size": 128,
   "learning_rate": 0.0004,
   "gamma": 0.99,
