@@ -13,6 +13,7 @@ import torch.optim as optim
 
 from torch.distributions import Categorical
 from eventlet.green import threading
+from utils import OrnsteinUhlenbeckNoise
 
 import donkey
 
@@ -169,6 +170,7 @@ class A2CGRUPolicy(nn.Module):
         self.gru.bias_ih.data.fill_(0)
         self.gru.bias_hh.data.fill_(0)
 
+
     def action(self, inputs, hiddens, masks):
         value, x, hiddens = self(inputs, hiddens, masks)
 
@@ -318,7 +320,10 @@ class A2C:
         end = time.time()
         total_num_steps = (self.batch_count + 1) * self.worker_count * self.rollout_size
         print(
-            "{}, timesteps {}, FPS {}, mean/median R {:.1f}/{:.1f}, min/max R {:.1f}/{:.1f}, entropy loss {:.5f}, value loss {:.5f}, action loss {:.5f}".
+            "{}, timesteps {}, FPS {}, " + \
+            "mean/median R {:.1f}/{:.1f}, " + \
+            "min/max R {:.1f}/{:.1f}, " + \
+            "entropy loss {:.5f}, value loss {:.5f}, action loss {:.5f}".
             format(
                 self.batch_count,
                 total_num_steps,
