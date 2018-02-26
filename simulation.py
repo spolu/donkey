@@ -30,15 +30,17 @@ def client_for_id(client_id):
 
 @sio.on('connect')
 def connect(sid, environ):
-    print("Received connect: sid={}".format(sid))
+    # print("Received connect: sid={}".format(sid))
+    pass
 
 @sio.on('disconnect')
 def disconnect(sid):
-    print("Received disconnect: sid={}".format(sid))
+    # print("Received disconnect: sid={}".format(sid))
+    pass
 
 @sio.on('telemetry')
 def telemetry(sid, data):
-    print("Received telemetry: sid={}".format(sid))
+    # print("Received telemetry: sid={}".format(sid))
 
     # Record telemetry on the client and notify.
     client = client_for_id(int(data['id']))
@@ -49,7 +51,7 @@ def telemetry(sid, data):
 
 @sio.on('hello')
 def hello(sid, data):
-    print("Received hello: sid={} id={}".format(sid, data['id']))
+    # print("Received hello: sid={} id={}".format(sid, data['id']))
 
     # Record sid on the client and notify.
     client = client_for_id(int(data['id']))
@@ -91,11 +93,13 @@ Command = collections.namedtuple(
 )
 
 class Simulation:
-    def __init__(self, launch=True, headless=True):
+    def __init__(self, launch, headless, time_scale, step_interval):
         global lock
         global clients
         self.headless = headless
         self.launch = launch
+        self.time_scale = time_scale
+        self.step_interval = step_interval
         self.env = os.environ.copy()
         self.process = None
 
@@ -121,9 +125,15 @@ class Simulation:
                 self.env['SIM_PATH'],
                 "-simulationClientID",
                 str(self.client['id']),
+                "-simulationTimeScale",
+                str(self.time_scale),
+                "-simulationStepInterval",
+                str(self.step_interval),
             ]
             if self.headless:
                 cmd.append('-batchmode')
+
+            print(cmd)
 
             self.process = subprocess.Popen(cmd, env=self.env)
 
@@ -140,9 +150,9 @@ class Simulation:
         self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
-        print("Received initial telemetry: id={} sid={}".format(
-            self.client['id'], self.client['sid'],
-        ))
+        # print("Received initial telemetry: id={} sid={}".format(
+        #     self.client['id'], self.client['sid'],
+        # ))
 
     def stop(self):
         if self.launch:
@@ -159,9 +169,9 @@ class Simulation:
         self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
-        print("Received initial telemetry: id={} sid={}".format(
-            self.client['id'], self.client['sid'],
-        ))
+        # print("Received initial telemetry: id={} sid={}".format(
+        #     self.client['id'], self.client['sid'],
+        # ))
 
     def step(self, command):
         global lock

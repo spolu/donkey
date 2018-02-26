@@ -5,16 +5,20 @@ import cv2
 import numpy as np
 
 
-MAX_GAME_TIME = 30
+MAX_GAME_TIME = 120
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_SIZE = 120 * 160
 OBSERVATION_SIZE = CAMERA_SIZE + 3 * 2
 CONTROL_SIZE = 3
+SIMULATION_TIME_SCALE = 40.0
+SIMULATION_STEP_INTERVAL = 0.10
 
 class Donkey:
     def __init__(self, headless=True):
         self.started = False
-        self.simulation = simulation.Simulation(headless=headless)
+        self.simulation = simulation.Simulation(
+            True, headless, SIMULATION_TIME_SCALE, SIMULATION_STEP_INTERVAL,
+        )
         self.track = track.Track()
         self.last_reset_time = 0.0
 
@@ -59,12 +63,11 @@ class Donkey:
         ])
 
         speed =  self.track.speed(position, velocity)
-        print("REWARD {}".format(speed))
+        # print("REWARD {}".format(speed))
 
         return speed
 
     def done_from_telemetry(self, telemetry):
-        print("TIME {}".format(telemetry['time'] - self.last_reset_time))
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
             return True
         position = np.array([

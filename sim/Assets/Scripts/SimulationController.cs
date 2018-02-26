@@ -23,7 +23,9 @@ public class SimulationController : MonoBehaviour
 	private bool connected = false;
 	private int clientID = 0;
 
+	private float timeScale = 1.0f;
 	private float stepInterval = 0.10f;
+
 	private float lastResume = 0.0f;
 	private float lastTelemetry = 0.0f;
 	private float lastPause = 0.0f;
@@ -33,7 +35,20 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("SimulationController initializing");
 
-``
+		string[] args = System.Environment.GetCommandLineArgs ();
+
+		for (int i = 0; i < args.Length - 1; i++) {
+			if (args [i] == "-simulationClientID") {
+				clientID = int.Parse(args[i+1]);
+			}
+			if (args [i] == "-simulationTimeScale") {
+				timeScale = float.Parse(args[i+1]);
+			}
+			if (args [i] == "-simulationStepInterval") {
+				stepInterval = float.Parse(args[i+1]);
+			}
+		}
+
 		_socket = GetComponent<SocketIOComponent>();
 
 		_socket.On ("open", OnOpen);
@@ -78,7 +93,7 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("Resume: time=" + Time.time);
 		lastResume = Time.time;
-		Time.timeScale = 1.0f;
+		Time.timeScale = timeScale;
 	}
 
 	private void Update()
