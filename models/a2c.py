@@ -275,7 +275,7 @@ class A2CGRUPolicy(nn.Module):
         return self.critic(x), self.actor(x), hiddens
 
 class A2C:
-    def __init__(self, config, args=None):
+    def __init__(self, config, save_dir=None):
         self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
@@ -284,7 +284,7 @@ class A2C:
         self.action_loss_coeff = config.get('action_loss_coeff')
         self.value_loss_coeff = config.get('value_loss_coeff')
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
-        self.max_grad_norm = config.get('max_grad_norm')
+        self.save_dir = save_dir
 
         self.envs = A2CEnvs(config)
         self.actor_critic = A2CGRUPolicy(config)
@@ -400,9 +400,9 @@ class A2C:
          action_loss * self.action_loss_coeff -
          entropy * self.entropy_loss_coeff).backward()
 
-        nn.utils.clip_grad_norm(
-            self.actor_critic.parameters(), self.max_grad_norm,
-        )
+        # nn.utils.clip_grad_norm(
+        #     self.actor_critic.parameters(), self.max_grad_norm,
+        # )
 
         self.optimizer.step()
         self.rollouts.after_update()
@@ -428,6 +428,11 @@ class A2C:
                 value_loss.data[0],
                 action_loss.data[0],
             ))
+
+        if self.batch_count % 100 == 0 and self.save_dir:
+            print("Saving models and optimizer: save_dir={}".format(self.save_dir))
+            torch.save(self.actor_critic.state_dict(), self.save_dir + "/actor_critic.pt")
+            torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
 
         self.batch_count += 1
         if self.running_reward is None:

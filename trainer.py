@@ -8,8 +8,8 @@ import torch
 from utils import Config
 from models.a2c import A2C
 
-def run(main_args):
-    cfg = Config(main_args.config_path)
+def run(args):
+    cfg = Config(args.config_path)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -18,7 +18,7 @@ def run(main_args):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     if cfg.get('model') == 'a2c':
-        model = A2C(cfg)
+        model = A2C(cfg, args.save_dir)
     else:
         raise Exception("Unknown model: {}".format(cfg.get('model')))
 
@@ -40,7 +40,8 @@ if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
 
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('config_path', type=str, help="Path to the config file")
+    parser.add_argument('config_path', type=str, help="path to the config file")
+    parser.add_argument('--save_dir', type=str, help="directory to save models")
 
     args = parser.parse_args()
 
