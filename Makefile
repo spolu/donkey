@@ -1,12 +1,12 @@
 PYTHON ?= python3
 
-UNITY_FLAGS = -quit -batchmode
+UNITY_FLAGS = -quit -batchmode -nographics
 
 # Target OS detection
 UNAME := $(shell uname -s)
 ifeq ($(UNAME),Linux)
-  UNITY ?= DISPLAY=:1 ~/opt/unity3d/Editor/Unity
-  UNITY_FLAGS += -executeMethod BuildPlayer.PerformBuildLinux64
+  UNITY ?= ~/opt/unity3d/Editor/Unity
+  UNITY_FLAGS += -serial $(UNITY_SERIAL) -executeMethod BuildPlayer.PerformBuildLinux64
   SIM_PATH = $(abspath ./build/sim)
 endif
 ifeq ($(UNAME),Darwin)

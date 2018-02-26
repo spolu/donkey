@@ -28,19 +28,11 @@ chmod +x UnitySetup-2017.3.0f1
 mkdir -p ~/opt/unity3d
 ./UnitySetup-2017.3.0f1 --unattended --install-location=~/opt/unity3d
 sudo apt-get install libnss3 xserver-xorg libgconf-2-4
-sudo nvidia-xconfig -a --use-display-device=None --virtual=1280x1024
 ```
 
 Set the following env variables in `.bashrc`:
 ```
-UNITY_USERNAME=
-UNITY_PASSWORD=
 UNITY_SERIAL=
-```
-
-At startup, start a new X server on :1
-```
-sudo /usr/bin/X :1 &
 ```
 
 # Useful resources
