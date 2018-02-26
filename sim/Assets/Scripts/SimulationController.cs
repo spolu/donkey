@@ -16,7 +16,7 @@ public class SimulationController : MonoBehaviour
 {
 
 	public GameObject carObject;
-	public Camera camSensor;
+	public CameraSensor camSensor;
 
 	private ICar car;
 	private SocketIOComponent _socket;
@@ -115,7 +115,7 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField ("throttle", car.GetThrottle());
 				m.json.AddField ("brake", car.GetHandBrake());
 
-				m.json.AddField ("camera", System.Convert.ToBase64String(CameraHelper.CaptureFrame(camSensor)));
+				m.json.AddField ("camera", System.Convert.ToBase64String(camSensor.GetImage().EncodeToJPG()));
 
 				JSONObject position = new JSONObject(JSONObject.Type.OBJECT);
 				position.AddField ("x", car.GetPosition().x);
