@@ -284,6 +284,7 @@ class A2C:
         self.action_loss_coeff = config.get('action_loss_coeff')
         self.value_loss_coeff = config.get('value_loss_coeff')
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
+        self.max_grad_norm = config.get('max_grad_norm')
         self.save_dir = save_dir
 
         self.envs = A2CEnvs(config)
@@ -400,9 +401,9 @@ class A2C:
          action_loss * self.action_loss_coeff -
          entropy * self.entropy_loss_coeff).backward()
 
-        # nn.utils.clip_grad_norm(
-        #     self.actor_critic.parameters(), self.max_grad_norm,
-        # )
+        nn.utils.clip_grad_norm(
+            self.actor_critic.parameters(), self.max_grad_norm,
+        )
 
         self.optimizer.step()
         self.rollouts.after_update()

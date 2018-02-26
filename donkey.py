@@ -22,6 +22,7 @@ class Donkey:
         )
         self.track = track.Track()
         self.last_reset_time = 0.0
+        self.step_count = 0
 
     def observation_from_telemetry(self, telemetry):
         """
@@ -66,9 +67,14 @@ class Donkey:
         ])
 
         speed =  self.track.speed(position, velocity)
-        # print("REWARD {}".format(speed))
+        # print("SPEED {}".format(speed))
 
-        return speed
+        if speed > 1.0:
+            return 1.0
+        if speed < 0.0:
+            return -1.0
+
+        return 0.0
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
@@ -126,6 +132,11 @@ class Donkey:
         observation = self.observation_from_telemetry(telemetry)
         reward = self.reward_from_telemetry(telemetry)
         done = self.done_from_telemetry(telemetry)
+
+        if self.step_count % 1000 == 0:
+            print("TELEMETRY {}".format(telemetry))
+        self.step_count += 1
+
 
         if done:
             self.reset()
