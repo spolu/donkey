@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 
-MAX_GAME_TIME = 120
+MAX_GAME_TIME = 30
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_SIZE = 120 * 160
 OBSERVATION_SIZE = CAMERA_SIZE + 3 * 2
@@ -16,6 +16,7 @@ class Donkey:
         self.started = False
         self.simulation = simulation.Simulation(headless=headless)
         self.track = track.Track()
+        self.last_reset_time = 0.0
 
     def observation_from_telemetry(self, telemetry):
         """
@@ -56,10 +57,15 @@ class Donkey:
             telemetry['velocity']['y'],
             telemetry['velocity']['z'],
         ])
-        return self.track.speed(position, speed)
+
+        speed =  self.track.speed(position, velocity)
+        print("REWARD {}".format(speed))
+
+        return speed
 
     def done_from_telemetry(self, telemetry):
-        if telemetry['time'] > MAX_GAME_TIME:
+        print("TIME {}".format(telemetry['time'] - self.last_reset_time))
+        if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
             return True
         position = np.array([
             telemetry['position']['x'],
@@ -82,6 +88,7 @@ class Donkey:
         else:
             self.simulation.reset()
         telemetry = self.simulation.telemetry()
+        self.last_reset_time = telemetry['time']
 
         observation = self.observation_from_telemetry(telemetry)
 
@@ -89,7 +96,7 @@ class Donkey:
 
     def step(self, controls):
         """
-        `step` takes as input a 1x3 float numpy array. Its values are clamped
+        `step` takes as input a 3D float numpy array. Its values are clamped
         to their valid intervals:
         - steering is clamped to [-1;1]
         - throttle is clamped to [0;1]
@@ -102,19 +109,22 @@ class Donkey:
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
-        steering = np.clip(controls[0][0], -1, 1)
-        throttle = np.clip(controls[0][0], 0, 1)
-        brake = np.clip(controls[0][0], 0, 1)
+        steering = np.clip(controls[0], -1, 1)
+        throttle = np.clip(controls[1], 0, 1)
+        brake = np.clip(controls[2], 0, 1)
 
-        print("RECEIVED {} {} {}", steering, throttle, brake)
+        # print("RECEIVED  {} {} {}".format(steering, throttle, brake))
 
         command = simulation.Command(steering, throttle, brake)
 
-        c.step(command)
+        self.simulation.step(command)
         telemetry = self.simulation.telemetry()
 
         observation = self.observation_from_telemetry(telemetry)
         reward = self.reward_from_telemetry(telemetry)
         done = self.done_from_telemetry(telemetry)
+
+        if done:
+            self.reset()
 
         return observation, reward, done

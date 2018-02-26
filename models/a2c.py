@@ -1,6 +1,7 @@
 import sys
 import random
 import time
+import math
 
 import numpy as np
 
@@ -11,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from torch.distributions import Categorical
+from torch.distributions import Categorical, Normal
 from eventlet.green import threading
 from utils import OrnsteinUhlenbeckNoise
 
@@ -37,7 +38,6 @@ class A2CWorker(threading.Thread):
 
     def run(self):
         while True:
-            print (">>> WORKER WAITING")
             # Wait for the controls to be set.
             self.condition.acquire()
             self.condition.wait()
@@ -49,7 +49,6 @@ class A2CWorker(threading.Thread):
             self.reward = reward
             self.done = done
 
-            print (">>> WORKER NOTIFY")
             # Notify that we are done.
             self.condition.acquire()
             self.condition.notify()
@@ -75,7 +74,6 @@ class A2CEnvs:
             w = self.workers[i]
             w.controls = controls[i]
 
-            print (">>> ENV NOTIFY")
             # Release the workers.
             w.condition.acquire()
             w.condition.notify()
@@ -83,7 +81,6 @@ class A2CEnvs:
 
         # Wait for the workers to finish.
         for w in self.workers:
-            print (">>> ENV WAITING")
             w.condition.acquire()
             w.condition.wait()
             w.condition.release()
@@ -105,12 +102,16 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1, self.worker_count, donkey.OBSERVATION_SIZE,
         )
-        self.hiddens = torch.zeros(self.rollout_size + 1, self.worker_count, self.hidden_size)
+        self.hiddens = torch.zeros(
+            self.rollout_size + 1, self.worker_count, self.hidden_size,
+        )
         self.rewards = torch.zeros(self.rollout_size, self.worker_count, 1)
         self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
         self.returns = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
-        self.actions = torch.zeros(self.rollout_size, self.worker_count, 1).long()
-        self.action_log_probs = torch.zeros(self.rollout_size, self.worker_count, 1)
+        self.actions = torch.zeros(
+            self.rollout_size, self.worker_count, donkey.CONTROL_SIZE
+        )
+        self.log_probs = torch.zeros(self.rollout_size, self.worker_count, 1)
         self.masks = torch.ones(self.rollout_size + 1, self.worker_count, 1)
 
     def cuda(self):
@@ -120,15 +121,15 @@ class A2CStorage:
         self.values = self.values.cuda()
         self.returns = self.returns.cuda()
         self.actions = self.actions.cuda()
-        self.action_log_probs = self.action_log_probs.cuda()
+        self.log_probs = self.log_probs.cuda()
         self.masks = self.masks.cuda()
 
-    def insert(self, step, obs, hidden, action, action_log_probs, value, reward, mask):
+    def insert(self, step, obs, hidden, action, log_probs, value, reward, mask):
         self.observations[step + 1].copy_(obs)
         self.hiddens[step + 1].copy_(hidden)
         self.masks[step + 1].copy_(mask)
         self.actions[step].copy_(action)
-        self.action_log_probs[step].copy_(action_log_probs)
+        self.log_probs[step].copy_(log_probs)
         self.values[step].copy_(value)
         self.rewards[step].copy_(reward)
 
@@ -157,7 +158,7 @@ class A2CGRUPolicy(nn.Module):
         self.linear1 = nn.Linear(donkey.OBSERVATION_SIZE, self.hidden_size)
         self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
-        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE)
+        self.actor = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
         self.critic = nn.Linear(self.hidden_size, 1)
 
         self.train()
@@ -170,31 +171,44 @@ class A2CGRUPolicy(nn.Module):
         self.gru.bias_ih.data.fill_(0)
         self.gru.bias_hh.data.fill_(0)
 
-
-    def action(self, inputs, hiddens, masks):
+    def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        probs = F.softmax(x, dim=1)
-        log_probs = F.log_softmax(x, dim=1)
+        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
 
-        m = Categorical(probs)
-        actions = m.sample().view(-1, 1)
+        action_mean = slices[0]
+        action_logstd = slices[1]
+        action_std = action_logstd.exp()
 
-        action_log_probs = log_probs.gather(1, actions)
-        dist_entropy = -(log_probs * probs).sum(-1).mean()
+        m = Normal(action_mean, action_std)
 
-        return value, actions, hiddens, action_log_probs, dist_entropy
+        if deterministic is False:
+            actions = m.sample()
+        else:
+            actions = action_mean
 
-    def evaluate_actions(self, inputs, hiddens, masks, actions):
+        log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
+        entropy = entropy.sum(-1).mean()
+
+        return value, actions, hiddens, log_probs, entropy
+
+    def evaluate(self, inputs, hiddens, masks, actions):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        probs = F.softmax(x, dim=1)
-        log_probs = F.log_softmax(x, dim=1)
+        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
 
-        action_log_probs = log_probs.gather(1, actions)
-        dist_entropy = -(log_probs * probs).sum(-1).mean()
+        action_mean = slices[0]
+        action_logstd = slices[1]
+        action_std = action_logstd.exp()
 
-        return value, hiddens, action_log_probs, dist_entropy
+        m = Normal(action_mean, action_std)
+
+        log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
+        entropy = entropy.sum(-1).mean()
+
+        return value, hiddens, log_probs, entropy
 
     def forward(self, inputs, hiddens, masks):
         x = F.softmax(inputs, dim=1)
@@ -251,10 +265,16 @@ class A2C:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, hidden, action_log_prob, dist_entropy = self.actor_critic.action(
-                autograd.Variable(self.rollouts.observations[step], requires_grad=False),
-                autograd.Variable(self.rollouts.hiddens[step], requires_grad=False),
-                autograd.Variable(self.rollouts.masks[step], requires_grad=False),
+            value, action, hidden, log_prob, entropy = self.actor_critic.action(
+                autograd.Variable(
+                    self.rollouts.observations[step], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.hiddens[step], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.masks[step], requires_grad=False,
+                ),
             )
 
             a = action.data.cpu().numpy()
@@ -262,7 +282,9 @@ class A2C:
 
             observations = torch.from_numpy(observations).float()
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
-            mask = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+            mask = torch.FloatTensor(
+                [[0.0] if done_ else [1.0] for done_ in done]
+            )
 
             self.episode_rewards += reward
             self.final_rewards *= mask
@@ -278,52 +300,70 @@ class A2C:
             self.rollouts.insert(
                 step,
                 observations,
-                hidden.data, action.data, action_log_prob.data,
+                hidden.data, action.data, log_prob.data,
                 value.data, reward,
                 mask,
             )
 
         next_value = self.actor_critic(
-            autograd.Variable(self.rollouts.observations[-1], requires_grad=False),
-            autograd.Variable(self.rollouts.hiddens[-1], requires_grad=False),
-            autograd.Variable(self.rollouts.masks[-1], requires_grad=False),
+            autograd.Variable(
+                self.rollouts.observations[-1], requires_grad=False,
+            ),
+            autograd.Variable(
+                self.rollouts.hiddens[-1], requires_grad=False,
+            ),
+            autograd.Variable(
+                self.rollouts.masks[-1], requires_grad=False,
+            ),
         )[0].data
 
         self.rollouts.compute_returns(next_value)
 
-        values, hiddens, action_log_probs, dist_entropy = self.actor_critic.evaluate_actions(
-            autograd.Variable(self.rollouts.observations[:-1].view(-1, PATH_MAP_SIZE)),
-            autograd.Variable(self.rollouts.hiddens[0].view(-1, self.hidden_size)),
-            autograd.Variable(self.rollouts.masks[:-1].view(-1, 1)),
-            autograd.Variable(self.rollouts.actions.view(-1, 1)),
+        values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
+            autograd.Variable(self.rollouts.observations[:-1].view(
+                -1, donkey.OBSERVATION_SIZE,
+            )),
+            autograd.Variable(self.rollouts.hiddens[0].view(
+                -1, self.hidden_size,
+            )),
+            autograd.Variable(self.rollouts.masks[:-1].view(
+                -1, 1,
+            )),
+            autograd.Variable(self.rollouts.actions.view(
+                -1, donkey.CONTROL_SIZE,
+            )),
         )
 
         values = values.view(self.rollout_size, self.worker_count, 1)
-        action_log_probs = action_log_probs.view(self.rollout_size, self.worker_count, 1)
+        log_probs = log_probs.view(self.rollout_size, self.worker_count, 1)
 
         advantages = autograd.Variable(self.rollouts.returns[:-1]) - values
         value_loss = advantages.pow(2).mean()
 
-        action_loss = -(autograd.Variable(advantages.data) * action_log_probs).mean()
+        action_loss = -(autograd.Variable(advantages.data) * log_probs).mean()
 
         self.optimizer.zero_grad()
 
         (value_loss * self.value_loss_coeff +
          action_loss * self.action_loss_coeff -
-         dist_entropy * self.entropy_loss_coeff).backward()
+         entropy * self.entropy_loss_coeff).backward()
 
-        nn.utils.clip_grad_norm(self.actor_critic.parameters(), self.max_grad_norm)
+        nn.utils.clip_grad_norm(
+            self.actor_critic.parameters(), self.max_grad_norm,
+        )
 
         self.optimizer.step()
         self.rollouts.after_update()
 
         end = time.time()
-        total_num_steps = (self.batch_count + 1) * self.worker_count * self.rollout_size
+        total_num_steps = (
+            (self.batch_count + 1) * self.worker_count * self.rollout_size
+        )
         print(
-            "{}, timesteps {}, FPS {}, " + \
-            "mean/median R {:.1f}/{:.1f}, " + \
-            "min/max R {:.1f}/{:.1f}, " + \
-            "entropy loss {:.5f}, value loss {:.5f}, action loss {:.5f}".
+            ("{}, timesteps {}, FPS {}, " + \
+             "mean/median R {:.1f}/{:.1f}, " + \
+             "min/max R {:.1f}/{:.1f}, " + \
+             "entropy loss {:.5f}, value loss {:.5f}, action loss {:.5f}").
             format(
                 self.batch_count,
                 total_num_steps,
@@ -332,7 +372,7 @@ class A2C:
                 self.final_rewards.median(),
                 self.final_rewards.min(),
                 self.final_rewards.max(),
-                dist_entropy.data[0],
+                entropy.data[0],
                 value_loss.data[0],
                 action_loss.data[0],
             ))
@@ -340,6 +380,8 @@ class A2C:
         self.batch_count += 1
         if self.running_reward is None:
             self.running_reward = self.final_rewards.mean()
-        self.running_reward = self.running_reward * 0.99 + self.final_rewards.mean() * 0.01
+        self.running_reward = (
+            self.running_reward * 0.99 + self.final_rewards.mean() * 0.01
+        )
 
         return self.running_reward
