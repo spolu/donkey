@@ -133,6 +133,7 @@ class Simulation:
             ]
             if self.headless:
                 cmd.append('-batchmode')
+                cmd.append('-nographics')
 
             print(cmd)
 

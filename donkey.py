@@ -36,7 +36,7 @@ class Donkey:
         ).astype(np.float)
 
         # Scale and transpose to 3x120x160.
-        camera = np.transpose(camera / 255.0, (1, 0, 2))
+        camera = np.transpose(camera / 255.0, (2, 0, 1))
 
         # velocity = np.array([
         #     telemetry['velocity']['x'],

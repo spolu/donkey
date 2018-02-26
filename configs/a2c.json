@@ -1,9 +1,9 @@
 {
   "model": "a2c",
-  "cuda": true,
+  "cuda": false,
   "seed": 0,
   "rollout_size": 20,
-  "worker_count": 4,
+  "worker_count": 2,
   "hidden_size": 128,
   "learning_rate": 0.0004,
   "gamma": 0.99,
