@@ -7,8 +7,9 @@ import numpy as np
 
 MAX_GAME_TIME = 120
 OFF_TRACK_DISTANCE = 6.0
-CAMERA_SIZE = 120 * 160
-OBSERVATION_SIZE = CAMERA_SIZE + 3 * 2
+CAMERA_CHANNEL = 3
+CAMERA_WIDTH = 120
+CAMERA_HEIGHT = 160
 CONTROL_SIZE = 3
 SIMULATION_TIME_SCALE = 40.0
 SIMULATION_STEP_INTERVAL = 0.10
@@ -24,31 +25,33 @@ class Donkey:
 
     def observation_from_telemetry(self, telemetry):
         """
-        Returns a float numpy array of size 1x(CAMERA_SIZE+3+3):
-        - the camera black and white image
-        - the current car velocity
-        - the current car acceleration
+        Returns a tuple of float numpy arrays:
+        - the camera color image (3x120x160)
+        - the current car velocity (3D)
+        - the current car acceleration (3D)
         """
         camera = cv2.imdecode(
             np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
-            cv2.IMREAD_GRAYSCALE,
+            cv2.IMREAD_COLOR,
         ).astype(np.float)
-        camera = camera / 255.0
-        camera = camera.reshape(CAMERA_SIZE)
 
-        velocity = np.array([
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-        ])
+        # Scale and transpose to 3x120x160.
+        camera = np.transpose(camera / 255.0, (1, 0, 2))
 
-        acceleration = np.array([
-            telemetry['acceleration']['x'],
-            telemetry['acceleration']['y'],
-            telemetry['acceleration']['z'],
-        ])
+        # velocity = np.array([
+        #     telemetry['velocity']['x'],
+        #     telemetry['velocity']['y'],
+        #     telemetry['velocity']['z'],
+        # ])
 
-        return np.concatenate((camera, velocity, acceleration), axis=0)
+        # acceleration = np.array([
+        #     telemetry['acceleration']['x'],
+        #     telemetry['acceleration']['y'],
+        #     telemetry['acceleration']['z'],
+        # ])
+
+        # return (camera, velocity, acceleration)
+        return camera
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -82,8 +85,8 @@ class Donkey:
     def reset(self):
         """
         `reset` resets the environment to its initial state and returns an
-        initial observation (see `step`). `reset` must be called at least once
-        before calling `step`.
+        initial observation (see `observation_from_telemetry`). `reset` must be
+        called at least once before calling `step`.
         """
         if not self.started:
             self.started = True
@@ -105,10 +108,7 @@ class Donkey:
         - throttle is clamped to [0;1]
         - brake is clamped to [0;1]
         It returns:
-        - an observation float numpy array of size 1x(CAMERA_SIZE+3+3):
-          - the camera black and white image
-          - the current car velocity
-          - the current car acceleration
+        - the observation as computed by `observation_from_telemetry`
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """

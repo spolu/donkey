@@ -28,17 +28,17 @@ class A2CWorker(threading.Thread):
     def __init__(self):
         self.condition = threading.Condition()
         self.controls = None
-        self.observations = None
+        self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = donkey.Donkey(headless=False)
+        self.donkey = donkey.Donkey(headless=True)
         threading.Thread.__init__(self)
 
     def reset(self):
         self.controls = None
         self.reward = 0.0
         self.done = False
-        self.observations = self.donkey.reset()
+        self.observation = self.donkey.reset()
 
     def run(self):
         global _recv_count
@@ -50,9 +50,9 @@ class A2CWorker(threading.Thread):
             _send_condition.wait()
             _send_condition.release()
 
-            observations, reward, done = self.donkey.step(self.controls)
+            observation, reward, done = self.donkey.step(self.controls)
 
-            self.observations = observations
+            self.observation = observation
             self.reward = reward
             self.done = done
 
@@ -73,7 +73,7 @@ class A2CEnvs:
     def reset(self):
         for w in self.workers:
             w.reset()
-        observations = [w.observations for w in self.workers]
+        observations = [w.observation for w in self.workers]
 
         return np.stack(observations)
 
@@ -106,7 +106,7 @@ class A2CEnvs:
 
         dones = [w.done for w in self.workers]
         rewards = [w.reward for w in self.workers]
-        observations = [w.observations for w in self.workers]
+        observations = [w.observation for w in self.workers]
 
         return np.stack(observations), np.stack(rewards), np.stack(dones)
 
@@ -119,7 +119,11 @@ class A2CStorage:
         self.tau = config.get('tau')
 
         self.observations = torch.zeros(
-            self.rollout_size + 1, self.worker_count, donkey.OBSERVATION_SIZE,
+            self.rollout_size + 1,
+            self.worker_count,
+            donkey.CAMERA_CHANNEL,
+            donkey.CAMERA_WIDTH,
+            donkey.CAMERA_HEIGHT
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -174,7 +178,11 @@ class A2CGRUPolicy(nn.Module):
         super(A2CGRUPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
 
-        self.linear1 = nn.Linear(donkey.OBSERVATION_SIZE, self.hidden_size)
+        self.conv1 = nn.Conv2d(donkey.CAMERA_CHANNEL, 32, 8, stride=4)
+        self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
+        self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
+        self.linear1 = nn.Linear(32 * 16 * 11, self.hidden_size)
+
         self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
         self.actor = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
@@ -182,9 +190,19 @@ class A2CGRUPolicy(nn.Module):
 
         self.train()
 
+        nn.init.orthogonal(self.conv1.weight.data)
+        nn.init.orthogonal(self.conv2.weight.data)
+        nn.init.orthogonal(self.conv3.weight.data)
         nn.init.orthogonal(self.linear1.weight.data)
         nn.init.orthogonal(self.actor.weight.data)
         nn.init.orthogonal(self.critic.weight.data)
+
+        relu_gain = nn.init.calculate_gain('relu')
+        self.conv1.weight.data.mul_(relu_gain)
+        self.conv2.weight.data.mul_(relu_gain)
+        self.conv3.weight.data.mul_(relu_gain)
+        self.linear1.weight.data.mul_(relu_gain)
+
         nn.init.orthogonal(self.gru.weight_ih.data)
         nn.init.orthogonal(self.gru.weight_hh.data)
         self.gru.bias_ih.data.fill_(0)
@@ -230,7 +248,16 @@ class A2CGRUPolicy(nn.Module):
         return value, hiddens, log_probs, entropy
 
     def forward(self, inputs, hiddens, masks):
-        x = F.softmax(inputs, dim=1)
+        x = self.conv1(inputs)
+        x = F.relu(x)
+
+        x = self.conv2(x)
+        x = F.relu(x)
+
+        x = self.conv3(x)
+        x = F.relu(x)
+
+        x = x.view(-1, 32 * 16 * 11)
         x = self.linear1(x)
         x = F.relu(x)
 
@@ -297,9 +324,9 @@ class A2C:
             )
 
             a = action.data.cpu().numpy()
-            observations, reward, done = self.envs.step(a)
+            observation, reward, done = self.envs.step(a)
 
-            observations = torch.from_numpy(observations).float()
+            observation = torch.from_numpy(observation).float()
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
@@ -312,15 +339,18 @@ class A2C:
 
             if self.cuda:
                 mask = mask.cuda()
-                observations = observations.cuda()
+                observation = observation.cuda()
 
-            observations *= mask
+            observation *= mask.unsqueeze(2).unsqueeze(2)
 
             self.rollouts.insert(
                 step,
-                observations,
-                hidden.data, action.data, log_prob.data,
-                value.data, reward,
+                observation,
+                hidden.data,
+                action.data,
+                log_prob.data,
+                value.data,
+                reward,
                 mask,
             )
 
@@ -340,7 +370,10 @@ class A2C:
 
         values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
-                -1, donkey.OBSERVATION_SIZE,
+                -1,
+                donkey.CAMERA_CHANNEL,
+                donkey.CAMERA_WIDTH,
+                donkey.CAMERA_HEIGHT
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,
