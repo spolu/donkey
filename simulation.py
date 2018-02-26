@@ -23,7 +23,6 @@ lock = threading.Lock()
 def client_for_id(client_id):
     global lock
     global clients
-    client = None
     with lock:
         client = clients[client_id]
     return client
@@ -40,7 +39,7 @@ def disconnect(sid):
 
 @sio.on('telemetry')
 def telemetry(sid, data):
-    # print("Received telemetry: sid={}".format(sid))
+    # print("Received telemetry: sid={} client_id={}".format(sid, data['id']))
 
     # Record telemetry on the client and notify.
     client = client_for_id(int(data['id']))
@@ -119,6 +118,8 @@ class Simulation:
         with lock:
             init_server()
 
+        self.client['condition'].acquire()
+
         # Start simulation.
         if self.launch:
             cmd = [
@@ -137,22 +138,22 @@ class Simulation:
 
             self.process = subprocess.Popen(cmd, env=self.env)
 
-        self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
         print("Simulation started: id={} sid={}".format(
             self.client['id'], self.client['sid'],
         ))
 
+        self.client['condition'].acquire()
+
         with lock:
             sio.emit('reset', data={}, room=self.client['sid'])
 
-        self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
-        # print("Received initial telemetry: id={} sid={}".format(
-        #     self.client['id'], self.client['sid'],
-        # ))
+        print("Received initial telemetry: id={} sid={}".format(
+            self.client['id'], self.client['sid'],
+        ))
 
     def stop(self):
         if self.launch:
@@ -163,19 +164,22 @@ class Simulation:
         ))
 
     def reset(self):
+        self.client['condition'].acquire()
+
         with lock:
             sio.emit('reset', data={}, room=self.client['sid'])
 
-        self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
-        # print("Received initial telemetry: id={} sid={}".format(
-        #     self.client['id'], self.client['sid'],
-        # ))
+        print("Received initial telemetry: id={} sid={}".format(
+            self.client['id'], self.client['sid'],
+        ))
 
     def step(self, command):
         global lock
         global sio
+
+        self.client['condition'].acquire()
 
         # Send command.
         with lock:
@@ -186,7 +190,6 @@ class Simulation:
             }, room=self.client['sid'])
 
         # Wait for telemetry to be received.
-        self.client['condition'].acquire()
         self.client['condition'].wait()
         self.client['condition'].release()
 

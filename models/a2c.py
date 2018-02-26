@@ -20,6 +20,10 @@ import donkey
 
 # import pdb; pdb.set_trace()
 
+_send_condition = threading.Condition()
+_recv_condition = threading.Condition()
+_recv_count = 0
+
 class A2CWorker(threading.Thread):
     def __init__(self):
         self.condition = threading.Condition()
@@ -37,11 +41,14 @@ class A2CWorker(threading.Thread):
         self.observations = self.donkey.reset()
 
     def run(self):
+        global _recv_count
+        global _send_condition
+        global _recv_condition
         while True:
             # Wait for the controls to be set.
-            self.condition.acquire()
-            self.condition.wait()
-            self.condition.release()
+            _send_condition.acquire()
+            _send_condition.wait()
+            _send_condition.release()
 
             observations, reward, done = self.donkey.step(self.controls)
 
@@ -50,9 +57,10 @@ class A2CWorker(threading.Thread):
             self.done = done
 
             # Notify that we are done.
-            self.condition.acquire()
-            self.condition.notify()
-            self.condition.release()
+            _recv_condition.acquire()
+            _recv_count = _recv_count + 1
+            _recv_condition.notify_all()
+            _recv_condition.release()
 
 class A2CEnvs:
     def __init__(self, config):
@@ -70,20 +78,31 @@ class A2CEnvs:
         return np.stack(observations)
 
     def step(self, controls):
+        global _recv_count
+        global _send_condition
+        global _recv_condition
+
+        _recv_condition.acquire()
+        _recv_count = 0
+
         for i in range(len(self.workers)):
             w = self.workers[i]
             w.controls = controls[i]
 
             # Release the workers.
-            w.condition.acquire()
-            w.condition.notify()
-            w.condition.release()
+            _send_condition.acquire()
+            _send_condition.notify()
+            _send_condition.release()
 
         # Wait for the workers to finish.
-        for w in self.workers:
-            w.condition.acquire()
-            w.condition.wait()
-            w.condition.release()
+        first = True
+        while _recv_count < len(self.workers):
+            if first:
+                first = False
+            else:
+                _recv_condition.acquire()
+            _recv_condition.wait()
+            _recv_condition.release()
 
         dones = [w.done for w in self.workers]
         rewards = [w.reward for w in self.workers]
