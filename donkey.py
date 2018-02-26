@@ -30,7 +30,6 @@ class Donkey:
         - the current car velocity (3D)
         - the current car acceleration (3D)
         """
-        print(telemetry)
         camera = cv2.imdecode(
             np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
             cv2.IMREAD_COLOR,
