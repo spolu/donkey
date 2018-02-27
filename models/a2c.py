@@ -321,7 +321,7 @@ class A2C:
         advantages = autograd.Variable(self.rollouts.returns[:-1]) - values
 
         value_loss = advantages.pow(2).mean()
-        action_loss = -(advantages * log_probs).mean()
+        action_loss = -(autograd.Variable(advantages.data) * log_probs).mean()
         entropy_loss = -entropy
 
         self.optimizer.zero_grad()

@@ -22,17 +22,12 @@ class Random:
         self.start = time.time()
         self.running_reward = None
 
-        self.action_mean = torch.rand(self.worker_count, donkey.CONTROL_SIZE)
-        self.action_logstd = torch.rand(self.worker_count, donkey.CONTROL_SIZE)
-        self.action_std = self.action_logstd.exp()
-
     def initialize(self):
         observations = self.envs.reset()
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            m = Normal(self.action_mean, self.action_std)
-            action = m.sample()
+            action = torch.rand(self.worker_count, donkey.CONTROL_SIZE)
 
             observation, reward, done = self.envs.step(action.numpy())
 
