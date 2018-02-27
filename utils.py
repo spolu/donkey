@@ -11,6 +11,9 @@ class Config:
             raise Exception("Unknown Config key {}".format(key))
         return self.config[key]
 
+    def override(self, key, value):
+        self.config[key] = value
+
     def __eq__(self, other):
         """Overrides the default implementation"""
         a = json.dumps(self.config, sort_keys=True)
