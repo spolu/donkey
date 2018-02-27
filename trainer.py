@@ -16,6 +16,8 @@ def run(args):
         cfg.override('worker_count', args.worker_count)
     if args.cuda != None:
         cfg.override('cuda', args.cuda)
+    if args.headless != None:
+        cfg.override('headless', args.headless)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -59,6 +61,7 @@ if __name__ == "__main__":
     parser.add_argument('config_path', type=str, help="path to the config file")
     parser.add_argument('--save_dir', type=str, help="directory to save models")
     parser.add_argument('--cuda', type=str2bool, help="cuda config override")
+    parser.add_argument('--headless', type=str2bool, help="headless config override")
     parser.add_argument('--worker_count', type=int, help="worker_count config override")
 
     args = parser.parse_args()

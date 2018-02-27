@@ -186,6 +186,7 @@ class A2CGRUPolicy(nn.Module):
 class A2C:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
+        self.headless = config.get('headless')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
         self.rollout_size = config.get('rollout_size')
@@ -197,7 +198,7 @@ class A2C:
         self.save_dir = save_dir
         self.load_dir = load_dir
 
-        self.envs = donkey.Envs(self.worker_count)
+        self.envs = donkey.Envs(self.worker_count, self.headless)
         self.actor_critic = A2CGRUPolicy(config)
         self.optimizer = optim.Adam(
             self.actor_critic.parameters(),

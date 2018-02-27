@@ -1,6 +1,7 @@
 {
   "model": "a2c",
   "cuda": true,
+  "headless": true,
   "seed": 0,
   "rollout_size": 20,
   "worker_count": 8,

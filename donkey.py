@@ -150,13 +150,13 @@ _recv_condition = threading.Condition()
 _recv_count = 0
 
 class Worker(threading.Thread):
-    def __init__(self):
+    def __init__(self, headless):
         self.condition = threading.Condition()
         self.controls = None
         self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = Donkey(headless=True)
+        self.donkey = Donkey(headless=headless)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -188,9 +188,9 @@ class Worker(threading.Thread):
             _recv_condition.release()
 
 class Envs:
-    def __init__(self, worker_count):
+    def __init__(self, worker_count, headless):
         self.worker_count = worker_count
-        self.workers = [Worker() for _ in range(self.worker_count)]
+        self.workers = [Worker(headless) for _ in range(self.worker_count)]
         for w in self.workers:
             w.start()
 

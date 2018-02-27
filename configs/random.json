@@ -1,6 +1,7 @@
 {
   "model": "random",
   "cuda": false,
+  "headless": true,
   "seed": 0,
   "rollout_size": 20,
   "worker_count": 8
