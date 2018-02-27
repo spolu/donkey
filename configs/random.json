@@ -1,0 +1,7 @@
+{
+  "model": "random",
+  "cuda": false,
+  "seed": 0,
+  "rollout_size": 20,
+  "worker_count": 8
+}

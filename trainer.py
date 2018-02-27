@@ -7,6 +7,7 @@ import torch
 
 from utils import Config
 from models.a2c import A2C
+from models.random import Random
 
 def run(args):
     cfg = Config(args.config_path)
@@ -24,6 +25,8 @@ def run(args):
 
     if cfg.get('model') == 'a2c':
         model = A2C(cfg, args.save_dir)
+    elif cfg.get('model') == 'random':
+        model = Random(cfg, args.save_dir)
     else:
         raise Exception("Unknown model: {}".format(cfg.get('model')))
 

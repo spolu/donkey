@@ -242,8 +242,9 @@ class A2C:
                 ),
             )
 
-            a = action.data.cpu().numpy()
-            observation, reward, done = self.envs.step(a)
+            observation, reward, done = self.envs.step(
+                action.data.cpu().numpy(),
+            )
 
             observation = torch.from_numpy(observation).float()
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
