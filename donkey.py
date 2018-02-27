@@ -4,6 +4,7 @@ import base64
 import cv2
 import numpy as np
 
+from eventlet.green import threading
 
 MAX_GAME_TIME = 120
 OFF_TRACK_DISTANCE = 6.0
@@ -142,3 +143,93 @@ class Donkey:
             self.reset()
 
         return observation, reward, done
+
+
+_send_condition = threading.Condition()
+_recv_condition = threading.Condition()
+_recv_count = 0
+
+class Worker(threading.Thread):
+    def __init__(self):
+        self.condition = threading.Condition()
+        self.controls = None
+        self.observation = None
+        self.reward = 0.0
+        self.done = False
+        self.donkey = Donkey(headless=True)
+        threading.Thread.__init__(self)
+
+    def reset(self):
+        self.controls = None
+        self.reward = 0.0
+        self.done = False
+        self.observation = self.donkey.reset()
+
+    def run(self):
+        global _recv_count
+        global _send_condition
+        global _recv_condition
+        while True:
+            # Wait for the controls to be set.
+            _send_condition.acquire()
+            _send_condition.wait()
+            _send_condition.release()
+
+            observation, reward, done = self.donkey.step(self.controls)
+
+            self.observation = observation
+            self.reward = reward
+            self.done = done
+
+            # Notify that we are done.
+            _recv_condition.acquire()
+            _recv_count = _recv_count + 1
+            _recv_condition.notify_all()
+            _recv_condition.release()
+
+class Envs:
+    def __init__(self, worker_count):
+        self.worker_count = worker_count
+        self.workers = [Worker() for _ in range(self.worker_count)]
+        for w in self.workers:
+            w.start()
+
+    def reset(self):
+        for w in self.workers:
+            w.reset()
+        observations = [w.observation for w in self.workers]
+
+        return np.stack(observations)
+
+    def step(self, controls):
+        global _recv_count
+        global _send_condition
+        global _recv_condition
+
+        _recv_condition.acquire()
+        _recv_count = 0
+
+        for i in range(len(self.workers)):
+            w = self.workers[i]
+            w.controls = controls[i]
+
+            # Release the workers.
+            _send_condition.acquire()
+            _send_condition.notify()
+            _send_condition.release()
+
+        # Wait for the workers to finish.
+        first = True
+        while _recv_count < len(self.workers):
+            if first:
+                first = False
+            else:
+                _recv_condition.acquire()
+            _recv_condition.wait()
+            _recv_condition.release()
+
+        dones = [w.done for w in self.workers]
+        rewards = [w.reward for w in self.workers]
+        observations = [w.observation for w in self.workers]
+
+        return np.stack(observations), np.stack(rewards), np.stack(dones)

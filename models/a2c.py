@@ -13,102 +13,11 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from torch.distributions import Categorical, Normal
-from eventlet.green import threading
 from utils import OrnsteinUhlenbeckNoise
 
 import donkey
 
 # import pdb; pdb.set_trace()
-
-_send_condition = threading.Condition()
-_recv_condition = threading.Condition()
-_recv_count = 0
-
-class A2CWorker(threading.Thread):
-    def __init__(self):
-        self.condition = threading.Condition()
-        self.controls = None
-        self.observation = None
-        self.reward = 0.0
-        self.done = False
-        self.donkey = donkey.Donkey(headless=True)
-        threading.Thread.__init__(self)
-
-    def reset(self):
-        self.controls = None
-        self.reward = 0.0
-        self.done = False
-        self.observation = self.donkey.reset()
-
-    def run(self):
-        global _recv_count
-        global _send_condition
-        global _recv_condition
-        while True:
-            # Wait for the controls to be set.
-            _send_condition.acquire()
-            _send_condition.wait()
-            _send_condition.release()
-
-            observation, reward, done = self.donkey.step(self.controls)
-
-            self.observation = observation
-            self.reward = reward
-            self.done = done
-
-            # Notify that we are done.
-            _recv_condition.acquire()
-            _recv_count = _recv_count + 1
-            _recv_condition.notify_all()
-            _recv_condition.release()
-
-class A2CEnvs:
-    def __init__(self, config):
-        self.worker_count = config.get('worker_count')
-        self.config = config
-        self.workers = [A2CWorker() for _ in range(self.worker_count)]
-        for w in self.workers:
-            w.start()
-
-    def reset(self):
-        for w in self.workers:
-            w.reset()
-        observations = [w.observation for w in self.workers]
-
-        return np.stack(observations)
-
-    def step(self, controls):
-        global _recv_count
-        global _send_condition
-        global _recv_condition
-
-        _recv_condition.acquire()
-        _recv_count = 0
-
-        for i in range(len(self.workers)):
-            w = self.workers[i]
-            w.controls = controls[i]
-
-            # Release the workers.
-            _send_condition.acquire()
-            _send_condition.notify()
-            _send_condition.release()
-
-        # Wait for the workers to finish.
-        first = True
-        while _recv_count < len(self.workers):
-            if first:
-                first = False
-            else:
-                _recv_condition.acquire()
-            _recv_condition.wait()
-            _recv_condition.release()
-
-        dones = [w.done for w in self.workers]
-        rewards = [w.reward for w in self.workers]
-        observations = [w.observation for w in self.workers]
-
-        return np.stack(observations), np.stack(rewards), np.stack(dones)
 
 class A2CStorage:
     def __init__(self, config):
@@ -275,7 +184,7 @@ class A2CGRUPolicy(nn.Module):
         return self.critic(x), self.actor(x), hiddens
 
 class A2C:
-    def __init__(self, config, save_dir=None):
+    def __init__(self, config, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
@@ -286,14 +195,23 @@ class A2C:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.max_grad_norm = config.get('max_grad_norm')
         self.save_dir = save_dir
+        self.load_dir = load_dir
 
-        self.envs = A2CEnvs(config)
+        self.envs = donkey.Envs(self.worker_count)
         self.actor_critic = A2CGRUPolicy(config)
         self.optimizer = optim.Adam(
             self.actor_critic.parameters(),
             self.learning_rate,
         )
         self.rollouts = A2CStorage(config)
+
+        if self.load_dir:
+            self.actor_critic.load_state_dict(
+                torch.load(self.load_dir + "/actor_critic.pt"),
+            )
+            # self.optimizer.load_state_dict(
+            #     torch.load(self.load_dir + "/optimizer.pt"),
+            # )
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])
