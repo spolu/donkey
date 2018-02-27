@@ -72,3 +72,17 @@ class Random:
         )
 
         return self.running_reward
+
+    def run(self):
+        end = False
+        final_reward = 0;
+        while not end:
+            m = Normal(self.action_mean, self.action_std)
+            action = m.sample()
+
+            observation, reward, done = self.envs.step(action.numpy())
+            final_reward += reward[0]
+            end = done[0]
+
+        return final_reward
+

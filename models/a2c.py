@@ -134,8 +134,14 @@ class A2CGRUPolicy(nn.Module):
             actions = action_mean
 
         log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1).mean()
+
+        # print("ACTION MEAN {}".format(action_logstd.data))
+        # print("ACTION LOGSTD {}".format(action_logstd.data))
+        # print("ACTION LOGSTD ENTROPY {}".format(action_logstd.data.sum(-1).mean()))
+        # print("ACTION STD {}".format(action_std.data))
 
         return value, actions, hiddens, log_probs, entropy
 
@@ -151,6 +157,7 @@ class A2CGRUPolicy(nn.Module):
         m = Normal(action_mean, action_std)
 
         log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1).mean()
 
@@ -208,8 +215,9 @@ class A2C:
 
         if self.load_dir:
             self.actor_critic.load_state_dict(
-                torch.load(self.load_dir + "/actor_critic.pt"),
+                torch.load(self.load_dir + "/actor_critic.pt", map_location='cpu'),
             )
+            # self.actor_critic.cpu()
             # self.optimizer.load_state_dict(
             #     torch.load(self.load_dir + "/optimizer.pt"),
             # )
@@ -311,15 +319,16 @@ class A2C:
         log_probs = log_probs.view(self.rollout_size, self.worker_count, 1)
 
         advantages = autograd.Variable(self.rollouts.returns[:-1]) - values
-        value_loss = advantages.pow(2).mean()
 
-        action_loss = -(autograd.Variable(advantages.data) * log_probs).mean()
+        value_loss = advantages.pow(2).mean()
+        action_loss = -(advantages * log_probs).mean()
+        entropy_loss = -entropy
 
         self.optimizer.zero_grad()
 
         (value_loss * self.value_loss_coeff +
-         action_loss * self.action_loss_coeff -
-         entropy * self.entropy_loss_coeff).backward()
+         action_loss * self.action_loss_coeff +
+         entropy_loss * self.entropy_loss_coeff).backward()
 
         nn.utils.clip_grad_norm(
             self.actor_critic.parameters(), self.max_grad_norm,
@@ -363,3 +372,55 @@ class A2C:
         )
 
         return self.running_reward
+
+    def run(self):
+        self.actor_critic.train(False)
+
+        end = False
+        final_reward = 0;
+
+        assert self.worker_count == 1
+        assert self.cuda == False
+
+        while not end:
+            value, action, hidden, log_prob, entropy = self.actor_critic.action(
+                autograd.Variable(
+                    self.rollouts.observations[0], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.hiddens[0], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.masks[0], requires_grad=False,
+                ),
+                deterministic=True,
+            )
+
+            observation, reward, done = self.envs.step(
+                action.data.numpy(),
+            )
+
+            print("VALUE: {}".format(value.data[0][0]))
+            print("REWARD: {}".format(reward[0]))
+            print("LOG_PROB: {}".format(log_prob.data[0][0]))
+            print("ENTROPY: {}".format(entropy.data[0]))
+            print("ACTION: {}".format(action.data.numpy()))
+
+            final_reward += reward[0]
+            end = done[0]
+
+            observation = torch.from_numpy(observation).float()
+            reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
+
+            self.rollouts.insert(
+                -1,
+                observation,
+                hidden.data,
+                action.data,
+                log_prob.data,
+                value.data,
+                reward,
+                torch.ones(self.worker_count, 1),
+            )
+
+        return final_reward

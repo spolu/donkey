@@ -12,23 +12,25 @@ from models.random import Random
 def run(args):
     cfg = Config(args.config_path)
 
-    if args.worker_count != None:
-        cfg.override('worker_count', args.worker_count)
-    if args.cuda != None:
-        cfg.override('cuda', args.cuda)
+    cfg.override('worker_count', 1)
+    cfg.override('cuda', False)
+
     if args.headless != None:
         cfg.override('headless', args.headless)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
 
+    if not args.load_dir:
+        raise Exception("Required argument: --load_dir")
+
     if cfg.get('cuda'):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     if cfg.get('model') == 'a2c':
-        model = A2C(cfg, args.save_dir)
+        model = A2C(cfg, None, args.load_dir)
     elif cfg.get('model') == 'random':
-        model = Random(cfg, args.save_dir)
+        model = Random(cfg, None, args.load_dir)
     else:
         raise Exception("Unknown model: {}".format(cfg.get('model')))
 
@@ -36,15 +38,8 @@ def run(args):
     model.initialize()
 
     while True:
-        running = model.batch_train()
-
-        print('STAT %d %f' % (
-            episode,
-            running,
-        ))
-        sys.stdout.flush()
-
-        episode += 1
+        reward = model.run()
+        print("DONE {}".format(reward))
 
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -52,7 +47,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('config_path', type=str, help="path to the config file")
 
-    parser.add_argument('--save_dir', type=str, help="directory to save models")
+    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
 
     parser.add_argument('--cuda', type=str2bool, help="cuda config override")
     parser.add_argument('--headless', type=str2bool, help="headless config override")
