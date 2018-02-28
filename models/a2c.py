@@ -133,10 +133,12 @@ class A2CGRUPolicy(nn.Module):
         else:
             actions = action_mean
 
+        # log_probs (sum on actions) -> batch x 1
         log_probs = m.log_prob(actions).sum(-1, keepdim=True)
 
+        # entropy (sum on actions / mean on batch) -> 1x1
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1).mean()
+        entropy = entropy.sum(-1, keepdim=True)
 
         # print("ACTION MEAN {}".format(action_mean.data))
         # print("ACTION LOGSTD {}".format(action_logstd.data))
@@ -156,10 +158,12 @@ class A2CGRUPolicy(nn.Module):
 
         m = Normal(action_mean, action_std)
 
+        # log_probs (sum on actions) -> batch x 1
         log_probs = m.log_prob(actions).sum(-1, keepdim=True)
 
+        # entropy (sum on actions / mean on batch) -> 1x1
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1).mean()
+        entropy = entropy.sum(-1, keepdim=True)
 
         return value, hiddens, log_probs, entropy
 
@@ -321,7 +325,7 @@ class A2C:
 
         value_loss = advantages.pow(2).mean()
         action_loss = -(autograd.Variable(advantages.data) * log_probs).mean()
-        entropy_loss = -entropy
+        entropy_loss = -entropy.mean()
 
         self.optimizer.zero_grad()
 
