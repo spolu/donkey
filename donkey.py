@@ -12,7 +12,9 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-SIMULATION_TIME_SCALE = 40.0
+# Beware on a laptop 4.0 is too fast for the machine and will skip some
+# intervals.
+SIMULATION_TIME_SCALE = 4.0
 SIMULATION_STEP_INTERVAL = 0.10
 
 class Donkey:
