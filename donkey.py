@@ -108,11 +108,7 @@ class Donkey:
 
     def step(self, controls):
         """
-        `step` takes as input a 3D float numpy array. Its values are clamped
-        to their valid intervals:
-        - steering is tanh-ed to [-1;1]
-        - throttle is tanh-ed to [0;1]
-        - brake is tanh-ed to [0;1]
+        `step` takes as input a 2D float numpy array.
         It returns:
         - the observation as computed by `observation_from_telemetry`
         - a reward value for the last step

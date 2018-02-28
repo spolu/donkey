@@ -92,7 +92,7 @@ class A2CGRUPolicy(nn.Module):
         self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
         self.linear1 = nn.Linear(32 * 16 * 11, self.hidden_size)
 
-        self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
+        # self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE * 2)
         self.critic = nn.Linear(self.hidden_size, 1)
@@ -105,16 +105,17 @@ class A2CGRUPolicy(nn.Module):
         nn.init.xavier_normal(self.linear1.weight.data)
         nn.init.xavier_normal(self.actor.weight.data)
         nn.init.xavier_normal(self.critic.weight.data)
-        nn.init.xavier_normal(self.gru.weight_ih.data)
-        nn.init.xavier_normal(self.gru.weight_hh.data)
-        self.gru.bias_ih.data.fill_(0)
-        self.gru.bias_hh.data.fill_(0)
+        # nn.init.xavier_normal(self.gru.weight_ih.data)
+        # nn.init.xavier_normal(self.gru.weight_hh.data)
+        # self.gru.bias_ih.data.fill_(0)
+        # self.gru.bias_hh.data.fill_(0)
 
         relu_gain = nn.init.calculate_gain('relu')
         self.conv1.weight.data.mul_(relu_gain)
         self.conv2.weight.data.mul_(relu_gain)
         self.conv3.weight.data.mul_(relu_gain)
-        self.linear1.weight.data.mul_(relu_gain)
+        tanh_gain = nn.init.calculate_gain('tanh')
+        self.linear1.weight.data.mul_(tanh_gain)
 
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
@@ -176,21 +177,21 @@ class A2CGRUPolicy(nn.Module):
 
         x = x.view(-1, 32 * 16 * 11)
         x = self.linear1(x)
-        x = F.relu(x)
-        y = x
+        x = F.tanh(x)
 
-        if inputs.size(0) == hiddens.size(0):
-            y = hiddens = self.gru(y, hiddens * masks)
-        else:
-            y = y.view(-1, hiddens.size(0), y.size(1))
-            masks = masks.view(-1, hiddens.size(0), 1)
-            outputs = []
-            for i in range(y.size(0)):
-                hx = hiddens = self.gru(y[i], hiddens * masks[i])
-                outputs.append(hx)
-            y = torch.cat(outputs, 0)
+        # y = x
+        # if inputs.size(0) == hiddens.size(0):
+        #     y = hiddens = self.gru(y, hiddens * masks)
+        # else:
+        #     y = y.view(-1, hiddens.size(0), y.size(1))
+        #     masks = masks.view(-1, hiddens.size(0), 1)
+        #     outputs = []
+        #     for i in range(y.size(0)):
+        #         hx = hiddens = self.gru(y[i], hiddens * masks[i])
+        #         outputs.append(hx)
+        #     y = torch.cat(outputs, 0)
 
-        return self.critic(x), self.actor(y), hiddens
+        return self.critic(x), self.actor(x), hiddens
 
 class A2C:
     def __init__(self, config, save_dir=None, load_dir=None):
@@ -208,7 +209,7 @@ class A2C:
 
         self.envs = donkey.Envs(config)
         self.actor_critic = A2CGRUPolicy(config)
-        self.optimizer = optim.RMSprop(
+        self.optimizer = optim.Adam(
             self.actor_critic.parameters(),
             self.learning_rate,
         )
@@ -408,7 +409,7 @@ class A2C:
             print("REWARD: {}".format(reward[0]))
             # print("LOG_PROB: {}".format(log_prob.data[0][0]))
             # print("ENTROPY: {}".format(entropy.data[0]))
-            # print("ACTION: {}".format(action.data.numpy()))
+            print("ACTION: {}".format(action.data.numpy()))
 
             final_reward += reward[0]
             end = done[0]
