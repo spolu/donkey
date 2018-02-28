@@ -7,14 +7,12 @@ public interface ICar
 	// Inputs require 0:1 input except steering which is -1:1, where 0 is center.
 	void RequestThrottle(float val);
 	void RequestSteering(float val);
-	void RequestFootBrake(float val);
-	void RequestHandBrake(float val);
+	void RequestBrake(float val);
 
 	// Query
 	float GetSteering();
 	float GetThrottle();
-	float GetFootBrake();
-	float GetHandBrake();
+	float GetBrake();
 
 	// Query state.
 	Transform GetTransform();

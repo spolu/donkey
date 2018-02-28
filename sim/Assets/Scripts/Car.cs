@@ -58,13 +58,17 @@ public class Car : MonoBehaviour, ICar {
 
 	public void RequestThrottle(float val)
 	{
-		requestTorque = val;
-		requestBrake = 0f;
+		requestTorque = Mathf.Clamp(val, 0.0f, 1.0f);
 	}
 
 	public void RequestSteering(float val)
 	{
-		requestSteering = Mathf.Clamp(val * maxSteer, -maxSteer, maxSteer);
+		requestSteering = Mathf.Clamp(val, -1.0f, 1.0f);
+	}
+
+	public void RequestBrake(float val)
+	{
+		requestBrake = Mathf.Clamp(val, 0.0f, 1.0f);
 	}
 
 	public void Set(Vector3 pos, Quaternion rot)
@@ -87,14 +91,9 @@ public class Car : MonoBehaviour, ICar {
 		return requestTorque;
 	}
 
-	public float GetFootBrake()
+	public float GetBrake()
 	{
 		return requestBrake;
-	}
-
-	public float GetHandBrake()
-	{
-		return 0.0f;
 	}
 
 	public Vector3 GetVelocity()
@@ -122,23 +121,12 @@ public class Car : MonoBehaviour, ICar {
 	{
 		return this.transform.position;
 	}
-
-
+		
 	public bool IsStill()
 	{
 		return rb.IsSleeping();
 	}
-
-	public void RequestFootBrake(float val)
-	{
-		requestBrake = val;
-	}
-
-	public void RequestHandBrake(float val)
-	{
-		//todo
-	}
-	
+		
 	// Update is called once per frame
 	void Update () {
 	
@@ -151,7 +139,7 @@ public class Car : MonoBehaviour, ICar {
 		lastAccel = requestTorque;
 
 		float throttle = requestTorque * maxTorque;
-		float steerAngle = requestSteering;
+		float steerAngle = requestSteering * maxSteer;
         float brake = requestBrake;
 
 		//front two tires.

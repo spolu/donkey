@@ -138,7 +138,7 @@ class A2CGRUPolicy(nn.Module):
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1).mean()
 
-        # print("ACTION MEAN {}".format(action_logstd.data))
+        # print("ACTION MEAN {}".format(action_mean.data))
         # print("ACTION LOGSTD {}".format(action_logstd.data))
         # print("ACTION LOGSTD ENTROPY {}".format(action_logstd.data.sum(-1).mean()))
         # print("ACTION STD {}".format(action_std.data))

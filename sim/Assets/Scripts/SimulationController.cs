@@ -70,7 +70,8 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("SimulationController disabling");
 
-		car.RequestFootBrake(1.0f);
+		car.RequestThrottle (0.0f);
+		car.RequestBrake (1.0f);
 	}
 		
 	public void Send(SimMessage m)
@@ -113,7 +114,7 @@ public class SimulationController : MonoBehaviour
 
 				m.json.AddField ("steering", car.GetSteering());
 				m.json.AddField ("throttle", car.GetThrottle());
-				m.json.AddField ("brake", car.GetHandBrake());
+				m.json.AddField ("brake", car.GetBrake());
 
 				m.json.AddField ("camera", System.Convert.ToBase64String(camSensor.GetImage().EncodeToJPG()));
 
@@ -155,6 +156,10 @@ public class SimulationController : MonoBehaviour
 		m.json = new JSONObject (JSONObject.Type.OBJECT);
 		m.type = "hello";
 
+		m.json.AddField ("client_id", clientID);	
+		m.json.AddField ("time_scale", timeScale);	
+		m.json.AddField ("step_interval", stepInterval);	
+
 		Send (m);
 	}
 
@@ -182,8 +187,7 @@ public class SimulationController : MonoBehaviour
 
 		car.RequestSteering (steeringReq);
 		car.RequestThrottle (throttleReq);
-		car.RequestFootBrake (brakeReq);
-		car.RequestHandBrake (0.0f);
+		car.RequestBrake (brakeReq);
 
 		Resume ();
 	}

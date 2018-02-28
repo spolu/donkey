@@ -11,7 +11,7 @@ OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
-CONTROL_SIZE = 3
+CONTROL_SIZE = 2
 SIMULATION_TIME_SCALE = 40.0
 SIMULATION_STEP_INTERVAL = 0.10
 
@@ -106,17 +106,22 @@ class Donkey:
         """
         `step` takes as input a 3D float numpy array. Its values are clamped
         to their valid intervals:
-        - steering is clamped to [-1;1]
-        - throttle is clamped to [0;1]
-        - brake is clamped to [0;1]
+        - steering is tanh-ed to [-1;1]
+        - throttle is tanh-ed to [0;1]
+        - brake is tanh-ed to [0;1]
         It returns:
         - the observation as computed by `observation_from_telemetry`
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
-        steering = np.clip(controls[0], -1, 1)
-        throttle = np.clip(controls[1], 0, 1)
-        brake = np.clip(controls[2], 0, 1)
+        steering = np.tanh(controls[0])
+        throttle_brake = np.tanh(controls[1])
+        if throttle_brake > 0:
+            throttle = throttle_brake
+            brake = 0
+        else:
+            throttle = 0.0
+            brake = -throttle_brake
 
         command = simulation.Command(steering, throttle, brake)
 
