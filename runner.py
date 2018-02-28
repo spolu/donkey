@@ -15,8 +15,10 @@ def run(args):
     cfg.override('worker_count', 1)
     cfg.override('cuda', False)
 
-    if args.headless != None:
-        cfg.override('headless', args.headless)
+    if args.simulation_headless != None:
+        cfg.override('simulation_headless', args.simulation_headless)
+    if args.simulation_time_scale != None:
+        cfg.override('simulation_time_scale', args.simulation_time_scale)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -49,9 +51,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
 
-    parser.add_argument('--cuda', type=str2bool, help="cuda config override")
-    parser.add_argument('--headless', type=str2bool, help="headless config override")
-    parser.add_argument('--worker_count', type=int, help="worker_count config override")
+    parser.add_argument('--simulation_headless', type=str2bool, help="config override")
+    parser.add_argument('--simulation_time_scale', type=float, help="config override")
 
     args = parser.parse_args()
 

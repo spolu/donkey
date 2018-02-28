@@ -94,7 +94,7 @@ class A2CGRUPolicy(nn.Module):
 
         self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
-        self.actor = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
+        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE * 2)
         self.critic = nn.Linear(self.hidden_size, 1)
 
         self.train()
@@ -102,9 +102,13 @@ class A2CGRUPolicy(nn.Module):
         nn.init.orthogonal(self.conv1.weight.data)
         nn.init.orthogonal(self.conv2.weight.data)
         nn.init.orthogonal(self.conv3.weight.data)
-        nn.init.orthogonal(self.linear1.weight.data)
-        nn.init.orthogonal(self.actor.weight.data)
-        nn.init.orthogonal(self.critic.weight.data)
+        nn.init.xavier_normal(self.linear1.weight.data)
+        nn.init.xavier_normal(self.actor.weight.data)
+        nn.init.xavier_normal(self.critic.weight.data)
+        nn.init.xavier_normal(self.gru.weight_ih.data)
+        nn.init.xavier_normal(self.gru.weight_hh.data)
+        self.gru.bias_ih.data.fill_(0)
+        self.gru.bias_hh.data.fill_(0)
 
         relu_gain = nn.init.calculate_gain('relu')
         self.conv1.weight.data.mul_(relu_gain)
@@ -112,16 +116,10 @@ class A2CGRUPolicy(nn.Module):
         self.conv3.weight.data.mul_(relu_gain)
         self.linear1.weight.data.mul_(relu_gain)
 
-        nn.init.orthogonal(self.gru.weight_ih.data)
-        nn.init.orthogonal(self.gru.weight_hh.data)
-        self.gru.bias_ih.data.fill_(0)
-        self.gru.bias_hh.data.fill_(0)
-
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-
         action_mean = slices[0]
         action_logstd = slices[1]
         action_std = action_logstd.exp()
@@ -151,7 +149,6 @@ class A2CGRUPolicy(nn.Module):
         value, x, hiddens = self(inputs, hiddens, masks)
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-
         action_mean = slices[0]
         action_logstd = slices[1]
         action_std = action_logstd.exp()
@@ -180,19 +177,20 @@ class A2CGRUPolicy(nn.Module):
         x = x.view(-1, 32 * 16 * 11)
         x = self.linear1(x)
         x = F.relu(x)
+        y = x
 
         if inputs.size(0) == hiddens.size(0):
-            x = hiddens = self.gru(x, hiddens * masks)
+            y = hiddens = self.gru(y, hiddens * masks)
         else:
-            x = x.view(-1, hiddens.size(0), x.size(1))
+            y = y.view(-1, hiddens.size(0), y.size(1))
             masks = masks.view(-1, hiddens.size(0), 1)
             outputs = []
-            for i in range(x.size(0)):
-                hx = hiddens = self.gru(x[i], hiddens * masks[i])
+            for i in range(y.size(0)):
+                hx = hiddens = self.gru(y[i], hiddens * masks[i])
                 outputs.append(hx)
-            x = torch.cat(outputs, 0)
+            y = torch.cat(outputs, 0)
 
-        return self.critic(x), self.actor(x), hiddens
+        return self.critic(x), self.actor(y), hiddens
 
 class A2C:
     def __init__(self, config, save_dir=None, load_dir=None):
@@ -253,6 +251,8 @@ class A2C:
                     self.rollouts.masks[step], requires_grad=False,
                 ),
             )
+
+            # print("VALUE: {}".format(value.data[0][0]))
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
@@ -344,6 +344,7 @@ class A2C:
         total_num_steps = (
             (self.batch_count + 1) * self.worker_count * self.rollout_size
         )
+
         print(
             ("{}, timesteps {}, FPS {}, " + \
              "mean/median R {:.1f}/{:.1f}, " + \
@@ -357,7 +358,7 @@ class A2C:
                 self.final_rewards.median(),
                 self.final_rewards.min(),
                 self.final_rewards.max(),
-                entropy.data[0],
+                entropy_loss.data[0],
                 value_loss.data[0],
                 action_loss.data[0],
             ))
@@ -377,7 +378,7 @@ class A2C:
         return self.running_reward
 
     def run(self):
-        self.actor_critic.train(False)
+        self.actor_critic.eval()
 
         end = False
         final_reward = 0;
@@ -405,9 +406,9 @@ class A2C:
 
             print("VALUE: {}".format(value.data[0][0]))
             print("REWARD: {}".format(reward[0]))
-            print("LOG_PROB: {}".format(log_prob.data[0][0]))
-            print("ENTROPY: {}".format(entropy.data[0]))
-            print("ACTION: {}".format(action.data.numpy()))
+            # print("LOG_PROB: {}".format(log_prob.data[0][0]))
+            # print("ENTROPY: {}".format(entropy.data[0]))
+            # print("ACTION: {}".format(action.data.numpy()))
 
             final_reward += reward[0]
             end = done[0]
