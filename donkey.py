@@ -138,18 +138,18 @@ class Donkey:
 
         # if self.step_count % 1000 == 0:
         #     print("TELEMETRY {}".format(telemetry))
-        print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
-            telemetry['time'],
-            telemetry['position']['x'],
-            telemetry['position']['y'],
-            telemetry['position']['z'],
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-            steering,
-            throttle,
-            brake,
-        ))
+        # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
+        #     telemetry['time'],
+        #     telemetry['position']['x'],
+        #     telemetry['position']['y'],
+        #     telemetry['position']['z'],
+        #     telemetry['velocity']['x'],
+        #     telemetry['velocity']['y'],
+        #     telemetry['velocity']['z'],
+        #     steering,
+        #     throttle,
+        #     brake,
+        # ))
         self.step_count += 1
 
 
