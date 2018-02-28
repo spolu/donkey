@@ -129,12 +129,21 @@ class Donkey:
         reward = self.reward_from_telemetry(telemetry)
         done = self.done_from_telemetry(telemetry)
 
-        if self.step_count % 1000 == 0:
-            print("TELEMETRY {}".format(telemetry))
+        # if self.step_count % 1000 == 0:
+        #     print("TELEMETRY {}".format(telemetry))
+        print(">> POS/VEL {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
+            telemetry['position']['x'],
+            telemetry['position']['y'],
+            telemetry['position']['z'],
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+        ))
         self.step_count += 1
 
 
         if done:
+            print(">> DONE")
             self.reset()
 
         return observation, reward, done
