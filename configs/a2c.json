@@ -5,12 +5,12 @@
   "seed": 0,
   "rollout_size": 10,
   "worker_count": 8,
-  "hidden_size": 512,
-  "learning_rate": 0.00001,
+  "hidden_size": 256,
+  "learning_rate": 0.001,
   "gamma": 0.99,
   "tau": 0.95,
   "action_loss_coeff": 1.0,
-  "value_loss_coeff": 0.7,
-  "entropy_loss_coeff": 0.001,
+  "value_loss_coeff": 0.5,
+  "entropy_loss_coeff": 0.1,
   "max_grad_norm": 20.0
 }
