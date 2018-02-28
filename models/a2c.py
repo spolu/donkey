@@ -114,8 +114,6 @@ class A2CGRUPolicy(nn.Module):
         self.conv1.weight.data.mul_(relu_gain)
         self.conv2.weight.data.mul_(relu_gain)
         self.conv3.weight.data.mul_(relu_gain)
-        tanh_gain = nn.init.calculate_gain('tanh')
-        self.linear1.weight.data.mul_(tanh_gain)
 
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
@@ -166,18 +164,26 @@ class A2CGRUPolicy(nn.Module):
         return value, hiddens, log_probs, entropy
 
     def forward(self, inputs, hiddens, masks):
+        # print(inputs.mean().data[0])
         x = self.conv1(inputs)
         x = F.relu(x)
+        # print(x.mean().data[0])
 
         x = self.conv2(x)
         x = F.relu(x)
+        # print(x.mean().data[0])
 
         x = self.conv3(x)
         x = F.relu(x)
+        # print(x.mean().data[0])
 
         x = x.view(-1, 32 * 16 * 11)
+        # print(x.mean().data[0])
         x = self.linear1(x)
-        x = F.tanh(x)
+        # print(x.mean().data[0])
+
+        # print(self.critic(x).mean().data[0])
+        # print(self.actor(x).mean().data[0])
 
         # y = x
         # if inputs.size(0) == hiddens.size(0):
