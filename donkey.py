@@ -72,9 +72,9 @@ class Donkey:
         ])
 
         speed = self.track.speed(position, velocity)
-        distance = self.track.distance(position)
+        # distance = self.track.distance(position)
 
-        return speed - distance
+        return speed
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
