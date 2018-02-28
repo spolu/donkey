@@ -329,8 +329,6 @@ class A2C:
          action_loss * self.action_loss_coeff +
          entropy_loss * self.entropy_loss_coeff).backward()
 
-        import pdb; pdb.set_trace()
-
         nn.utils.clip_grad_norm(
             self.actor_critic.parameters(), self.max_grad_norm,
         )
