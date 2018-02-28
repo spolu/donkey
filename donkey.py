@@ -12,16 +12,18 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-# Beware on a laptop 4.0 is too fast for the machine and will skip some
-# intervals.
-SIMULATION_TIME_SCALE = 4.0
-SIMULATION_STEP_INTERVAL = 0.10
 
 class Donkey:
-    def __init__(self, headless=True):
+    def __init__(self, config):
+        self.simulation_headless = config.get('simulation_headless')
+        self.simulation_time_scale = config.get('simulation_time_scale')
+        self.simulation_step_interval = config.get('simulation_step_interval')
         self.started = False
         self.simulation = simulation.Simulation(
-            True, headless, SIMULATION_TIME_SCALE, SIMULATION_STEP_INTERVAL,
+            True,
+            self.simulation_headless,
+            self.simulation_time_scale,
+            self.simulation_step_interval,
         )
         self.track = track.Track()
         self.last_reset_time = 0.0
@@ -136,18 +138,18 @@ class Donkey:
 
         # if self.step_count % 1000 == 0:
         #     print("TELEMETRY {}".format(telemetry))
-        # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
-        #     telemetry['time'],
-        #     telemetry['position']['x'],
-        #     telemetry['position']['y'],
-        #     telemetry['position']['z'],
-        #     telemetry['velocity']['x'],
-        #     telemetry['velocity']['y'],
-        #     telemetry['velocity']['z'],
-        #     steering,
-        #     throttle,
-        #     brake,
-        # ))
+        print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
+            telemetry['time'],
+            telemetry['position']['x'],
+            telemetry['position']['y'],
+            telemetry['position']['z'],
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+            steering,
+            throttle,
+            brake,
+        ))
         self.step_count += 1
 
 
@@ -163,13 +165,13 @@ _recv_condition = threading.Condition()
 _recv_count = 0
 
 class Worker(threading.Thread):
-    def __init__(self, headless):
+    def __init__(self, config):
         self.condition = threading.Condition()
         self.controls = None
         self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = Donkey(headless=headless)
+        self.donkey = Donkey(config)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -201,9 +203,9 @@ class Worker(threading.Thread):
             _recv_condition.release()
 
 class Envs:
-    def __init__(self, worker_count, headless):
-        self.worker_count = worker_count
-        self.workers = [Worker(headless) for _ in range(self.worker_count)]
+    def __init__(self, config):
+        self.worker_count = config.get('worker_count')
+        self.workers = [Worker(config) for _ in range(self.worker_count)]
         for w in self.workers:
             w.start()
 

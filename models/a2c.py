@@ -193,7 +193,6 @@ class A2CGRUPolicy(nn.Module):
 class A2C:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
-        self.headless = config.get('headless')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
         self.rollout_size = config.get('rollout_size')
@@ -205,9 +204,9 @@ class A2C:
         self.save_dir = save_dir
         self.load_dir = load_dir
 
-        self.envs = donkey.Envs(self.worker_count, self.headless)
+        self.envs = donkey.Envs(config)
         self.actor_critic = A2CGRUPolicy(config)
-        self.optimizer = optim.Adam(
+        self.optimizer = optim.RMSprop(
             self.actor_critic.parameters(),
             self.learning_rate,
         )
@@ -329,6 +328,8 @@ class A2C:
         (value_loss * self.value_loss_coeff +
          action_loss * self.action_loss_coeff +
          entropy_loss * self.entropy_loss_coeff).backward()
+
+        import pdb; pdb.set_trace()
 
         nn.utils.clip_grad_norm(
             self.actor_critic.parameters(), self.max_grad_norm,

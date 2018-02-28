@@ -12,9 +12,8 @@ class Random:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.rollout_size = config.get('rollout_size')
         self.worker_count = config.get('worker_count')
-        self.headless = config.get('headless')
 
-        self.envs = donkey.Envs(self.worker_count, self.headless)
+        self.envs = donkey.Envs(config)
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])
@@ -27,7 +26,7 @@ class Random:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            action = torch.rand(self.worker_count, donkey.CONTROL_SIZE)
+            action = torch.rand(self.worker_count, donkey.CONTROL_SIZE) * 100 - 50
 
             observation, reward, done = self.envs.step(action.numpy())
 

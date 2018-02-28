@@ -1,8 +1,10 @@
 {
   "model": "random",
   "cuda": false,
-  "headless": true,
   "seed": 0,
-  "rollout_size": 20,
-  "worker_count": 8
+  "rollout_size": 10,
+  "worker_count": 8,
+  "simulation_headless": true,
+  "simulation_time_scale": 4.0,
+  "simulation_step_interval": 0.10
 }
