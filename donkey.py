@@ -123,6 +123,9 @@ class Donkey:
             throttle = 0.0
             brake = -throttle_brake
 
+        print("STEERING {} {}".format(steering, controls[0]))
+        print("THROTTLE {} {}".format(throttle, controls[1]))
+
         command = simulation.Command(steering, throttle, brake)
 
         self.simulation.step(command)
