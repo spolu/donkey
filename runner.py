@@ -28,7 +28,7 @@ def run(args):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     module = __import__('models.' + cfg.get('model'))
-    model = getattr(module, cfg.get('model')).Model(cfg, args.save_dir, args.load_dir)
+    model = getattr(module, cfg.get('model')).Model(cfg, None, args.load_dir)
 
     episode = 0
     model.initialize()
