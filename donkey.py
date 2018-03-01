@@ -143,8 +143,8 @@ class Donkey:
             throttle = 0.0
             brake = -throttle_brake
 
-        print("STEERING {} {}".format(steering, controls[0]))
-        print("THROTTLE {} {}".format(throttle, controls[1]))
+        # print("STEERING {} {}".format(steering, controls[0]))
+        # print("THROTTLE {} {}".format(throttle, controls[1]))
 
         command = simulation.Command(steering, throttle, brake)
 
@@ -176,7 +176,7 @@ class Donkey:
             # print(">> DONE")
             self.reset()
 
-        print("REWARD: {}".format(reward))
+        # print("REWARD: {}".format(reward))
 
         return observation, reward, done
 

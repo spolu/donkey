@@ -213,7 +213,7 @@ class A2C:
                 ),
             )
 
-            print("VALUE: {}".format(value.data[0][0]))
+            # print("VALUE: {}".format(value.data[0][0]))
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
