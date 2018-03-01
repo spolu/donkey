@@ -1,5 +1,5 @@
 {
-  "model": "a2c",
+  "model": "stan_a2c",
   "cuda": true,
   "seed": 0,
   "rollout_size": 10,

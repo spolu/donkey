@@ -154,7 +154,7 @@ class A2CGRUPolicy(nn.Module):
 
         return self.critic(x), self.actor(x), hiddens
 
-class A2C:
+class Model:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')

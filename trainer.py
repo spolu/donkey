@@ -6,8 +6,6 @@ import os.path
 import torch
 
 from utils import Config, str2bool
-from models.a2c import A2C
-from models.random import Random
 
 def run(args):
     cfg = Config(args.config_path)
@@ -27,12 +25,8 @@ def run(args):
     if cfg.get('cuda'):
         torch.cuda.manual_seed(cfg.get('seed'))
 
-    if cfg.get('model') == 'a2c':
-        model = A2C(cfg, args.save_dir, args.load_dir)
-    elif cfg.get('model') == 'random':
-        model = Random(cfg, args.save_dir)
-    else:
-        raise Exception("Unknown model: {}".format(cfg.get('model')))
+    module = __import__('models.' + cfg.get('model'))
+    model = module.Model(cfg, args.save_dir, args.load_dir)
 
     episode = 0
     model.initialize()
