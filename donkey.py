@@ -1,6 +1,7 @@
 import simulation
 import track
 import base64
+import collections
 import cv2
 import numpy as np
 
@@ -13,6 +14,11 @@ CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
 MIN_REWARD_SPEED = 0.5
+
+Observation = collections.namedtuple(
+    'Observation',
+    'track, position, velocity, acceleration, camera'
+)
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -64,9 +70,9 @@ class Donkey:
             telemetry['acceleration']['z'],
         ])
 
-        unity = self.track.unity(position)
+        track = self.track.unity(position)
 
-        return unity, position, velocity, acceleration, camera
+        return Observation(track, position, velocity, acceleration, camera)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -82,8 +88,6 @@ class Donkey:
 
         speed = self.track.speed(position, velocity)
         distance = self.track.distance(position)
-
-        # print("SPEED {}".format(speed))
 
         if speed > MIN_REWARD_SPEED:
             return speed * (1 - distance / OFF_TRACK_DISTANCE)
@@ -151,6 +155,7 @@ class Donkey:
 
         # if self.step_count % 10 == 0:
         #     print("TELEMETRY {}".format(telemetry))
+
         # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
         #     telemetry['time'],
         #     telemetry['position']['x'],
@@ -163,11 +168,10 @@ class Donkey:
         #     throttle,
         #     brake,
         # ))
+
         self.step_count += 1
 
-
         if done:
-            # print(">> DONE")
             self.reset()
 
         # print("REWARD: {}".format(reward))
@@ -229,7 +233,7 @@ class Envs:
             w.reset()
         observations = [w.observation for w in self.workers]
 
-        return np.stack(observations)
+        return observations
 
     def step(self, controls):
         global _recv_count
@@ -262,4 +266,4 @@ class Envs:
         rewards = [w.reward for w in self.workers]
         observations = [w.observation for w in self.workers]
 
-        return np.stack(observations), np.stack(rewards), np.stack(dones)
+        return observations, rewards, dones

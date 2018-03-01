@@ -19,6 +19,17 @@ import donkey
 
 # import pdb; pdb.set_trace()
 
+OBSERVATION_SIZE = 6
+
+def preprocess(observation):
+    track = [o.track for o in observation]
+    velocity = [o.track for o in observation]
+
+    observation = np.concatenate((np.stack(track), np.stack(velocity)), axis=-1)
+    observation = torch.from_numpy(observation).float()
+
+    return observation
+
 class A2CStorage:
     def __init__(self, config):
         self.rollout_size = config.get('rollout_size')
@@ -30,7 +41,7 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            6
+            OBSERVATION_SIZE,
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -85,7 +96,8 @@ class A2CGRUPolicy(nn.Module):
         super(A2CGRUPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
 
-        self.linear1 = nn.Linear(6, self.hidden_size)
+        self.linear1 = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
+        self.linear2 = nn.Linear(self.hidden_size, self.hidden_size)
 
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE * 2)
         self.critic = nn.Linear(self.hidden_size, 1)
@@ -93,6 +105,7 @@ class A2CGRUPolicy(nn.Module):
         self.train()
 
         nn.init.xavier_normal(self.linear1.weight.data)
+        nn.init.xavier_normal(self.linear2.weight.data)
         nn.init.xavier_normal(self.actor.weight.data)
         nn.init.xavier_normal(self.critic.weight.data)
 
@@ -147,10 +160,8 @@ class A2CGRUPolicy(nn.Module):
     def forward(self, inputs, hiddens, masks):
         x = self.linear1(inputs)
         x = F.relu(x)
-
-        # print(x.mean().data[0])
-        # print(self.critic(x).mean().data[0])
-        # print(self.actor(x).mean().data[0])
+        x = self.linear2(x)
+        x = F.relu(x)
 
         return self.critic(x), self.actor(x), hiddens
 
@@ -191,9 +202,9 @@ class Model:
         self.running_reward = None
 
     def initialize(self):
-        observations = self.envs.reset()
-        observations = torch.from_numpy(observations).float()
-        self.rollouts.observations[0].copy_(observations)
+        observation = self.envs.reset()
+        observation = preprocess(observation)
+        self.rollouts.observations[0].copy_(observation)
 
         if self.cuda:
             self.actor_critic.cuda()
@@ -219,7 +230,7 @@ class Model:
                 action.data.cpu().numpy(),
             )
 
-            observation = torch.from_numpy(observation).float()
+            observation = preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
@@ -264,7 +275,7 @@ class Model:
         values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
-                6
+                OBSERVATION_SIZE,
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,
@@ -372,7 +383,7 @@ class Model:
             final_reward += reward[0]
             end = done[0]
 
-            observation = torch.from_numpy(observation).float()
+            observation = preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
 
             self.rollouts.insert(
