@@ -90,7 +90,7 @@ class Donkey:
         distance = self.track.distance(position)
 
         if speed > MIN_REWARD_SPEED:
-            return speed * (1 - distance / OFF_TRACK_DISTANCE) / 100.0
+            return 1.0 * (0.5 - distance / OFF_TRACK_DISTANCE) / 100.0
         else:
             return 0.0
 
@@ -121,6 +121,7 @@ class Donkey:
         self.last_reset_time = telemetry['time']
 
         observation = self.observation_from_telemetry(telemetry)
+        # print("TELEMETRY RESET {}".format(telemetry))
 
         return observation
 
@@ -154,7 +155,7 @@ class Donkey:
         done = self.done_from_telemetry(telemetry)
 
         # if self.step_count % 10 == 0:
-        #     print("TELEMETRY {}".format(telemetry))
+        #   print("TELEMETRY {}".format(telemetry))
 
         # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
         #     telemetry['time'],
@@ -173,6 +174,8 @@ class Donkey:
 
         if done:
             self.reset()
+            # If we're done we read the new observations post reset.
+            observation = self.observation_from_telemetry(telemetry)
 
         # print("REWARD: {}".format(reward))
 
