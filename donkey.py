@@ -90,7 +90,7 @@ class Donkey:
         distance = self.track.distance(position)
 
         if speed > MIN_REWARD_SPEED:
-            return 1.0 * (0.5 - distance / OFF_TRACK_DISTANCE) / 100.0
+            return 1.0 * (distance / OFF_TRACK_DISTANCE) / 5.0
         else:
             return 0.0
 
