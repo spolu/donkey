@@ -99,11 +99,12 @@ class A2CGRUPolicy(nn.Module):
     def __init__(self, config):
         super(A2CGRUPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
+        self.config = config
 
         self.linear1 = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
         self.linear2 = nn.Linear(self.hidden_size, self.hidden_size)
 
-        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE * 2)
+        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE)
         self.critic = nn.Linear(self.hidden_size, 1)
 
         self.train()
@@ -116,10 +117,17 @@ class A2CGRUPolicy(nn.Module):
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
-        action_std = action_logstd.exp()
+        action_mean = x
+        action_std = 0.2 * torch.ones(x.size()).float()
+        if self.config.get('cuda'):
+            action_std = action_std.cuda()
+        action_std = autograd.Variable(action_std)
+        action_logstd = action_std.log()
+
+        # slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+        # action_mean = slices[0]
+        # action_logstd = slices[1]
+        # action_std = action_logstd.exp()
 
         m = Normal(action_mean, action_std)
 
@@ -145,10 +153,17 @@ class A2CGRUPolicy(nn.Module):
     def evaluate(self, inputs, hiddens, masks, actions):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
-        action_std = action_logstd.exp()
+        action_mean = x
+        action_std = 0.2 * torch.ones(x.size()).float()
+        if self.config.get('cuda'):
+            action_std = action_std.cuda()
+        action_std = autograd.Variable(action_std)
+        action_logstd = action_std.log()
+
+        # slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+        # action_mean = slices[0]
+        # action_logstd = slices[1]
+        # action_std = action_logstd.exp()
 
         m = Normal(action_mean, action_std)
 
@@ -228,7 +243,7 @@ class Model:
                 ),
             )
 
-            # print("VALUE: {}".format(value.data[0][0]))
+            print("VALUE: {}".format(value.data[0][0]))
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
