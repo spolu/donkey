@@ -6,12 +6,16 @@ import numpy as np
 
 from eventlet.green import threading
 
-MAX_GAME_TIME = 120
+MAX_GAME_TIME = 30
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
+MIN_REWARD_SPEED = 0.5
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 class Donkey:
     def __init__(self, config):
@@ -72,9 +76,14 @@ class Donkey:
         ])
 
         speed = self.track.speed(position, velocity)
-        # distance = self.track.distance(position)
+        distance = self.track.distance(position)
 
-        return speed
+        # print("SPEED {}".format(speed))
+
+        if speed > MIN_REWARD_SPEED:
+            return speed * (1 - distance / OFF_TRACK_DISTANCE)
+        else:
+            return 0.0
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
@@ -114,8 +123,8 @@ class Donkey:
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
-        steering = np.tanh(controls[0])
-        throttle_brake = np.tanh(controls[1])
+        steering = 2 * sigmoid(controls[0]) - 1.0
+        throttle_brake = 2 * sigmoid(controls[1]) - 1.0
         if throttle_brake > 0:
             throttle = throttle_brake
             brake = 0

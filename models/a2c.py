@@ -180,6 +180,8 @@ class A2CGRUPolicy(nn.Module):
         x = x.view(-1, 32 * 16 * 11)
         # print(x.mean().data[0])
         x = self.linear1(x)
+        # rint(x.mean().data[0])
+        x = F.relu(x)
         # print(x.mean().data[0])
 
         # print(self.critic(x).mean().data[0])
@@ -259,7 +261,7 @@ class A2C:
                 ),
             )
 
-            # print("VALUE: {}".format(value.data[0][0]))
+            print("VALUE: {}".format(value.data[0][0]))
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
