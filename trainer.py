@@ -28,7 +28,7 @@ def run(args):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     if cfg.get('model') == 'a2c':
-        model = A2C(cfg, args.save_dir)
+        model = A2C(cfg, args.save_dir, args.load_dir)
     elif cfg.get('model') == 'random':
         model = Random(cfg, args.save_dir)
     else:
@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('config_path', type=str, help="path to the config file")
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
+    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
 
     parser.add_argument('--cuda', type=str2bool, help="config override")
     parser.add_argument('--worker_count', type=int, help="config override")

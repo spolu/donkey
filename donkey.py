@@ -40,13 +40,13 @@ class Donkey:
         - the current car velocity (3D)
         - the current car acceleration (3D)
         """
-        camera = cv2.imdecode(
-            np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
-            cv2.IMREAD_COLOR,
-        ).astype(np.float)
+        # camera = cv2.imdecode(
+        #     np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
+        #     cv2.IMREAD_COLOR,
+        # ).astype(np.float)
 
         # Scale and transpose to 3x120x160.
-        camera = np.transpose(camera / 255.0, (2, 0, 1))
+        # camera = np.transpose(camera / 255.0, (2, 0, 1))
 
         # velocity = np.array([
         #     telemetry['velocity']['x'],
@@ -60,8 +60,19 @@ class Donkey:
         #     telemetry['acceleration']['z'],
         # ])
 
-        # return (camera, velocity, acceleration)
-        return camera
+        position = np.array([
+            telemetry['position']['x'],
+            telemetry['position']['y'],
+            telemetry['position']['z'],
+        ])
+        velocity = np.array([
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+        ])
+        unity = self.track.unity(position)
+
+        return np.concatenate((unity, velocity))
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -124,7 +135,7 @@ class Donkey:
         - a boolean indicating whether the game is finished
         """
         steering = 2 * sigmoid(controls[0]) - 1.0
-        throttle_brake = 2 * sigmoid(controls[1]) - 1.0
+        throttle_brake = 2 * sigmoid(controls[1]) - 0.6
         if throttle_brake > 0:
             throttle = throttle_brake
             brake = 0
@@ -132,8 +143,8 @@ class Donkey:
             throttle = 0.0
             brake = -throttle_brake
 
-        # print("STEERING {} {}".format(steering, controls[0]))
-        # print("THROTTLE {} {}".format(throttle, controls[1]))
+        print("STEERING {} {}".format(steering, controls[0]))
+        print("THROTTLE {} {}".format(throttle, controls[1]))
 
         command = simulation.Command(steering, throttle, brake)
 
@@ -144,7 +155,7 @@ class Donkey:
         reward = self.reward_from_telemetry(telemetry)
         done = self.done_from_telemetry(telemetry)
 
-        # if self.step_count % 1000 == 0:
+        # if self.step_count % 10 == 0:
         #     print("TELEMETRY {}".format(telemetry))
         # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
         #     telemetry['time'],
@@ -164,6 +175,8 @@ class Donkey:
         if done:
             # print(">> DONE")
             self.reset()
+
+        print("REWARD: {}".format(reward))
 
         return observation, reward, done
 

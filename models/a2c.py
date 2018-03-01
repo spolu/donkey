@@ -30,9 +30,7 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            donkey.CAMERA_CHANNEL,
-            donkey.CAMERA_WIDTH,
-            donkey.CAMERA_HEIGHT
+            6
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -87,33 +85,16 @@ class A2CGRUPolicy(nn.Module):
         super(A2CGRUPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
 
-        self.conv1 = nn.Conv2d(donkey.CAMERA_CHANNEL, 32, 8, stride=4)
-        self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
-        self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
-        self.linear1 = nn.Linear(32 * 16 * 11, self.hidden_size)
-
-        # self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
+        self.linear1 = nn.Linear(6, self.hidden_size)
 
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE * 2)
         self.critic = nn.Linear(self.hidden_size, 1)
 
         self.train()
 
-        nn.init.orthogonal(self.conv1.weight.data)
-        nn.init.orthogonal(self.conv2.weight.data)
-        nn.init.orthogonal(self.conv3.weight.data)
         nn.init.xavier_normal(self.linear1.weight.data)
         nn.init.xavier_normal(self.actor.weight.data)
         nn.init.xavier_normal(self.critic.weight.data)
-        # nn.init.xavier_normal(self.gru.weight_ih.data)
-        # nn.init.xavier_normal(self.gru.weight_hh.data)
-        # self.gru.bias_ih.data.fill_(0)
-        # self.gru.bias_hh.data.fill_(0)
-
-        relu_gain = nn.init.calculate_gain('relu')
-        self.conv1.weight.data.mul_(relu_gain)
-        self.conv2.weight.data.mul_(relu_gain)
-        self.conv3.weight.data.mul_(relu_gain)
 
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
@@ -164,40 +145,12 @@ class A2CGRUPolicy(nn.Module):
         return value, hiddens, log_probs, entropy
 
     def forward(self, inputs, hiddens, masks):
-        # print(inputs.mean().data[0])
-        x = self.conv1(inputs)
+        x = self.linear1(inputs)
         x = F.relu(x)
-        # print(x.mean().data[0])
 
-        x = self.conv2(x)
-        x = F.relu(x)
         # print(x.mean().data[0])
-
-        x = self.conv3(x)
-        x = F.relu(x)
-        # print(x.mean().data[0])
-
-        x = x.view(-1, 32 * 16 * 11)
-        # print(x.mean().data[0])
-        x = self.linear1(x)
-        # rint(x.mean().data[0])
-        x = F.relu(x)
-        # print(x.mean().data[0])
-
         # print(self.critic(x).mean().data[0])
         # print(self.actor(x).mean().data[0])
-
-        # y = x
-        # if inputs.size(0) == hiddens.size(0):
-        #     y = hiddens = self.gru(y, hiddens * masks)
-        # else:
-        #     y = y.view(-1, hiddens.size(0), y.size(1))
-        #     masks = masks.view(-1, hiddens.size(0), 1)
-        #     outputs = []
-        #     for i in range(y.size(0)):
-        #         hx = hiddens = self.gru(y[i], hiddens * masks[i])
-        #         outputs.append(hx)
-        #     y = torch.cat(outputs, 0)
 
         return self.critic(x), self.actor(x), hiddens
 
@@ -227,10 +180,9 @@ class A2C:
             self.actor_critic.load_state_dict(
                 torch.load(self.load_dir + "/actor_critic.pt", map_location='cpu'),
             )
-            # self.actor_critic.cpu()
-            # self.optimizer.load_state_dict(
-            #     torch.load(self.load_dir + "/optimizer.pt"),
-            # )
+            self.optimizer.load_state_dict(
+                torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
+            )
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])
@@ -282,7 +234,7 @@ class A2C:
                 mask = mask.cuda()
                 observation = observation.cuda()
 
-            observation *= mask.unsqueeze(2).unsqueeze(2)
+            observation *= mask
 
             self.rollouts.insert(
                 step,
@@ -312,9 +264,7 @@ class A2C:
         values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
-                donkey.CAMERA_CHANNEL,
-                donkey.CAMERA_WIDTH,
-                donkey.CAMERA_HEIGHT
+                6
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,

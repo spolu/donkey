@@ -58,6 +58,18 @@ class Track:
         v = self.points[closests[1]] - position
         return np.linalg.norm(np.cross(u, v)) / np.linalg.norm(u-v)
 
+    def unity(self, position):
+        """
+        Returns the unity vector of the track at the closest point from the
+        given position.
+        """
+        closests = self.closest_pair(position)
+        u = self.points[closests[0]]
+        v = self.points[closests[1]]
+        t = (v-u) / np.linalg.norm(v-u)
+        return t
+
+
     def speed(self, position, velocity):
         """
         Returns the linear speed along the track given a position and a
