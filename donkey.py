@@ -40,25 +40,13 @@ class Donkey:
         - the current car velocity (3D)
         - the current car acceleration (3D)
         """
-        # camera = cv2.imdecode(
-        #     np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
-        #     cv2.IMREAD_COLOR,
-        # ).astype(np.float)
+        camera = cv2.imdecode(
+            np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
+            cv2.IMREAD_COLOR,
+        ).astype(np.float)
 
         # Scale and transpose to 3x120x160.
-        # camera = np.transpose(camera / 255.0, (2, 0, 1))
-
-        # velocity = np.array([
-        #     telemetry['velocity']['x'],
-        #     telemetry['velocity']['y'],
-        #     telemetry['velocity']['z'],
-        # ])
-
-        # acceleration = np.array([
-        #     telemetry['acceleration']['x'],
-        #     telemetry['acceleration']['y'],
-        #     telemetry['acceleration']['z'],
-        # ])
+        camera = np.transpose(camera / 255.0, (2, 0, 1))
 
         position = np.array([
             telemetry['position']['x'],
@@ -70,9 +58,15 @@ class Donkey:
             telemetry['velocity']['y'],
             telemetry['velocity']['z'],
         ])
+        acceleration = np.array([
+            telemetry['acceleration']['x'],
+            telemetry['acceleration']['y'],
+            telemetry['acceleration']['z'],
+        ])
+
         unity = self.track.unity(position)
 
-        return np.concatenate((unity, velocity))
+        return unity, position, velocity, acceleration, camera
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
