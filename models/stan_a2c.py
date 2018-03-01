@@ -365,11 +365,13 @@ class Model:
                 action.data.numpy(),
             )
 
-            print("VALUE: {}".format(value.data[0][0]))
-            print("REWARD: {}".format(reward[0]))
-            # print("LOG_PROB: {}".format(log_prob.data[0][0]))
-            # print("ENTROPY: {}".format(entropy.data[0]))
-            print("ACTION: {}".format(action.data.numpy()))
+            print("VALUE/STEERING/THROTTLE/REWARD/DONE: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
+                value.data[0][0],
+                action.data[0][0],
+                action.data[0][1],
+                done[0],
+                reward[0],
+            ))
 
             final_reward += reward[0]
             end = done[0]
