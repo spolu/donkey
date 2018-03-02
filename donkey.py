@@ -28,12 +28,14 @@ class Donkey:
         self.simulation_headless = config.get('simulation_headless')
         self.simulation_time_scale = config.get('simulation_time_scale')
         self.simulation_step_interval = config.get('simulation_step_interval')
+        self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
         self.started = False
         self.simulation = simulation.Simulation(
             True,
             self.simulation_headless,
             self.simulation_time_scale,
             self.simulation_step_interval,
+            self.simulation_capture_frame_rate,
         )
         self.track = track.Track()
         self.last_reset_time = 0.0
@@ -156,6 +158,17 @@ class Donkey:
 
         # if self.step_count % 10 == 0:
         #   print("TELEMETRY {}".format(telemetry))
+        # print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
+        #     telemetry['time'],
+        #     telemetry['fps'],
+        #     telemetry['last_resume'],
+        #     telemetry['last_pause'],
+        #     telemetry['last_telemetry'],
+        #     telemetry['last_telemetry'],
+        #     telemetry['delta'],
+        #     telemetry['fixed_delta'],
+        #     telemetry['time_scale'],
+        # ))
 
         # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
         #     telemetry['time'],
@@ -174,6 +187,7 @@ class Donkey:
 
         if done:
             self.reset()
+            print ("DONE!!!!")
             # If we're done we read the new observations post reset.
             observation = self.observation_from_telemetry(telemetry)
 

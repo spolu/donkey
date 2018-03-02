@@ -41,6 +41,17 @@ def disconnect(sid):
 def telemetry(sid, data):
     # print("Received telemetry: sid={} client_id={}".format(sid, data['id']))
 
+    print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
+        data['time'],
+        data['fps'],
+        data['last_resume'],
+        data['last_pause'],
+        data['last_telemetry'],
+        data['delta'],
+        data['fixed_delta'],
+        data['time_scale'],
+    ))
+
     # Record telemetry on the client and notify.
     client = client_for_id(int(data['id']))
     client['condition'].acquire()
@@ -94,13 +105,14 @@ Command = collections.namedtuple(
 )
 
 class Simulation:
-    def __init__(self, launch, headless, time_scale, step_interval):
+    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate):
         global lock
         global clients
         self.headless = headless
         self.launch = launch
         self.time_scale = time_scale
         self.step_interval = step_interval
+        self.capture_frame_rate = capture_frame_rate
         self.env = os.environ.copy()
         self.process = None
 
@@ -132,6 +144,8 @@ class Simulation:
                 str(self.time_scale),
                 "-simulationStepInterval",
                 str(self.step_interval),
+                "-simulationCaptureFrameRate",
+                str(self.capture_frame_rate),
             ]
             if self.headless:
                 cmd.append('-batchmode')

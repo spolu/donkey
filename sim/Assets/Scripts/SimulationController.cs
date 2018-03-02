@@ -24,12 +24,17 @@ public class SimulationController : MonoBehaviour
 	private int clientID = 0;
 
 	private float timeScale = 1.0f;
-	private float stepInterval = 0.10f;
+	private float stepInterval = 0.30f;
+	private int captureFrameRate = 0;
 
 	private float lastResume = 0.0f;
 	private float lastTelemetry = 0.0f;
 	private float lastPause = 0.0f;
 
+	public float fpsInterval = 3.0f;
+	private float fpsAccumulator = 0.0f;
+	private int fpsFrameCount  = 0;
+	private float fpsValue = 0.0f;
 
 	void Start()
 	{
@@ -47,7 +52,12 @@ public class SimulationController : MonoBehaviour
 			if (args [i] == "-simulationStepInterval") {
 				stepInterval = float.Parse(args[i+1]);
 			}
+			if (args [i] == "-simulationCaptureFrameRate") {
+				captureFrameRate = int.Parse(args[i+1]);
+			}
 		}
+
+		Time.captureFramerate = captureFrameRate;
 
 		_socket = GetComponent<SocketIOComponent>();
 
@@ -97,49 +107,76 @@ public class SimulationController : MonoBehaviour
 		Time.timeScale = timeScale;
 	}
 
+	private void FixedUpdate()
+	{
+		Debug.Log ("FIXED time=" + Time.time + " position=" + car.GetPosition ().z);
+	}
+
 	private void Update()
 	{
-		if (connected) {
-			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry) {
-				lastTelemetry = Time.time;
-				Debug.Log ("Sending Telemetry: connected=" + connected + 
-					" time=" + Time.time + " last_resume="+ lastResume + " last_pause=" + lastPause);
+		Debug.Log ("UDPATE time=" + Time.time + " position=" + car.GetPosition ().z);
 
-				SimMessage m = new SimMessage();
-				m.json = new JSONObject(JSONObject.Type.OBJECT);
+		if (connected) {
+			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry && Time.timeScale != 0.0) {
+				lastTelemetry = Time.time;
+				Debug.Log ("Sending Telemetry: connected=" + connected +
+				" time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
+
+				SimMessage m = new SimMessage ();
+				m.json = new JSONObject (JSONObject.Type.OBJECT);
 
 				m.type = "telemetry";
 
-				m.json.AddField ("time", Time.time);	
+				m.json.AddField ("time", Time.time);
+				m.json.AddField ("last_resume", lastResume);
+				m.json.AddField ("last_pause", lastPause);
+				m.json.AddField ("last_telemetry", lastTelemetry);
+				m.json.AddField ("time_scale", Time.timeScale);
+				m.json.AddField ("fps", fpsValue);
+				m.json.AddField ("delta", Time.deltaTime);
+				m.json.AddField ("fixed_delta", Time.fixedDeltaTime);
 
-				m.json.AddField ("steering", car.GetSteering());
-				m.json.AddField ("throttle", car.GetThrottle());
-				m.json.AddField ("brake", car.GetBrake());
+				m.json.AddField ("steering", car.GetSteering ());
+				m.json.AddField ("throttle", car.GetThrottle ());
+				m.json.AddField ("brake", car.GetBrake ());
 
-				m.json.AddField ("camera", System.Convert.ToBase64String(camSensor.GetImage().EncodeToJPG()));
+				m.json.AddField ("camera", System.Convert.ToBase64String (camSensor.GetImage ().EncodeToJPG ()));
 
-				JSONObject position = new JSONObject(JSONObject.Type.OBJECT);
-				position.AddField ("x", car.GetPosition().x);
-				position.AddField ("y", car.GetPosition().y);
-				position.AddField ("z", car.GetPosition().z);
+				JSONObject position = new JSONObject (JSONObject.Type.OBJECT);
+				position.AddField ("x", car.GetPosition ().x);
+				position.AddField ("y", car.GetPosition ().y);
+				position.AddField ("z", car.GetPosition ().z);
 				m.json.AddField ("position", position);
 
-				JSONObject velocity = new JSONObject(JSONObject.Type.OBJECT);
-				velocity.AddField ("x", car.GetVelocity().x);
-				velocity.AddField ("y", car.GetVelocity().y);
-				velocity.AddField ("z", car.GetVelocity().z);
+				JSONObject velocity = new JSONObject (JSONObject.Type.OBJECT);
+				velocity.AddField ("x", car.GetVelocity ().x);
+				velocity.AddField ("y", car.GetVelocity ().y);
+				velocity.AddField ("z", car.GetVelocity ().z);
 				m.json.AddField ("velocity", velocity);
 
-				JSONObject acceleration = new JSONObject(JSONObject.Type.OBJECT);
-				acceleration.AddField ("x", car.GetAccelleration().x);
-				acceleration.AddField ("y", car.GetAccelleration().y);
-				acceleration.AddField ("z", car.GetAccelleration().z);
+				JSONObject acceleration = new JSONObject (JSONObject.Type.OBJECT);
+				acceleration.AddField ("x", car.GetAccelleration ().x);
+				acceleration.AddField ("y", car.GetAccelleration ().y);
+				acceleration.AddField ("z", car.GetAccelleration ().z);
 				m.json.AddField ("acceleration", acceleration);
 
 				Send (m);
+				//Pause ();
+				Debug.Log ("WILL PAUSE");
 				Pause ();
 			}
 		}
+
+		fpsAccumulator += Time.deltaTime;
+		++fpsFrameCount;
+
+		if( fpsAccumulator > fpsInterval)
+		{
+			fpsValue = fpsFrameCount / fpsAccumulator;
+			fpsAccumulator = 0.0f;
+			fpsFrameCount = 0;			
+		}
+
 	}
 
 	// SOCKET IO HANDLERS
@@ -171,10 +208,11 @@ public class SimulationController : MonoBehaviour
 		lastPause = Time.time + 999.0f;
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
-		Time.timeScale = 1.0f;
 
 		// Reset the car to its initial state.
 		car.RestorePosRot ();
+
+		Resume ();
 	}
 
 	void OnStep(SocketIOEvent ev)
