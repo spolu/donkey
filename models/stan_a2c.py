@@ -379,6 +379,10 @@ class Model:
             final_reward += reward[0]
             end = done[0]
 
+            if end:
+                print("REWARD: {}".format(final_reward))
+                final_reward = 0.0
+
             observation = preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
 
@@ -391,5 +395,3 @@ class Model:
                 reward,
                 torch.ones(self.worker_count, 1),
             )
-
-        return final_reward
