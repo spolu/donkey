@@ -40,6 +40,7 @@ class Donkey:
         self.track = track.Track()
         self.last_reset_time = 0.0
         self.step_count = 0
+        self.last_control = np.zeros(2)
 
     def observation_from_telemetry(self, telemetry):
         """
@@ -121,13 +122,14 @@ class Donkey:
             self.simulation.reset()
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
+        self.last_control = np.zeros(2)
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
 
         return observation
 
-    def step(self, controls):
+    def step(self, controls, differential=False):
         """
         `step` takes as input a 2D float numpy array.
         It returns:
@@ -135,6 +137,10 @@ class Donkey:
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
+        if differential:
+            self.last_controls += controls
+            controls = self.last_controls
+
         steering = 2 * sigmoid(controls[0]) - 1.0
         throttle_brake = 2 * sigmoid(controls[1]) - 0.6
         if throttle_brake > 0:
@@ -204,6 +210,7 @@ class Worker(threading.Thread):
     def __init__(self, config):
         self.condition = threading.Condition()
         self.controls = None
+        self.differential = False
         self.observation = None
         self.reward = 0.0
         self.done = False
@@ -212,6 +219,7 @@ class Worker(threading.Thread):
 
     def reset(self):
         self.controls = None
+        self.differential = False
         self.reward = 0.0
         self.done = False
         self.observation = self.donkey.reset()
@@ -226,7 +234,9 @@ class Worker(threading.Thread):
             _send_condition.wait()
             _send_condition.release()
 
-            observation, reward, done = self.donkey.step(self.controls)
+            observation, reward, done = self.donkey.step(
+                self.controls, self.differential,
+            )
 
             self.observation = observation
             self.reward = reward
@@ -252,7 +262,7 @@ class Envs:
 
         return observations
 
-    def step(self, controls):
+    def step(self, controls, differential=False):
         global _recv_count
         global _send_condition
         global _recv_condition
@@ -263,6 +273,7 @@ class Envs:
         for i in range(len(self.workers)):
             w = self.workers[i]
             w.controls = controls[i]
+            w.differential = differential
 
             # Release the workers.
             _send_condition.acquire()
