@@ -175,7 +175,10 @@ class A2CGRUPolicy(nn.Module):
         x = self.linear2(x)
         x = F.relu(x)
 
-        return self.critic(x), self.actor(x)
+        actor = F.relu(self.actor(x)) - 0.5
+        critic = self.critic(x)
+
+        return critic, actor
 
 class Model:
     def __init__(self, config, save_dir=None, load_dir=None):

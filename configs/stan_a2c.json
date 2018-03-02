@@ -5,7 +5,7 @@
   "rollout_size": 10,
   "worker_count": 8,
   "hidden_size": 256,
-  "learning_rate": 0.00001,
+  "learning_rate": 0.000005,
   "gamma": 0.99,
   "tau": 0.95,
   "action_loss_coeff": 1.0,
