@@ -38,6 +38,7 @@ class A2CStorage:
     def __init__(self, config):
         self.rollout_size = config.get('rollout_size')
         self.worker_count = config.get('worker_count')
+        self.hidden_size = config.get('hidden_size')
         self.gamma = config.get('gamma')
         self.tau = config.get('tau')
 
@@ -45,6 +46,9 @@ class A2CStorage:
             self.rollout_size + 1,
             self.worker_count,
             OBSERVATION_SIZE,
+        )
+        self.hiddens = torch.zeros(
+            self.rollout_size + 1, self.worker_count, self.hidden_size,
         )
         self.rewards = torch.zeros(self.rollout_size, self.worker_count, 1)
         self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
@@ -57,6 +61,7 @@ class A2CStorage:
 
     def cuda(self):
         self.observations = self.observations.cuda()
+        self.hiddens = self.hiddens.cuda()
         self.rewards = self.rewards.cuda()
         self.values = self.values.cuda()
         self.returns = self.returns.cuda()
@@ -64,8 +69,9 @@ class A2CStorage:
         self.log_probs = self.log_probs.cuda()
         self.masks = self.masks.cuda()
 
-    def insert(self, step, obs, action, log_probs, value, reward, mask):
-        self.observations[step + 1].copy_(obs)
+    def insert(self, step, observations, hidden, action, log_probs, value, reward, mask):
+        self.observations[step + 1].copy_(observations)
+        self.hiddens[step + 1].copy_(hidden)
         self.masks[step + 1].copy_(mask)
         self.actions[step].copy_(action)
         self.log_probs[step].copy_(log_probs)
@@ -95,7 +101,7 @@ class A2CGRUPolicy(nn.Module):
         self.config = config
 
         self.linear1 = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
-        self.linear2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
 
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE)
         self.critic = nn.Linear(self.hidden_size, 1)
@@ -103,12 +109,15 @@ class A2CGRUPolicy(nn.Module):
         self.train()
 
         nn.init.xavier_normal(self.linear1.weight.data)
-        nn.init.xavier_normal(self.linear2.weight.data)
+        nn.init.xavier_normal(self.gru.weight_ih.data)
+        nn.init.xavier_normal(self.gru.weight_hh.data)
+        self.gru.bias_ih.data.fill_(0)
+        self.gru.bias_hh.data.fill_(0)
         nn.init.xavier_normal(self.actor.weight.data)
         nn.init.xavier_normal(self.critic.weight.data)
 
-    def action(self, inputs, deterministic=False):
-        value, x = self(inputs)
+    def action(self, inputs, hiddens, masks, deterministic=False):
+        value, x, hiddens = self(inputs, hiddens, masks)
 
         action_mean = x
         action_std = 0.1 * torch.ones(x.size()).float()
@@ -141,10 +150,10 @@ class A2CGRUPolicy(nn.Module):
         # print("ACTION LOGSTD ENTROPY {}".format(action_logstd.data.sum(-1).mean()))
         # print("ACTION STD {}".format(action_std.data))
 
-        return value, actions, log_probs, entropy
+        return value, actions, hiddens, log_probs, entropy
 
-    def evaluate(self, inputs, actions):
-        value, x = self(inputs)
+    def evaluate(self, inputs, hiddens, masks, actions):
+        value, x, hiddens = self(inputs, hiddens, masks)
 
         action_mean = x
         action_std = 0.1 * torch.ones(x.size()).float()
@@ -167,18 +176,30 @@ class A2CGRUPolicy(nn.Module):
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1, keepdim=True)
 
-        return value, log_probs, entropy
+        return value, hiddens, log_probs, entropy
 
-    def forward(self, inputs):
+    def forward(self, inputs, hiddens, masks):
         x = self.linear1(inputs)
         x = F.relu(x)
-        x = self.linear2(x)
-        x = F.relu(x)
 
-        actor = F.relu(self.actor(x)) - 0.5
-        critic = self.critic(x)
+        y = x
+        if inputs.size(0) == hiddens.size(0):
+            y = hiddens = self.gru(y, hiddens * masks)
+        else:
+            y = y.view(-1, hiddens.size(0), y.size(1))
+            masks = masks.view(-1, hiddens.size(0), 1)
+            outputs = []
+            for i in range(y.size(0)):
+                hx = hiddens = self.gru(y[i], hiddens * masks[i])
+                outputs.append(hx)
+            y = torch.cat(outputs, 0)
 
-        return critic, actor
+        y = F.relu(y)
+
+        actor = self.actor(y)
+        critic = self.critic(y)
+
+        return critic, actor, hiddens
 
 class Model:
     def __init__(self, config, save_dir=None, load_dir=None):
@@ -227,9 +248,15 @@ class Model:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, log_prob, entropy = self.actor_critic.action(
+            value, action, hidden, log_prob, entropy = self.actor_critic.action(
                 autograd.Variable(
                     self.rollouts.observations[step], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.hiddens[step], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.masks[step], requires_grad=False,
                 ),
             )
 
@@ -264,6 +291,7 @@ class Model:
             self.rollouts.insert(
                 step,
                 observation,
+                hidden.data,
                 action.data,
                 log_prob.data,
                 value.data,
@@ -275,14 +303,26 @@ class Model:
             autograd.Variable(
                 self.rollouts.observations[-1], requires_grad=False,
             ),
+            autograd.Variable(
+                self.rollouts.hiddens[-1], requires_grad=False,
+            ),
+            autograd.Variable(
+                self.rollouts.masks[-1], requires_grad=False,
+            ),
         )[0].data
 
         self.rollouts.compute_returns(next_value)
 
-        values, log_probs, entropy = self.actor_critic.evaluate(
+        values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
                 OBSERVATION_SIZE,
+            )),
+            autograd.Variable(self.rollouts.hiddens[0].view(
+                -1, self.hidden_size,
+            )),
+            autograd.Variable(self.rollouts.masks[:-1].view(
+                -1, 1,
             )),
             autograd.Variable(self.rollouts.actions.view(
                 -1, donkey.CONTROL_SIZE,
@@ -358,9 +398,15 @@ class Model:
         assert self.cuda == False
 
         while not end:
-            value, action, log_prob, entropy = self.actor_critic.action(
+            value, action, hidden, log_prob, entropy = self.actor_critic.action(
                 autograd.Variable(
                     self.rollouts.observations[0], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.hiddens[0], requires_grad=False,
+                ),
+                autograd.Variable(
+                    self.rollouts.masks[0], requires_grad=False,
                 ),
                 deterministic=True,
             )
@@ -391,6 +437,7 @@ class Model:
             self.rollouts.insert(
                 -1,
                 observation,
+                hidden.data,
                 action.data,
                 log_prob.data,
                 value.data,
