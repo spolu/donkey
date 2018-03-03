@@ -262,7 +262,7 @@ class Model:
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
-                differential=True,
+                differential=False,
             )
 
             print("VALUE/STEERING/THROTTLE/REWARD/DONE: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
