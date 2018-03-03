@@ -40,7 +40,7 @@ class Donkey:
         self.track = track.Track()
         self.last_reset_time = 0.0
         self.step_count = 0
-        self.last_control = np.zeros(2)
+        self.last_controls = np.zeros(2)
 
     def observation_from_telemetry(self, telemetry):
         """
@@ -122,7 +122,7 @@ class Donkey:
             self.simulation.reset()
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
-        self.last_control = np.zeros(2)
+        self.last_controls = np.zeros(2)
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
@@ -193,7 +193,6 @@ class Donkey:
 
         if done:
             self.reset()
-            print ("DONE!!!!")
             # If we're done we read the new observations post reset.
             observation = self.observation_from_telemetry(telemetry)
 
