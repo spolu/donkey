@@ -109,12 +109,12 @@ public class SimulationController : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		Debug.Log ("FIXED time=" + Time.time + " position=" + car.GetPosition ().z);
+		// Debug.Log ("FIXED time=" + Time.time + " position=" + car.GetPosition ().z);
 	}
 
 	private void Update()
 	{
-		Debug.Log ("UDPATE time=" + Time.time + " position=" + car.GetPosition ().z);
+		// Debug.Log ("UDPATE time=" + Time.time + " position=" + car.GetPosition ().z);
 
 		if (connected) {
 			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry && Time.timeScale != 0.0) {
