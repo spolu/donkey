@@ -398,49 +398,59 @@ class Model:
         assert self.cuda == False
 
         while not end:
-            value, action, hidden, log_prob, entropy = self.actor_critic.action(
-                autograd.Variable(
-                    self.rollouts.observations[0], requires_grad=False,
-                ),
-                autograd.Variable(
-                    self.rollouts.hiddens[0], requires_grad=False,
-                ),
-                autograd.Variable(
-                    self.rollouts.masks[0], requires_grad=False,
-                ),
-                deterministic=True,
-            )
+            for step in range(self.rollout_size):
+                value, action, hidden, log_prob, entropy = self.actor_critic.action(
+                    autograd.Variable(
+                        self.rollouts.observations[0], requires_grad=False,
+                    ),
+                    autograd.Variable(
+                        self.rollouts.hiddens[0], requires_grad=False,
+                    ),
+                    autograd.Variable(
+                        self.rollouts.masks[0], requires_grad=False,
+                    ),
+                    deterministic=True,
+                )
 
-            observation, reward, done = self.envs.step(
-                action.data.numpy(),
-                differential=True,
-            )
+                observation, reward, done = self.envs.step(
+                    action.data.numpy(),
+                    differential=False,
+                )
 
-            print("VALUE/STEERING/THROTTLE/REWARD/DONE: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
-                value.data[0][0],
-                action.data[0][0],
-                action.data[0][1],
-                done[0],
-                reward[0],
-            ))
+                print("VALUE/STEERING/THROTTLE/REWARD/DONE: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
+                    value.data[0][0],
+                    action.data[0][0],
+                    action.data[0][1],
+                    done[0],
+                    reward[0],
+                ))
 
-            final_reward += reward[0]
-            end = done[0]
+                final_reward += reward[0]
+                end = done[0]
 
-            if end:
-                print("REWARD: {}".format(final_reward))
-                final_reward = 0.0
+                if end:
+                    print("REWARD: {}".format(final_reward))
+                    final_reward = 0.0
 
-            observation = preprocess(observation)
-            reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
+                observation = preprocess(observation)
+                reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
+                mask = torch.FloatTensor(
+                    [[0.0] if done_ else [1.0] for done_ in done]
+                )
 
-            self.rollouts.insert(
-                -1,
-                observation,
-                hidden.data,
-                action.data,
-                log_prob.data,
-                value.data,
-                reward,
-                torch.ones(self.worker_count, 1),
-            )
+                if self.cuda:
+                    mask = mask.cuda()
+                    observation = observation.cuda()
+
+                self.rollouts.insert(
+                    -1,
+                    observation,
+                    hidden.data,
+                    action.data,
+                    log_prob.data,
+                    value.data,
+                    reward,
+                    mask,
+                )
+
+            self.rollouts.after_update()
