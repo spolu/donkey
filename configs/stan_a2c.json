@@ -2,8 +2,8 @@
   "model": "stan_a2c",
   "cuda": true,
   "seed": 5,
-  "rollout_size": 10,
-  "worker_count": 8,
+  "rollout_size": 20,
+  "worker_count": 32,
   "hidden_size": 256,
   "learning_rate": 0.00001,
   "gamma": 0.99,
@@ -13,7 +13,7 @@
   "entropy_loss_coeff": 0.0,
   "max_grad_norm": 50.0,
   "simulation_headless": true,
-  "simulation_time_scale": 10.0,
+  "simulation_time_scale": 5.0,
   "simulation_step_interval": 0.20,
   "simulation_capture_frame_rate": 100
 }
