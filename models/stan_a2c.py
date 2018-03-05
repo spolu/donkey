@@ -401,13 +401,13 @@ class Model:
             for step in range(self.rollout_size):
                 value, action, hidden, log_prob, entropy = self.actor_critic.action(
                     autograd.Variable(
-                        self.rollouts.observations[0], requires_grad=False,
+                        self.rollouts.observations[step], requires_grad=False,
                     ),
                     autograd.Variable(
-                        self.rollouts.hiddens[0], requires_grad=False,
+                        self.rollouts.hiddens[step], requires_grad=False,
                     ),
                     autograd.Variable(
-                        self.rollouts.masks[0], requires_grad=False,
+                        self.rollouts.masks[step], requires_grad=False,
                     ),
                     deterministic=True,
                 )
@@ -443,7 +443,7 @@ class Model:
                     observation = observation.cuda()
 
                 self.rollouts.insert(
-                    -1,
+                    step,
                     observation,
                     hidden.data,
                     action.data,
