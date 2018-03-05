@@ -224,12 +224,20 @@ class Model:
         self.rollouts = A2CStorage(config)
 
         if self.load_dir:
-            self.actor_critic.load_state_dict(
-                torch.load(self.load_dir + "/actor_critic.pt", map_location='cpu'),
-            )
-            self.optimizer.load_state_dict(
-                torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
-            )
+            if self.cuda:
+                self.actor_critic.load_state_dict(
+                    torch.load(self.load_dir + "/actor_critic.pt"),
+                )
+                self.optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/optimizer.pt"),
+                )
+            else:
+                self.actor_critic.load_state_dict(
+                    torch.load(self.load_dir + "/actor_critic.pt", map_location='cpu'),
+                )
+                self.optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
+                )
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])

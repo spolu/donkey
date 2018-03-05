@@ -18,14 +18,17 @@ fi
 
 TEMP="$(dirname `mktemp`)/exp_$EXPERIMENT"
 
+ARGS="--save_dir $TEMP"
+
+if [ "$2" != "" ]; then
+  ARGS="--save_dir $TEMP --load_dir=$TEMP"
+fi
+
 echo "[Start] experiment=$EXPERIMENT config=$CONFIG tempdir=$TEMP"
 
 mkdir -p $TEMP
-
-# Dump config.json for traceability
 cp $CONFIG $TEMP/config.json
-
 ./scripts/update_experiment.sh $$ $EXPERIMENT $TEMP &
 
 # Start the fuzzer on the config in the background
-$PYTHON trainer.py $CONFIG --save_dir $TEMP > $TEMP/out.log 2>&1
+$PYTHON trainer.py $CONFIG $ARGS > $TEMP/out.log 2>&1
