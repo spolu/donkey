@@ -9,12 +9,12 @@ import random
 from eventlet.green import threading
 
 MAX_GAME_TIME = 30
-OFF_TRACK_DISTANCE = 1.0
+OFF_TRACK_DISTANCE = 2.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 1
-REWARD_SPEED_MAX = 0.25
+REWARD_SPEED_MAX = 2.0
 
 Observation = collections.namedtuple(
     'Observation',
