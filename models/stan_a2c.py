@@ -92,6 +92,7 @@ class A2CStorage:
 
     def after_update(self):
         self.observations[0].copy_(self.observations[-1])
+        self.hiddens[0].copy_(self.hiddens[-1])
         self.masks[0].copy_(self.masks[-1])
 
 class A2CGRUPolicy(nn.Module):
