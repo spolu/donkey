@@ -19,17 +19,19 @@ import donkey
 
 # import pdb; pdb.set_trace()
 
-OBSERVATION_SIZE = 9
+OBSERVATION_SIZE = 1
 
 def preprocess(observation):
     track = [o.track for o in observation]
     velocity = [o.velocity for o in observation]
     position = [o.position for o in observation]
+    correction = [o.correction for o in observation]
 
-    observation = np.concatenate(
-        (np.stack(track), np.stack(position), np.stack(velocity)),
-        axis=-1,
-    )
+    # observation = np.concatenate(
+    #     (np.stack(track), np.stack(position), np.stack(velocity)),
+    #     axis=-1,
+    # )
+    observation = np.stack(correction)
     observation = torch.from_numpy(observation).float()
 
     return observation

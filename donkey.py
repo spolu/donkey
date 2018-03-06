@@ -4,6 +4,7 @@ import base64
 import collections
 import cv2
 import numpy as np
+import random
 
 from eventlet.green import threading
 
@@ -17,7 +18,7 @@ MIN_REWARD_SPEED = 0.25
 
 Observation = collections.namedtuple(
     'Observation',
-    'track, position, velocity, acceleration, camera'
+    'track, correction, position, velocity, acceleration, camera'
 )
 
 def sigmoid(x):
@@ -75,11 +76,9 @@ class Donkey:
 
         track = self.track.unity(position)
         distance = self.track.distance(position)
-        correction = self.track.correction(position)
+        correction = self.track.correction(position) / OFF_TRACK_DISTANCE
 
-        print("CORRECTION: " + correction)
-
-        return Observation(track, distance, position, velocity, acceleration, camera)
+        return Observation(track, correction, position, velocity, acceleration, camera)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([

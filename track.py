@@ -89,7 +89,7 @@ class Track:
         closests = self.closest_pair(position)
         u = self.points[closests[0]] - position
         v = self.points[closests[1]] - position
-        return (np.cross(u, v) / np.linalg.norm(u-v))[2]
+        return (np.cross(u, v) / np.linalg.norm(u-v))[1]
 
 # def main():
 #     # loading the track points
