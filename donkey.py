@@ -119,7 +119,11 @@ class Donkey:
             self.started = True
             self.simulation.start()
         else:
-            self.simulation.reset()
+            if random.randint(1, 30) == 1:
+                self.simulation.stop()
+                self.simulation.start()
+            else:
+                self.simulation.reset()
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
         self.last_controls = np.zeros(2)
