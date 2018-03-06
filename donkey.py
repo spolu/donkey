@@ -14,7 +14,7 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-MIN_REWARD_SPEED = 0.25
+REWARD_SPEED_MAX = 0.25
 
 Observation = collections.namedtuple(
     'Observation',
@@ -96,10 +96,7 @@ class Donkey:
         speed = self.track.speed(position, velocity)
         distance = self.track.distance(position)
 
-        if speed > MIN_REWARD_SPEED:
-            return (1.0 - 2 * distance / OFF_TRACK_DISTANCE) / 5.0
-        else:
-            return 0.0
+        return min(speed, REWARD_SPEED_MAX) / 10.0
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
