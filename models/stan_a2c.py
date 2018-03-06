@@ -120,7 +120,7 @@ class A2CGRUPolicy(nn.Module):
         value, x, hiddens = self(inputs, hiddens, masks)
 
         action_mean = x
-        action_std = 0.1 * torch.ones(x.size()).float()
+        action_std = self.config.get('action_std') * torch.ones(x.size()).float()
         if self.config.get('cuda'):
             action_std = action_std.cuda()
         action_std = autograd.Variable(action_std)
@@ -156,7 +156,7 @@ class A2CGRUPolicy(nn.Module):
         value, x, hiddens = self(inputs, hiddens, masks)
 
         action_mean = x
-        action_std = 0.1 * torch.ones(x.size()).float()
+        action_std = self.config.get('action_std') * torch.ones(x.size()).float()
         if self.config.get('cuda'):
             action_std = action_std.cuda()
         action_std = autograd.Variable(action_std)
@@ -417,7 +417,7 @@ class Model:
                     autograd.Variable(
                         self.rollouts.masks[step], requires_grad=False,
                     ),
-                    deterministic=True,
+                    deterministic=False,
                 )
 
                 observation, reward, done = self.envs.step(
