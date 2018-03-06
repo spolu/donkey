@@ -18,7 +18,7 @@ MIN_REWARD_SPEED = 0.25
 
 Observation = collections.namedtuple(
     'Observation',
-    'track, correction, position, velocity, acceleration, camera'
+    'track, distance, correction, speed, position, velocity, acceleration, camera'
 )
 
 def sigmoid(x):
@@ -75,10 +75,11 @@ class Donkey:
         ])
 
         track = self.track.unity(position)
-        distance = self.track.distance(position)
+        distance = self.track.distance(position) / OFF_TRACK_DISTANCE
         correction = self.track.correction(position) / OFF_TRACK_DISTANCE
+        speed = self.track.speed(position, velocity)
 
-        return Observation(track, correction, position, velocity, acceleration, camera)
+        return Observation(track, distance, correction, speed, position, velocity, acceleration, camera)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -122,7 +123,7 @@ class Donkey:
             self.started = True
             self.simulation.start()
         else:
-            if random.randint(1, 30) == 1:
+            if random.randint(1, 50) == 1:
                 self.simulation.stop()
                 self.simulation.start()
             else:
