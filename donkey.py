@@ -9,11 +9,11 @@ import random
 from eventlet.green import threading
 
 MAX_GAME_TIME = 30
-OFF_TRACK_DISTANCE = 6.0
+OFF_TRACK_DISTANCE = 1.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
-CONTROL_SIZE = 2
+CONTROL_SIZE = 1
 REWARD_SPEED_MAX = 0.25
 
 Observation = collections.namedtuple(
@@ -147,13 +147,35 @@ class Donkey:
             controls = self.last_controls
 
         steering = 2 * sigmoid(4 * controls[0]) - 1.0
-        throttle_brake = 2 * sigmoid(4 * controls[1]) - 1.0
-        if throttle_brake > 0:
-            throttle = throttle_brake
-            brake = 0
-        else:
+
+        telemetry = self.simulation.telemetry()
+        position = np.array([
+            telemetry['position']['x'],
+            telemetry['position']['y'],
+            telemetry['position']['z'],
+        ])
+        velocity = np.array([
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+        ])
+
+        speed = self.track.speed(position, velocity)
+
+        if speed > 3.0:
             throttle = 0.0
-            brake = -throttle_brake
+            brake = 0.1
+        else:
+            throttle = 0.1
+            brake = 0.0
+
+        # throttle_brake = 2 * sigmoid(4 * controls[1]) - 1.0
+        # if throttle_brake > 0:
+        #     throttle = throttle_brake
+        #     brake = 0
+        # else:
+        #     throttle = 0.0
+        #     brake = -throttle_brake
 
         # print("STEERING {} {}".format(steering, controls[0]))
         # print("THROTTLE {} {}".format(throttle, controls[1]))

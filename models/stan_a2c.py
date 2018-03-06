@@ -273,10 +273,9 @@ class Model:
                 differential=False,
             )
 
-            print("VALUE/STEERING/THROTTLE/DONE/REWARD: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
+            print("VALUE/STEERING/DONE/REWARD: {:.2f} {:.2f} {} {:.2f}".format(
                 value.data[0][0],
                 action.data[0][0],
-                action.data[0][1],
                 done[0],
                 reward[0],
             ))
