@@ -13,7 +13,7 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-MIN_REWARD_SPEED = 0.5
+MIN_REWARD_SPEED = 0.25
 
 Observation = collections.namedtuple(
     'Observation',
@@ -74,8 +74,12 @@ class Donkey:
         ])
 
         track = self.track.unity(position)
+        distance = self.track.distance(position)
+        correction = self.track.correction(position)
 
-        return Observation(track, position, velocity, acceleration, camera)
+        print("CORRECTION: " + correction)
+
+        return Observation(track, distance, position, velocity, acceleration, camera)
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -93,7 +97,7 @@ class Donkey:
         distance = self.track.distance(position)
 
         if speed > MIN_REWARD_SPEED:
-            return 1.0 * (distance / OFF_TRACK_DISTANCE) / 5.0
+            return (1.0 - 2 * distance / OFF_TRACK_DISTANCE) / 5.0
         else:
             return 0.0
 
@@ -145,8 +149,8 @@ class Donkey:
             self.last_controls += controls
             controls = self.last_controls
 
-        steering = 2 * sigmoid(controls[0]) - 1.0
-        throttle_brake = 2 * sigmoid(controls[1]) - 0.6
+        steering = 2 * sigmoid(4 * controls[0]) - 1.0
+        throttle_brake = 2 * sigmoid(4 * controls[1]) - 1.0
         if throttle_brake > 0:
             throttle = throttle_brake
             brake = 0

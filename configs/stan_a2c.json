@@ -2,7 +2,7 @@
   "model": "stan_a2c",
   "cuda": true,
   "seed": 5,
-  "rollout_size": 20,
+  "rollout_size": 10,
   "worker_count": 32,
   "hidden_size": 256,
   "learning_rate": 0.00001,

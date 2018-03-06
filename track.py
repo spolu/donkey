@@ -81,13 +81,15 @@ class Track:
         t = (v-u) / np.linalg.norm(v-u)
         return np.dot(t, velocity)
 
-    # TODO(stan): this won't work until we prevent a,b from being returned in
-    #             the following situation (where b,c should be returned):
-    #             (a)-(b)--(p)-------(c)
-    # def finish_line(self, prev_position, next_position):
-    #     prev_closests = self.closest_pair(prev_position)
-    #     next_closests = self.closest_pair(next_position)
-    #     return prev_closests[1] == 0 and next_closests[0] == 0
+    def correction(self, position):
+        """
+        Returns the unity vector between the current position and the closest
+        point on the track.
+        """
+        closests = self.closest_pair(position)
+        u = self.points[closests[0]] - position
+        v = self.points[closests[1]] - position
+        return (np.cross(u, v) / np.linalg.norm(u-v))[2]
 
 # def main():
 #     # loading the track points
