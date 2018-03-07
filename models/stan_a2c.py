@@ -109,7 +109,7 @@ class A2CGRUPolicy(nn.Module):
         nn.init.xavier_normal(self.gru.weight_hh.data)
         self.gru.bias_ih.data.fill_(0)
         self.gru.bias_hh.data.fill_(0)
-        nn.init.xavier_normal(self.actor.weight.data)
+        nn.init.xavier_normal(self.actor.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.critic.weight.data)
 
         self.train()
@@ -186,7 +186,7 @@ class A2CGRUPolicy(nn.Module):
 
         y = F.relu(y)
 
-        actor = self.actor(y)
+        actor = F.tanh(0.5 + self.actor(y))
         critic = self.critic(y)
 
         return critic, actor, hiddens
