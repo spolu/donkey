@@ -102,7 +102,7 @@ class Donkey:
         track_lateral_speed = self.track.lateral_speed(position, velocity)
         track_position = self.track.position(position)
 
-        return track_speed - track_lateral_speed - np.linalg.norm(velocity) * np.linalg.norm(track_position)
+        return (track_speed - track_lateral_speed - np.linalg.norm(velocity) * np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
@@ -154,12 +154,14 @@ class Donkey:
             controls = self.last_controls
 
         steering = controls[0]
-        if controls[1] > 0:
-            throttle = controls[1]
-            brake = 0.0
-        if controls[1] < 0:
-            throttle = 0.0
-            brake = -controls[1]
+        throttle = max(0.0, 1 + controls[1])
+        brake = 0.0
+        #if controls[1] > 0:
+        #    throttle = controls[1]
+        #    brake = 0.0
+        #if controls[1] < 0:
+        #    throttle = 0.0
+        #    brake = -controls[1]
 
         command = simulation.Command(steering, throttle, brake)
 

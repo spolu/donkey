@@ -100,17 +100,24 @@ class A2CGRUPolicy(nn.Module):
         self.config = config
 
         self.linear1 = nn.Linear(OBSERVATION_SIZE, self.hidden_size, False)
-        self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
+        # self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
+        self.hidden1 = nn.Linear(self.hidden_size, self.hidden_size, False)
+        self.hidden2 = nn.Linear(self.hidden_size, self.hidden_size, False)
+        self.hidden3 = nn.Linear(self.hidden_size, self.hidden_size, False)
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE, False)
         self.critic = nn.Linear(self.hidden_size, 1, False)
 
         nn.init.xavier_normal(self.linear1.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.gru.weight_ih.data)
-        nn.init.xavier_normal(self.gru.weight_hh.data)
-        self.gru.bias_ih.data.fill_(0)
-        self.gru.bias_hh.data.fill_(0)
+        nn.init.xavier_normal(self.hidden1.weight.data, nn.init.calculate_gain('linear'))
+        nn.init.xavier_normal(self.hidden2.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.hidden3.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.actor.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.critic.weight.data)
+
+        #nn.init.xavier_normal(self.gru.weight_ih.data)
+        #nn.init.xavier_normal(self.gru.weight_hh.data)
+        #self.gru.bias_ih.data.fill_(0)
+        #self.gru.bias_hh.data.fill_(0)
 
         self.train()
 
@@ -171,23 +178,30 @@ class A2CGRUPolicy(nn.Module):
     def forward(self, inputs, hiddens, masks):
         x = self.linear1(inputs)
         x = F.relu(x)
+        x = self.hidden1(x)
+        x = self.hidden2(x)
+        x = F.relu(x)
 
-        y = x
-        if inputs.size(0) == hiddens.size(0):
-            y = hiddens = self.gru(y, hiddens * masks)
-        else:
-            y = y.view(-1, hiddens.size(0), y.size(1))
-            masks = masks.view(-1, hiddens.size(0), 1)
-            outputs = []
-            for i in range(y.size(0)):
-                hx = hiddens = self.gru(y[i], hiddens * masks[i])
-                outputs.append(hx)
-            y = torch.cat(outputs, 0)
+        actor = F.tanh(self.actor(x))
 
-        y = F.relu(y)
+        x = self.hidden3(x)
+        x = F.relu(x)
 
-        actor = F.tanh(self.actor(y))
-        critic = self.critic(y)
+        critic = self.critic(x)
+
+        # y = x
+        # if inputs.size(0) == hiddens.size(0):
+        #     y = hiddens = self.gru(y, hiddens * masks)
+        # else:
+        #     y = y.view(-1, hiddens.size(0), y.size(1))
+        #     masks = masks.view(-1, hiddens.size(0), 1)
+        #     outputs = []
+        #     for i in range(y.size(0)):
+        #         hx = hiddens = self.gru(y[i], hiddens * masks[i])
+        #         outputs.append(hx)
+        #     y = torch.cat(outputs, 0)
+
+        # y = F.relu(y)
 
         return critic, actor, hiddens
 
