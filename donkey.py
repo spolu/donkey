@@ -5,9 +5,11 @@ import collections
 import cv2
 import numpy as np
 import random
+import math
 
 from eventlet.green import threading
 
+MAX_SPEED = 10.0
 MAX_GAME_TIME = 30
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
@@ -70,9 +72,9 @@ class Donkey:
             telemetry['acceleration']['z'],
         ])
 
-        track_angle = self.track.angle(position, velocity)
+        track_angle = self.track.angle(position, velocity) / math.pi
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
-        track_speed = self.track.speed(position, velocity) / OFF_TRACK_DISTANCE
+        track_speed = self.track.speed(position, velocity) / MAX_SPEED
 
         return Observation(
             track_angle,
@@ -100,7 +102,7 @@ class Donkey:
         track_lateral_speed = self.track.lateral_speed(position, velocity)
         track_position = self.track.position(position)
 
-        return track_speed - track_lateral_speed - np.linalg.morm(velocity) * np.linalg.norm(track_position)
+        return track_speed - track_lateral_speed - np.linalg.norm(velocity) * np.linalg.norm(track_position)
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
@@ -110,7 +112,8 @@ class Donkey:
             telemetry['position']['y'],
             telemetry['position']['z'],
         ])
-        if self.track.distance(position) > OFF_TRACK_DISTANCE:
+        track_position = self.track.position(position)
+        if np.linalg.norm(track_position) > OFF_TRACK_DISTANCE:
             return True
         return False
 
