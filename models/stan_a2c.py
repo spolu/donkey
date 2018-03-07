@@ -186,7 +186,7 @@ class A2CGRUPolicy(nn.Module):
 
         y = F.relu(y)
 
-        actor = F.tanh(0.5 + self.actor(y))
+        actor = F.tanh(self.actor(y))
         critic = self.critic(y)
 
         return critic, actor, hiddens
