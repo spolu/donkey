@@ -9,20 +9,16 @@ import random
 from eventlet.green import threading
 
 MAX_GAME_TIME = 30
-OFF_TRACK_DISTANCE = 2.0
+OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
-CONTROL_SIZE = 1
-REWARD_SPEED_MAX = 2.0
+CONTROL_SIZE = 2
 
 Observation = collections.namedtuple(
     'Observation',
-    'track, distance, correction, speed, position, velocity, acceleration, camera'
+    'track_angle, track_position, track_speed, position, velocity, acceleration, camera'
 )
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
 
 class Donkey:
     def __init__(self, config):
@@ -74,12 +70,19 @@ class Donkey:
             telemetry['acceleration']['z'],
         ])
 
-        track = self.track.unity(position)
-        distance = self.track.distance(position) / OFF_TRACK_DISTANCE
-        correction = self.track.correction(position) / OFF_TRACK_DISTANCE
-        speed = self.track.speed(position, velocity)
+        track_angle = self.track.angle(position, velocity)
+        track_position = self.track.position(position) / OFF_TRACK_DISTANCE
+        track_speed = self.track.speed(position, velocity) / OFF_TRACK_DISTANCE
 
-        return Observation(track, distance, correction, speed, position, velocity, acceleration, camera)
+        return Observation(
+            track_angle,
+            track_position,
+            track_speed,
+            position,
+            velocity,
+            acceleration,
+            camera,
+        )
 
     def reward_from_telemetry(self, telemetry):
         position = np.array([
@@ -93,10 +96,11 @@ class Donkey:
             telemetry['velocity']['z'],
         ])
 
-        speed = self.track.speed(position, velocity)
-        distance = self.track.distance(position)
+        track_speed = self.track.speed(position, velocity)
+        track_lateral_speed = self.track.lateral_speed(position, velocity)
+        track_position = self.track.position(position)
 
-        return min(speed, REWARD_SPEED_MAX) / 10.0
+        return track_speed - track_lateral_speed - np.linalg.morm(velocity) * np.linalg.norm(track_position)
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
@@ -146,39 +150,13 @@ class Donkey:
             self.last_controls += controls
             controls = self.last_controls
 
-        steering = 2 * sigmoid(4 * controls[0]) - 1.0
-
-        telemetry = self.simulation.telemetry()
-        position = np.array([
-            telemetry['position']['x'],
-            telemetry['position']['y'],
-            telemetry['position']['z'],
-        ])
-        velocity = np.array([
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-        ])
-
-        speed = self.track.speed(position, velocity)
-
-        if speed > 3.0:
-            throttle = 0.0
-            brake = 0.1
-        else:
-            throttle = 0.1
+        steering = controls[0]
+        if controls[1] > 0:
+            throttle = controls[1]
             brake = 0.0
-
-        # throttle_brake = 2 * sigmoid(4 * controls[1]) - 1.0
-        # if throttle_brake > 0:
-        #     throttle = throttle_brake
-        #     brake = 0
-        # else:
-        #     throttle = 0.0
-        #     brake = -throttle_brake
-
-        # print("STEERING {} {}".format(steering, controls[0]))
-        # print("THROTTLE {} {}".format(throttle, controls[1]))
+        if controls[1] < 0:
+            throttle = 0.0
+            brake = -controls[1]
 
         command = simulation.Command(steering, throttle, brake)
 
@@ -222,8 +200,6 @@ class Donkey:
             self.reset()
             # If we're done we read the new observations post reset.
             observation = self.observation_from_telemetry(telemetry)
-
-        # print("REWARD: {}".format(reward))
 
         return observation, reward, done
 

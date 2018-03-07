@@ -110,12 +110,15 @@ class A2CGRUPolicy(nn.Module):
         self.train()
 
         nn.init.xavier_normal(self.linear1.weight.data)
+        self.linear1.bias.data.fill_(0)
         nn.init.xavier_normal(self.gru.weight_ih.data)
         nn.init.xavier_normal(self.gru.weight_hh.data)
         self.gru.bias_ih.data.fill_(0)
         self.gru.bias_hh.data.fill_(0)
         nn.init.xavier_normal(self.actor.weight.data)
         nn.init.xavier_normal(self.critic.weight.data)
+        self.actor.bias.data.fill_(0)
+        self.critic.bias.data.fill_(0)
 
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
