@@ -103,14 +103,20 @@ class A2CGRUPolicy(nn.Module):
         # self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
         self.hidden1 = nn.Linear(self.hidden_size, self.hidden_size, False)
         self.hidden2 = nn.Linear(self.hidden_size, self.hidden_size, False)
-        self.hidden3 = nn.Linear(self.hidden_size, self.hidden_size, False)
+
+        self.hidden_a = nn.Linear(self.hidden_size, self.hidden_size, True)
+        self.hidden_v = nn.Linear(self.hidden_size, self.hidden_size, True)
+
         self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE, False)
         self.critic = nn.Linear(self.hidden_size, 1, False)
 
         nn.init.xavier_normal(self.linear1.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.hidden1.weight.data, nn.init.calculate_gain('linear'))
         nn.init.xavier_normal(self.hidden2.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.hidden3.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.hidden_a.weight.data, nn.init.calculate_gain('relu'))
+        self.hidden_a.bias.data.fill_(0)
+        nn.init.xavier_normal(self.hidden_v.weight.data, nn.init.calculate_gain('relu'))
+        self.hidden_v.bias.data.fill_(0)
         nn.init.xavier_normal(self.actor.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.critic.weight.data)
 
@@ -182,12 +188,16 @@ class A2CGRUPolicy(nn.Module):
         x = self.hidden2(x)
         x = F.relu(x)
 
-        actor = F.tanh(self.actor(x))
+        a = x
+        v = x
 
-        x = self.hidden3(x)
-        x = F.relu(x)
+        a = self.hidden_a(a)
+        a = F.relu(a)
+        actor = F.tanh(self.actor(a))
 
-        critic = self.critic(x)
+        v = self.hidden_v(v)
+        v = F.relu(x)
+        critic = self.critic(v)
 
         # y = x
         # if inputs.size(0) == hiddens.size(0):
