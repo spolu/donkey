@@ -72,7 +72,7 @@ class Track:
     def angle(self, position, velocity):
         t = self.unity(position)
         w = velocity / np.linalg.norm(velocity)
-        return np.arccos(np.dot(t, velocity))
+        return np.arccos(np.dot(t, w))
 
     def divergence(self, position):
         """
