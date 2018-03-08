@@ -492,7 +492,7 @@ class Model:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, hidden, entropy = self.actor_critic.action(
+                value, action, hidden, log_prob, entropy = self.actor_critic.action(
                     autograd.Variable(
                         self.rollouts.observations[step], requires_grad=False,
                     ),
@@ -541,6 +541,7 @@ class Model:
                     observation,
                     hidden.data,
                     action.data,
+                    log_prob.data,
                     value.data,
                     reward,
                     mask,
