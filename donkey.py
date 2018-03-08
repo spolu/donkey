@@ -106,7 +106,7 @@ class Donkey:
         track_lateral_speed = self.track.lateral_speed(position, velocity)
         track_position = self.track.position(position)
 
-        return (track_speed - track_lateral_speed - np.linalg.norm(velocity) * np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+        return (2 * track_speed - track_lateral_speed - np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
