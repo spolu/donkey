@@ -161,7 +161,8 @@ class Donkey:
             brake = 0.0
         if controls[1] < 0:
             throttle = 0.0
-            brake = -controls[1]
+            # brake = -controls[1]
+            brake = 0.0
 
         command = simulation.Command(steering, throttle, brake)
 

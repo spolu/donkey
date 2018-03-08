@@ -207,7 +207,7 @@ class PPOPolicy(nn.Module):
         # action_logstd = action_std.log()
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = 1.0 + slices[0]
+        action_mean = slices[0]
         action_logstd = 2 * slices[1]
         action_std = action_logstd.exp()
 
@@ -238,7 +238,7 @@ class PPOPolicy(nn.Module):
         # action_logstd = action_std.log()
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = 1.0 + slices[0]
+        action_mean = slices[0]
         action_logstd = 2 * slices[1]
         action_std = action_logstd.exp()
 

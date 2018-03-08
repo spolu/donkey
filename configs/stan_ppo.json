@@ -6,7 +6,8 @@
   "rollout_size": 256,
   "worker_count": 8,
   "mini_batch_count": 32,
-  "hidden_size": 64,
+
+  "hidden_size": 128,
 
   "learning_rate": 0.0004,
   "gamma": 0.99,
