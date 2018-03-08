@@ -211,6 +211,9 @@ class PPOPolicy(nn.Module):
         action_logstd = 2 * slices[1]
         action_std = action_logstd.exp()
 
+        # print("STEERING {} {}".format(action_mean.data[0][0], action_std.data[0][0]))
+        # print("THROTTLE {} {}".format(action_mean.data[0][1], action_std.data[0][1]))
+
         m = Normal(action_mean, action_std)
 
         if deterministic is False:
