@@ -154,12 +154,12 @@ class Donkey:
             controls = self.last_controls
 
         steering = controls[0]
-        throttle = (controls[1] + 1.0) / 2.0
+        throttle_brake = (controls[1] + 1.0) / 2.0
 
-        if controls[1] > 0:
-            throttle = controls[1]
+        if throttle_brake > 0.0:
+            throttle = throttle_brake
             brake = 0.0
-        if controls[1] < 0:
+        if throttle_brake < 0.0:
             throttle = 0.0
             # brake = -controls[1]
             brake = 0.0
