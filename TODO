@@ -1,24 +1,6 @@
-# simulation
 
-- [x] command line control
-- [x] Makefile to build simulation from console
-- [x] simulation interface
-  - [x] headless option
-  - [x] spawns a new simulation on creation
-  - [x] cleans up after itself on destruction
-  - [x] step API with appropriate conditions wait
-- [ ] allow running multiple simulation at the same time
-
-# environment
-
-- [x] donkey.py interface
-  - [x] observations (camera, velocity, acceleration)
-  - [x] step (steering, throttle, brakes)
-  - [x] end conditions (go out of track or completed N runs)
-  - [x] reward function
-- [ ] allow human to play env
-
-# model
-
-- [x] multi-process donkey environment
-- [x] model dumping and replay
+- [ ] experiment with brake
+- [ ] add time to help value computation
+- [ ] increase time limit
+- [ ] test with recurrent generator
+- [ ] test with recurrent NN
