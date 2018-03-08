@@ -28,7 +28,7 @@ def preprocess(observation):
     # position = [o.position  / 100.0 for o in observation]
 
     observation = np.concatenate(
-        (np.stack(angle), np.stack(track_position), np.stack(speed)),
+        (np.stack(angles), np.stack(track_position), np.stack(speed)),
         axis=-1,
     )
     observation = torch.from_numpy(observation).float()

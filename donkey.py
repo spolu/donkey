@@ -20,7 +20,7 @@ ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
-    'track_angle, track_position, track_speed, position, velocity, acceleration, camera'
+    'track_angles, track_position, track_speed, position, velocity, acceleration, camera'
 )
 
 class Donkey:
