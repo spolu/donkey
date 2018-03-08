@@ -179,7 +179,7 @@ class PPOPolicy(nn.Module):
 
         nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc3_a.weight.data, nn.init.calculate_gain('linear'))
+        nn.init.xavier_normal(self.fc3_a.weight.data, nn.init.calculate_gain('tanh'))
         self.fc1_a.bias.data.fill_(0)
         self.fc2_a.bias.data.fill_(0)
         self.fc3_a.bias.data.fill_(0)
@@ -207,8 +207,8 @@ class PPOPolicy(nn.Module):
         # action_logstd = action_std.log()
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
+        action_mean = 1.0 + slices[0]
+        action_logstd = 2 * slices[1]
         action_std = action_logstd.exp()
 
         m = Normal(action_mean, action_std)
@@ -238,8 +238,8 @@ class PPOPolicy(nn.Module):
         # action_logstd = action_std.log()
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
+        action_mean = 1.0 + slices[0]
+        action_logstd = 2 * slices[1]
         action_std = action_logstd.exp()
 
         m = Normal(action_mean, action_std)
@@ -256,7 +256,7 @@ class PPOPolicy(nn.Module):
     def forward(self, inputs, hiddens, masks):
         a = F.tanh(self.fc1_a(inputs))
         a = F.tanh(self.fc2_a(a))
-        a = self.fc3_a(a)
+        a = F.tanh(self.fc3_a(a))
 
         v = F.tanh(self.fc1_v(inputs))
         v = F.tanh(self.fc2_v(v))
@@ -467,7 +467,7 @@ class Model:
                 action_loss.data[0],
             ))
 
-        if self.batch_count % 100 == 0 and self.save_dir:
+        if self.batch_count % 10 == 0 and self.save_dir:
             print("Saving models and optimizer: save_dir={}".format(self.save_dir))
             torch.save(self.actor_critic.state_dict(), self.save_dir + "/actor_critic.pt")
             torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")

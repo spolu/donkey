@@ -154,14 +154,14 @@ class Donkey:
             controls = self.last_controls
 
         steering = controls[0]
-        throttle = max(0.0, 1 + controls[1])
-        brake = 0.0
-        #if controls[1] > 0:
-        #    throttle = controls[1]
-        #    brake = 0.0
-        #if controls[1] < 0:
-        #    throttle = 0.0
-        #    brake = -controls[1]
+        throttle = controls[1]
+
+        if controls[1] > 0:
+            throttle = controls[1]
+            brake = 0.0
+        if controls[1] < 0:
+            throttle = 0.0
+            brake = -controls[1]
 
         command = simulation.Command(steering, throttle, brake)
 
