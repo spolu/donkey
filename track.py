@@ -105,4 +105,3 @@ class Track:
     def lateral_speed(self, position, velocity, offset=0):
         t = self.unity(position, offset)
         return np.cross(t, velocity)[1]
-

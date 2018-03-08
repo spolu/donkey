@@ -16,7 +16,7 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-ANGLE_WINDOW = 5
+ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
@@ -74,7 +74,7 @@ class Donkey:
         ])
 
         track_angles = []
-        for i in range(FUTURE_WINDOW):
+        for i in range(ANGLES_WINDOW):
             track_angles.append(self.track.angle(position, velocity, i) / math.pi)
 
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
