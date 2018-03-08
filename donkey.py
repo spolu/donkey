@@ -16,6 +16,7 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
+ANGLE_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
@@ -72,12 +73,15 @@ class Donkey:
             telemetry['acceleration']['z'],
         ])
 
-        track_angle = self.track.angle(position, velocity) / math.pi
+        track_angles = []
+        for i in range(FUTURE_WINDOW):
+            track_angles.append(self.track.angle(position, velocity, i) / math.pi)
+
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
         track_speed = self.track.speed(position, velocity) / MAX_SPEED
 
         return Observation(
-            track_angle,
+            track_angles,
             track_position,
             track_speed,
             position,
