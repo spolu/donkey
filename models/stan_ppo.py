@@ -209,7 +209,7 @@ class PPOPolicy(nn.Module):
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
-        action_logstd = 2 * slices[1]
+        action_logstd = slices[1]
         action_std = action_logstd.exp()
 
         # print("STEERING {} {}".format(action_mean.data[0][0], action_std.data[0][0]))
@@ -243,7 +243,7 @@ class PPOPolicy(nn.Module):
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
-        action_logstd = 2 * slices[1]
+        action_logstd = slices[1]
         action_std = action_logstd.exp()
 
         m = Normal(action_mean, action_std)
