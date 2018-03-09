@@ -20,7 +20,7 @@ ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
-    'track_angles, track_position, track_speed, position, velocity, acceleration, camera'
+    'time, track_angles, track_position, track_speed, position, velocity, acceleration, camera'
 )
 
 class Donkey:
@@ -44,11 +44,10 @@ class Donkey:
 
     def observation_from_telemetry(self, telemetry):
         """
-        Returns a tuple of float numpy arrays:
-        - the camera color image (3x120x160)
-        - the current car velocity (3D)
-        - the current car acceleration (3D)
+        Returns a named tuple with physical measurements as well as camera.
         """
+        time = (telemetry['time'] - self.last_reset_time) / MAX_GAME_TIME
+
         camera = cv2.imdecode(
             np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
             cv2.IMREAD_COLOR,
@@ -81,6 +80,7 @@ class Donkey:
         track_speed = self.track.speed(position, velocity) / MAX_SPEED
 
         return Observation(
+            time,
             track_angles,
             track_position,
             track_speed,

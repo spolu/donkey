@@ -1,5 +1,5 @@
 
-- [ ] experiment with brake
+- [x] experiment with brake (25 less distance because of random braking)
 - [ ] add time to help value computation
 - [ ] increase time limit
 - [ ] test with recurrent generator
