@@ -16,7 +16,7 @@ CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 CONTROL_SIZE = 2
-ANGLES_WINDOW = 5
+ANGLES_WINDOW = 8
 
 Observation = collections.namedtuple(
     'Observation',

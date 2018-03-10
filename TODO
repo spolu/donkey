@@ -1,8 +1,8 @@
 
 - [x] experiment with brake (25 less distance because of random braking)
 - [x] add time to help value computation (27 faster convergence)
-- [x] remove the 2x for action_logstd (seems positive)
-- [ ] increase time limit
-- [ ] increase angles window
+- [x] remove the 2x for action_logstd (~35 seems positive)
+- [x] increase angles window (~40)
 - [ ] test with recurrent generator
 - [ ] test with recurrent NN
+- [ ] increase time limit
