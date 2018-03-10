@@ -3,9 +3,9 @@
   "cuda": true,
   "seed": 0,
 
-  "rollout_size": 256,
-  "worker_count": 8,
-  "mini_batch_count": 32,
+  "rollout_size": 40,
+  "worker_count": 32,
+  "mini_batch_count": 4,
 
   "hidden_size": 128,
 

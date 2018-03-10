@@ -166,54 +166,42 @@ class PPOPolicy(nn.Module):
         self.hidden_size = config.get('hidden_size')
         self.config = config
 
-        self.fc1_a = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
-        self.fc2_a = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc3_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
+        self.fc = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
+        self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
 
-        self.fc1_v = nn.Linear(OBSERVATION_SIZE, self.hidden_size)
-        self.fc2_v = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc3_v = nn.Linear(self.hidden_size, 1)
+        self.fc1_a = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
 
-        # self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
+        self.fc1_v = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc2_v = nn.Linear(self.hidden_size, 1)
 
         self.train()
 
+        nn.init.xavier_normal(self.fc.weight.data, nn.init.calculate_gain('tanh'))
+        self.fc.bias.data.fill_(0)
+
+        nn.init.xavier_normal(self.gru.weight_ih.data)
+        nn.init.xavier_normal(self.gru.weight_hh.data)
+        self.gru.bias_ih.data.fill_(0)
+        self.gru.bias_hh.data.fill_(0)
+
         nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc3_a.weight.data, nn.init.calculate_gain('tanh'))
         self.fc1_a.bias.data.fill_(0)
         self.fc2_a.bias.data.fill_(0)
-        self.fc3_a.bias.data.fill_(0)
-
-        # nn.init.xavier_normal(self.gru.weight_ih.data)
-        # nn.init.xavier_normal(self.gru.weight_hh.data)
-        # self.gru.bias_ih.data.fill_(0)
-        # self.gru.bias_hh.data.fill_(0)
 
         nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc3_v.weight.data, nn.init.calculate_gain('linear'))
+        nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('linear'))
         self.fc1_v.bias.data.fill_(0)
         self.fc2_v.bias.data.fill_(0)
-        self.fc3_v.bias.data.fill_(0)
 
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, hiddens = self(inputs, hiddens, masks)
-
-        # action_mean = x
-        # action_std = self.config.get('action_std') * torch.ones(x.size()).float()
-        # if self.config.get('cuda'):
-        #     action_std = action_std.cuda()
-        # action_std = autograd.Variable(action_std)
-        # action_logstd = action_std.log()
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
         action_logstd = slices[1]
         action_std = action_logstd.exp()
-
-        # print("STEERING {} {}".format(action_mean.data[0][0], action_std.data[0][0]))
-        # print("THROTTLE {} {}".format(action_mean.data[0][1], action_std.data[0][1]))
 
         m = Normal(action_mean, action_std)
 
@@ -234,13 +222,6 @@ class PPOPolicy(nn.Module):
     def evaluate(self, inputs, hiddens, masks, actions):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        # action_mean = x
-        # action_std = self.config.get('action_std') * torch.ones(x.size()).float()
-        # if self.config.get('cuda'):
-        #     action_std = action_std.cuda()
-        # action_std = autograd.Variable(action_std)
-        # action_logstd = action_std.log()
-
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
         action_logstd = slices[1]
@@ -258,26 +239,25 @@ class PPOPolicy(nn.Module):
         return value, hiddens, log_probs, entropy
 
     def forward(self, inputs, hiddens, masks):
-        a = F.tanh(self.fc1_a(inputs))
+        x = F.tanh(self.fc(inputs))
+
+        if inputs.size(0) == hiddens.size(0):
+            x = hiddens = self.gru(x, hiddens * masks)
+        else:
+            x = x.view(-1, hiddens.size(0), x.size(1))
+            masks = masks.view(-1, hiddens.size(0), 1)
+            outputs = []
+            for i in range(x.size(0)):
+                hx = hiddens = self.gru(x[i], hiddens * masks[i])
+                outputs.append(hx)
+            x = torch.cat(outputs, 0)
+        x = F.tanh(x)
+
+        a = F.tanh(self.fc1_a(x))
         a = F.tanh(self.fc2_a(a))
-        a = F.tanh(self.fc3_a(a))
 
-        v = F.tanh(self.fc1_v(inputs))
-        v = F.tanh(self.fc2_v(v))
-        v = self.fc3_v(v)
-
-        # y = x
-        # if inputs.size(0) == hiddens.size(0):
-        #     y = hiddens = self.gru(y, hiddens * masks)
-        # else:
-        #     y = y.view(-1, hiddens.size(0), y.size(1))
-        #     masks = masks.view(-1, hiddens.size(0), 1)
-        #     outputs = []
-        #     for i in range(y.size(0)):
-        #         hx = hiddens = self.gru(y[i], hiddens * masks[i])
-        #         outputs.append(hx)
-        #     y = torch.cat(outputs, 0)
-        # y = F.relu(y)
+        v = F.tanh(self.fc1_v(x))
+        v = self.fc2_v(v)
 
         return v, a, hiddens
 
@@ -408,7 +388,7 @@ class Model:
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         for e in range(self.ppo_epoch_count):
-            generator = self.rollouts.feed_forward_generator(advantages)
+            generator = self.rollouts.recurrent_generator(advantages)
 
             for sample in generator:
                 observations_batch, \
