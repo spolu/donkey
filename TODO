@@ -7,3 +7,7 @@
   - /keybase/team/dr1ve/experiments/exp_20180310_0851
 - [ ] test with recurrent NN
 - [ ] increase time limit
+
+- [ ] separate policy
+- [ ] web or pygame based control for human perf
+- [ ] race / self play
