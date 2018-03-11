@@ -19,17 +19,16 @@ import donkey
 
 # import pdb; pdb.set_trace()
 
-OBSERVATION_SIZE = 3 + donkey.ANGLES_WINDOW
+OBSERVATION_SIZE = 2 + donkey.ANGLES_WINDOW
 
 def preprocess(observation):
-    time = [[o.time] for o in observation]
     angles = [o.track_angles for o in observation]
     track_position = [[o.track_position] for o in observation]
     speed = [[o.track_speed] for o in observation]
     # position = [o.position  / 100.0 for o in observation]
 
     observation = np.concatenate(
-        (np.stack(time), np.stack(angles), np.stack(track_position), np.stack(speed)),
+        (np.stack(angles), np.stack(track_position), np.stack(speed)),
         axis=-1,
     )
     observation = torch.from_numpy(observation).float()
