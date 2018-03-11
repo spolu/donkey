@@ -1,0 +1,29 @@
+{
+  "model": "mat_ppo",
+  "cuda": true,
+  "seed": 0,
+
+  "rollout_size": 80,
+  "worker_count": 32,
+  "mini_batch_count": 8,
+
+  "hidden_size": 256,
+
+  "learning_rate": 0.0002,
+  "gamma": 0.99,
+  "tau": 0.95,
+
+  "ppo_epoch_count": 10,
+  "ppo_clip": 0.2,
+
+  "action_loss_coeff": 1.0,
+  "value_loss_coeff": 0.5,
+  "entropy_loss_coeff": 0.0,
+
+  "grad_norm_max": 0.5,
+
+  "simulation_headless": true,
+  "simulation_time_scale": 5.0,
+  "simulation_step_interval": 0.20,
+  "simulation_capture_frame_rate": 100
+}
