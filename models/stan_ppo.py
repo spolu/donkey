@@ -486,7 +486,7 @@ class Model:
                     autograd.Variable(
                         self.rollouts.masks[step], requires_grad=False,
                     ),
-                    deterministic=False,
+                    deterministic=True,
                 )
 
                 observation, reward, done = self.envs.step(
