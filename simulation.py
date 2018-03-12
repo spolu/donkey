@@ -75,6 +75,7 @@ def hello(sid, data):
 
 def run_server():
     global app
+    global sio
     print("Starting shared server: port=9090")
     address = ('0.0.0.0', 9090)
     app = socketio.Middleware(sio, app)
@@ -84,8 +85,6 @@ def run_server():
         print("Stopping shared server")
 
 def init_server():
-    global app
-    global sio
     global inited
 
     if inited:
