@@ -1,4 +1,5 @@
 
+
 - [x] experiment with brake (25 less distance because of random braking)
 - [x] add time to help value computation (27 faster convergence)
 - [x] remove the 2x for action_logstd (~35 seems positive)
@@ -12,5 +13,6 @@
 - [x] game ~= 1 run + stall time limit
 - [x] web or pygame based control for human perf
 - [x] second stage learning reward based on time only (time/speed rewards)
+   - best lap time: 28.7
 - [ ] multiple run on same machine
 - [ ] race / self play

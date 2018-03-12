@@ -22,11 +22,6 @@ def transition():
     return {
         'done': done,
         'reward': reward,
-        'position': {
-            'x': observations.position[0],
-            'y': observations.position[1],
-            'z': observations.position[2],
-        },
         'progress': observations.progress,
         'time': observations.time,
         'linear_speed': observations.track_linear_speed,
