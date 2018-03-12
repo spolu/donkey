@@ -1,6 +1,6 @@
 {
   "model": "stan_a2c",
-  "policy": "actor_critic_params_gru",
+  "policy": "actor_critic_params_mlp",
   "cuda": true,
   "seed": 0,
 
