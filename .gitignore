@@ -1,4 +1,5 @@
 .*.swp
 .DS_Store
 build
+experiments
 __pycache__

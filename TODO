@@ -3,11 +3,13 @@
 - [x] add time to help value computation (27 faster convergence)
 - [x] remove the 2x for action_logstd (~35 seems positive)
 - [x] increase angles window (~40)
-- [ ] test with recurrent generator (~35 seems slightly less stable)
+- [x] test with recurrent generator (~35 seems slightly less stable)
   - /keybase/team/dr1ve/experiments/exp_20180310_0851
-- [ ] test with recurrent NN
-- [ ] increase time limit
+- [x] test with recurrent NN
+  - /keybase/team/dr1ve/experiments/exp_20180311_1205
 
+- [ ] game ~= 1 run + time limit
+- [ ] second stage learning reward based on time only
 - [ ] separate policy
 - [ ] web or pygame based control for human perf
 - [ ] race / self play
