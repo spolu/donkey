@@ -170,7 +170,7 @@ class Donkey:
         # crossed the finish line, stop.
         progress = self.track.progress(position) / self.track.length
         if self.last_progress > progress + 0.1:
-            print("TIME: {}".format(time))
+            print("LAP TIME: {}".format(time))
             return True
         else:
             self.last_progress = progress
