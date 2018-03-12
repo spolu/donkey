@@ -15,6 +15,7 @@ Shared underlying socket.io server
 
 sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
+port = 9093
 inited = False
 
 clients = []
@@ -76,8 +77,9 @@ def hello(sid, data):
 def run_server():
     global app
     global sio
-    print("Starting shared server: port=9090")
-    address = ('0.0.0.0', 9090)
+    global port
+    print("Starting shared server: port=" + str(port))
+    address = ('0.0.0.0', port)
     app = socketio.Middleware(sio, app)
     try:
         eventlet.wsgi.server(eventlet.listen(address), app)
@@ -127,6 +129,7 @@ class Simulation:
     def start(self):
         global lock
         global sio
+        global port
 
         # Lazily init the shared socket.IO server.
         with lock:
@@ -146,6 +149,8 @@ class Simulation:
                 str(self.step_interval),
                 "-simulationCaptureFrameRate",
                 str(self.capture_frame_rate),
+                "-socketIOPort",
+                str(port),
             ]
             if self.headless:
                 cmd.append('-batchmode')
@@ -214,3 +219,15 @@ class Simulation:
         telemetry = self.client['telemetry']
         self.client['condition'].release()
         return telemetry
+
+if __name__ == "__main__":
+    s = Simulation(
+        False,
+        False,
+        1.0,
+        0.2,
+        0,
+    )
+    s.start()
+
+

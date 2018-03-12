@@ -31,15 +31,15 @@ public class SimulationController : MonoBehaviour
 	private float lastTelemetry = 0.0f;
 	private float lastPause = 0.0f;
 
-	public float fpsInterval = 3.0f;
+	private float fpsInterval = 3.0f;
 	private float fpsAccumulator = 0.0f;
 	private int fpsFrameCount  = 0;
 	private float fpsValue = 0.0f;
 
-	void Start()
-	{
-		Debug.Log ("SimulationController initializing");
+	private string socketIOUrl = "ws://127.0.0.1:9091/socket.io/?EIO=4&transport=websocket";
 
+	void Awake()
+	{
 		string[] args = System.Environment.GetCommandLineArgs ();
 
 		for (int i = 0; i < args.Length - 1; i++) {
@@ -55,11 +55,20 @@ public class SimulationController : MonoBehaviour
 			if (args [i] == "-simulationCaptureFrameRate") {
 				captureFrameRate = int.Parse(args[i+1]);
 			}
+			if (args [i] == "-socketIOPort") {
+				socketIOUrl = "ws://127.0.0.1:" + args[i+1] + "/socket.io/?EIO=4&transport=websocket";
+			}
 		}
 
-		Time.captureFramerate = captureFrameRate;
-
 		_socket = GetComponent<SocketIOComponent>();
+		_socket.url = socketIOUrl;
+	}
+
+	void Start()
+	{
+		Debug.Log ("SimulationController initializing");
+
+		Time.captureFramerate = captureFrameRate;
 
 		_socket.On ("open", OnOpen);
 		_socket.On ("step", OnStep);
