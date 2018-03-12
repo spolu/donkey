@@ -1,42 +1,19 @@
 import sys
-import random
 import time
-import math
 
 import numpy as np
 
 import torch
-import torch.distributed as dist
 import torch.autograd as autograd
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-
-from torch.distributions import Categorical, Normal
-from utils import OrnsteinUhlenbeckNoise
 
 import donkey
 
 # import pdb; pdb.set_trace()
 
-OBSERVATION_SIZE = 6
-
-def preprocess(observation):
-    angle = [[o.track_angle] for o in observation]
-    track_position = [[o.track_position] for o in observation]
-    speed = [[o.track_speed] for o in observation]
-    position = [o.position  / 100.0 for o in observation]
-
-    observation = np.concatenate(
-        (np.stack(angle), np.stack(track_position), np.stack(speed), np.stack(position)),
-        axis=-1,
-    )
-    observation = torch.from_numpy(observation).float()
-
-    return observation
-
 class A2CStorage:
-    def __init__(self, config):
+    def __init__(self, config, policy):
         self.rollout_size = config.get('rollout_size')
         self.worker_count = config.get('worker_count')
         self.hidden_size = config.get('hidden_size')
@@ -46,7 +23,7 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            OBSERVATION_SIZE,
+            policy.inputs_size(),
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -94,124 +71,8 @@ class A2CStorage:
         self.hiddens[0].copy_(self.hiddens[-1])
         self.masks[0].copy_(self.masks[-1])
 
-class A2CPolicy(nn.Module):
-    def __init__(self, config):
-        super(A2CPolicy, self).__init__()
-        self.hidden_size = config.get('hidden_size')
-        self.config = config
-
-        self.linear1 = nn.Linear(OBSERVATION_SIZE, self.hidden_size, False)
-        self.gru = nn.GRUCell(self.hidden_size, self.hidden_size, True)
-
-        self.hidden_a = nn.Linear(self.hidden_size, self.hidden_size, True)
-        self.hidden_v = nn.Linear(self.hidden_size, self.hidden_size, True)
-
-        self.actor = nn.Linear(self.hidden_size, donkey.CONTROL_SIZE, False)
-        self.critic = nn.Linear(self.hidden_size, 1, False)
-
-        nn.init.xavier_normal(self.linear1.weight.data, nn.init.calculate_gain('relu'))
-
-        nn.init.xavier_normal(self.gru.weight_ih.data)
-        nn.init.xavier_normal(self.gru.weight_hh.data)
-        self.gru.bias_ih.data.fill_(0)
-        self.gru.bias_hh.data.fill_(0)
-
-        nn.init.xavier_normal(self.hidden_a.weight.data, nn.init.calculate_gain('relu'))
-        self.hidden_a.bias.data.fill_(0)
-        nn.init.xavier_normal(self.hidden_v.weight.data, nn.init.calculate_gain('relu'))
-        self.hidden_v.bias.data.fill_(0)
-
-        nn.init.xavier_normal(self.actor.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.critic.weight.data)
-
-        self.train()
-
-    def action(self, inputs, hiddens, masks, deterministic=False):
-        value, x, hiddens = self(inputs, hiddens, masks)
-
-        action_mean = x
-        action_std = self.config.get('action_std') * torch.ones(x.size()).float()
-        if self.config.get('cuda'):
-            action_std = action_std.cuda()
-        action_std = autograd.Variable(action_std)
-        action_logstd = action_std.log()
-
-        # slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        # action_mean = slices[0]
-        # action_logstd = slices[1]
-        # action_std = action_logstd.exp()
-
-        m = Normal(action_mean, action_std)
-
-        if deterministic is False:
-            actions = m.sample()
-        else:
-            actions = action_mean
-
-        # entropy (sum on actions / mean on batch) -> 1x1
-        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1, keepdim=True)
-
-        return value, actions, hiddens, entropy
-
-    def evaluate(self, inputs, hiddens, masks, actions):
-        value, x, hiddens = self(inputs, hiddens, masks)
-
-        action_mean = x
-        action_std = self.config.get('action_std') * torch.ones(x.size()).float()
-        if self.config.get('cuda'):
-            action_std = action_std.cuda()
-        action_std = autograd.Variable(action_std)
-        action_logstd = action_std.log()
-
-        # slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        # action_mean = slices[0]
-        # action_logstd = slices[1]
-        # action_std = action_logstd.exp()
-
-        m = Normal(action_mean, action_std)
-
-        # log_probs (sum on actions) -> batch x 1
-        log_probs = m.log_prob(actions).sum(-1, keepdim=True)
-
-        # entropy (sum on actions / mean on batch) -> 1x1
-        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1, keepdim=True)
-
-        return value, hiddens, log_probs, entropy
-
-    def forward(self, inputs, hiddens, masks):
-        x = self.linear1(inputs)
-        x = F.relu(x)
-
-        y = x
-        if inputs.size(0) == hiddens.size(0):
-            y = hiddens = self.gru(y, hiddens * masks)
-        else:
-            y = y.view(-1, hiddens.size(0), y.size(1))
-            masks = masks.view(-1, hiddens.size(0), 1)
-            outputs = []
-            for i in range(y.size(0)):
-                hx = hiddens = self.gru(y[i], hiddens * masks[i])
-                outputs.append(hx)
-            y = torch.cat(outputs, 0)
-        y = F.relu(y)
-
-        a = y
-        v = y
-
-        a = self.hidden_a(a)
-        a = F.relu(a)
-        actor = F.tanh(self.actor(a))
-
-        v = self.hidden_v(v)
-        v = F.relu(x)
-        critic = self.critic(v)
-
-        return critic, actor, hiddens
-
 class Model:
-    def __init__(self, config, save_dir=None, load_dir=None):
+    def __init__(self, config, policy, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
@@ -219,28 +80,33 @@ class Model:
         self.hidden_size = config.get('hidden_size')
         self.action_loss_coeff = config.get('action_loss_coeff')
         self.value_loss_coeff = config.get('value_loss_coeff')
+        self.entropy_loss_coeff = config.get('entropy_loss_coeff')
+
+        self.policy = policy
+
         self.save_dir = save_dir
         self.load_dir = load_dir
 
         self.envs = donkey.Envs(config)
-        self.actor_critic = A2CPolicy(config)
+
         self.optimizer = optim.Adam(
-            self.actor_critic.parameters(),
+            self.policy.parameters(),
             self.learning_rate,
         )
-        self.rollouts = A2CStorage(config)
+
+        self.rollouts = A2CStorage(config, policy)
 
         if self.load_dir:
             if self.cuda:
-                self.actor_critic.load_state_dict(
-                    torch.load(self.load_dir + "/actor_critic.pt"),
+                self.policy.load_state_dict(
+                    torch.load(self.load_dir + "/policy.pt"),
                 )
                 self.optimizer.load_state_dict(
                     torch.load(self.load_dir + "/optimizer.pt"),
                 )
             else:
-                self.actor_critic.load_state_dict(
-                    torch.load(self.load_dir + "/actor_critic.pt", map_location='cpu'),
+                self.policy.load_state_dict(
+                    torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
                 )
                 self.optimizer.load_state_dict(
                     torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
@@ -254,16 +120,16 @@ class Model:
 
     def initialize(self):
         observation = self.envs.reset()
-        observation = preprocess(observation)
+        observation = self.policy.preprocess(observation)
         self.rollouts.observations[0].copy_(observation)
 
         if self.cuda:
-            self.actor_critic.cuda()
+            self.policy.cuda()
             self.rollouts.cuda()
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, hidden, entropy = self.actor_critic.action(
+            value, action, hidden, log_prob, entropy = self.policy.action(
                 autograd.Variable(
                     self.rollouts.observations[step], requires_grad=False,
                 ),
@@ -288,7 +154,7 @@ class Model:
                 reward[0],
             ))
 
-            observation = preprocess(observation)
+            observation = self.policy.preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
@@ -313,7 +179,7 @@ class Model:
                 mask,
             )
 
-        next_value = self.actor_critic(
+        next_value = self.policy(
             autograd.Variable(
                 self.rollouts.observations[-1], requires_grad=False,
             ),
@@ -327,10 +193,10 @@ class Model:
 
         self.rollouts.compute_returns(next_value)
 
-        values, hiddens, log_probs, entropy = self.actor_critic.evaluate(
+        values, hiddens, log_probs, entropy = self.policy.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
-                OBSERVATION_SIZE,
+                self.policy.inputs_size(),
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,
@@ -355,7 +221,8 @@ class Model:
         self.optimizer.zero_grad()
 
         (value_loss * self.value_loss_coeff +
-         action_loss * self.action_loss_coeff).backward()
+         action_loss * self.action_loss_coeff +
+         entropy_loss * self.entropy_loss_coeff).backward()
 
         self.optimizer.step()
         self.rollouts.after_update()
@@ -385,7 +252,7 @@ class Model:
 
         if self.batch_count % 100 == 0 and self.save_dir:
             print("Saving models and optimizer: save_dir={}".format(self.save_dir))
-            torch.save(self.actor_critic.state_dict(), self.save_dir + "/actor_critic.pt")
+            torch.save(self.policy.state_dict(), self.save_dir + "/policy.pt")
             torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
 
         self.batch_count += 1
@@ -398,7 +265,7 @@ class Model:
         return self.running_reward
 
     def run(self):
-        self.actor_critic.eval()
+        self.policy.eval()
 
         end = False
         final_reward = 0;
@@ -408,7 +275,7 @@ class Model:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, hidden, entropy = self.actor_critic.action(
+                value, action, hidden, entropy = self.policy.action(
                     autograd.Variable(
                         self.rollouts.observations[step], requires_grad=False,
                     ),
@@ -441,7 +308,7 @@ class Model:
                     print("REWARD: {}".format(final_reward))
                     final_reward = 0.0
 
-                observation = preprocess(observation)
+                observation = self.policy.preprocess(observation)
                 reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
                 mask = torch.FloatTensor(
                     [[0.0] if done_ else [1.0] for done_ in done]

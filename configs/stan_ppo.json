@@ -1,5 +1,6 @@
 {
   "model": "stan_ppo",
+  "policy": "actor_critic_params_gru",
   "cuda": true,
   "seed": 0,
 
