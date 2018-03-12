@@ -30,7 +30,6 @@ var command = () => {
   return c
 }
 
-
 document.addEventListener('keydown', (evt) => {
   keypressed[evt.key] = true
   if (evt.key == 'r') {
@@ -41,7 +40,11 @@ document.addEventListener('keyup', (evt) => {
   keypressed[evt.key] = false
 });
 
-socket.on('telemetry', (message) => {
+socket.on('transition', (message) => {
+  document.getElementById('reward').innerText = message['reward']
+  document.getElementById('progress').innerText = message['progress']
+  document.getElementById('time').innerText = message['time']
+  document.getElementById('linear_speed').innerText = message['linear_speed']
 })
 
 socket.on('next', (message) => {

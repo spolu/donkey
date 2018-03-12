@@ -6,25 +6,31 @@ import os
 
 from flask import Flask
 from eventlet.green import threading
+from utils import Config
 
-import simulation
+import donkey
 
 sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
-s = simulation.Simulation(
-    True, False, 1.0, 0.2, 0
-)
 
-def client_for_sid(sid):
-    global lock
-    global clients
-    with lock:
-        client = clients[sid]
-    return client
+d = None
+observations = None
+reward = None
+done = None
 
-@app.route("/")
-def hello():
-    return "Donkey"
+def transition():
+    return {
+        'done': done,
+        'reward': reward,
+        'position': {
+            'x': observations.position[0],
+            'y': observations.position[1],
+            'z': observations.position[2],
+        },
+        'progress': observations.progress,
+        'time': observations.time,
+        'linear_speed': observations.track_linear_speed,
+    }
 
 def run_server():
     global app
@@ -39,28 +45,37 @@ def run_server():
 @sio.on('connect')
 def connect(sid, environ):
     print("Received connect: sid={}".format(sid))
-    sio.emit('telemetry', s.telemetry())
+    sio.emit('transition', transition())
     sio.emit('next')
 
 @sio.on('step')
 def step(sid, data):
-    s.step(
-        simulation.Command(
-            data['steering'],
-            data['throttle'],
-            data['brake'],
-        ),
-    )
-    sio.emit('telemetry', s.telemetry())
+    global observations
+    global reward
+    global done
+
+    steering = data['steering']
+    throttle_brake = 0.0
+
+    if data['brake'] > 0.0:
+        throttle_brake = -data['brake']
+    if data['throttle'] > 0.0:
+        throttle_brake = data['throttle']
+
+    observations, reward, done = d.step([steering, throttle_brake])
+
+    sio.emit('transition', transition())
     sio.emit('next')
 
 @sio.on('reset')
 def reset(sid, data):
-    s.reset()
+    d.reset()
 
 if __name__ == "__main__":
-    s.start()
-    s.reset()
+    cfg = Config('configs/human.json')
+
+    d = donkey.Donkey(cfg)
+    observations = d.reset()
 
     run_server()
 

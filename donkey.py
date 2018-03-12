@@ -10,7 +10,7 @@ import math
 from eventlet.green import threading
 
 MAX_SPEED = 10.0
-STALL_SPEED = 0.5
+STALL_SPEED = 0.1
 MAX_STALL_TIME = 10
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
@@ -21,7 +21,7 @@ ANGLES_WINDOW = 8
 
 Observation = collections.namedtuple(
     'Observation',
-    'progress, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
+    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
 )
 
 class Donkey:
@@ -83,9 +83,11 @@ class Donkey:
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
 
         progress = self.track.progress(position) / self.track.length
+        time = telemetry['time'] - self.last_reset_time
 
         return Observation(
             progress,
+            time,
             track_angles,
             track_position,
             track_linear_speed,
@@ -134,14 +136,14 @@ class Donkey:
         track_linear_speed = self.track.linear_speed(position, velocity)
         time = telemetry['time'] - self.last_reset_time
         if track_linear_speed > STALL_SPEED:
-            self.last_unstall_time = time
-        if (time - self.last_unstall_time > MAX_STALL_TIME):
+            self.last_unstall = time
+        elif (time - self.last_unstall > MAX_STALL_TIME):
             return True
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
         progress = self.track.progress(position) / self.track.length
-        if self.last_progress > progress:
+        if self.last_progress > progress + 0.1:
             return True
         else:
             self.last_progress = progress
@@ -188,6 +190,9 @@ class Donkey:
 
         steering = controls[0]
         throttle_brake = controls[1]
+
+        throttle= 0.0
+        brake = 0.0
 
         if throttle_brake > 0.0:
             throttle = throttle_brake
