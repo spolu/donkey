@@ -9,8 +9,8 @@
   - /keybase/team/dr1ve/experiments/exp_20180311_1205
 
 - [x] separate policy
-- [ ] game ~= 1 run + time limit
+- [x] game ~= 1 run + stall time limit
 - [ ] second stage learning reward based on time only
 - [ ] web or pygame based control for human perf
-- [ ] race / self play
 - [ ] multiple run on same machine
+- [ ] race / self play

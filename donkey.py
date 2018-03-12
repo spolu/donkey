@@ -10,7 +10,8 @@ import math
 from eventlet.green import threading
 
 MAX_SPEED = 10.0
-MAX_GAME_TIME = 30
+STALL_SPEED = 0.5
+MAX_STALL_TIME = 10
 OFF_TRACK_DISTANCE = 6.0
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
@@ -20,7 +21,7 @@ ANGLES_WINDOW = 8
 
 Observation = collections.namedtuple(
     'Observation',
-    'time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
+    'progress, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
 )
 
 class Donkey:
@@ -39,15 +40,17 @@ class Donkey:
         )
         self.track = track.Track()
         self.last_reset_time = 0.0
+
         self.step_count = 0
+
         self.last_controls = np.zeros(2)
+        self.last_progress = 0.0
+        self.last_unstall = 0.0
 
     def observation_from_telemetry(self, telemetry):
         """
         Returns a named tuple with physical measurements as well as camera.
         """
-        time = (telemetry['time'] - self.last_reset_time) / MAX_GAME_TIME
-
         camera = cv2.imdecode(
             np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
             cv2.IMREAD_COLOR,
@@ -79,8 +82,10 @@ class Donkey:
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
 
+        progress = self.track.progress(position) / self.track.length
+
         return Observation(
-            time,
+            progress,
             track_angles,
             track_position,
             track_linear_speed,
@@ -109,16 +114,38 @@ class Donkey:
         return (2 * track_linear_speed - track_lateral_speed - np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
     def done_from_telemetry(self, telemetry):
-        if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
-            return True
         position = np.array([
             telemetry['position']['x'],
             telemetry['position']['y'],
             telemetry['position']['z'],
         ])
+        velocity = np.array([
+            telemetry['velocity']['x'],
+            telemetry['velocity']['y'],
+            telemetry['velocity']['z'],
+        ])
+
+        # If we're off track, stop.
         track_position = self.track.position(position)
         if np.linalg.norm(track_position) > OFF_TRACK_DISTANCE:
             return True
+
+        # If we stall (STALL_SPEED) for more than MAX_STALL_TIME then stop.
+        track_linear_speed = self.track.linear_speed(position, velocity)
+        time = telemetry['time'] - self.last_reset_time
+        if track_linear_speed > STALL_SPEED:
+            self.last_unstall_time = time
+        if (time - self.last_unstall_time > MAX_STALL_TIME):
+            return True
+
+        # If the last progress is bigger than the current one, it means we just
+        # crossed the finish line, stop.
+        progress = self.track.progress(position) / self.track.length
+        if self.last_progress > progress:
+            return True
+        else:
+            self.last_progress = progress
+
         return False
 
     def reset(self):
@@ -139,6 +166,8 @@ class Donkey:
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
         self.last_controls = np.zeros(2)
+        self.last_progress = 0.0
+        self.last_unstall = 0.0
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
@@ -175,33 +204,6 @@ class Donkey:
         observation = self.observation_from_telemetry(telemetry)
         reward = self.reward_from_telemetry(telemetry)
         done = self.done_from_telemetry(telemetry)
-
-        # if self.step_count % 10 == 0:
-        #   print("TELEMETRY {}".format(telemetry))
-        # print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
-        #     telemetry['time'],
-        #     telemetry['fps'],
-        #     telemetry['last_resume'],
-        #     telemetry['last_pause'],
-        #     telemetry['last_telemetry'],
-        #     telemetry['last_telemetry'],
-        #     telemetry['delta'],
-        #     telemetry['fixed_delta'],
-        #     telemetry['time_scale'],
-        # ))
-
-        # print(">> TIM/POS/VEL/CMD {:.2f} {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f} / {:.2f} {:.2f} {:.2f}".format(
-        #     telemetry['time'],
-        #     telemetry['position']['x'],
-        #     telemetry['position']['y'],
-        #     telemetry['position']['z'],
-        #     telemetry['velocity']['x'],
-        #     telemetry['velocity']['y'],
-        #     telemetry['velocity']['z'],
-        #     steering,
-        #     throttle,
-        #     brake,
-        # ))
 
         self.step_count += 1
 

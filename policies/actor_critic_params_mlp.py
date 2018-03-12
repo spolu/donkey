@@ -49,14 +49,14 @@ class Policy(nn.Module):
         track_angles = [o.track_angles for o in observation]
         track_position = [[o.track_position] for o in observation]
         track_linear_speed = [[o.track_linear_speed] for o in observation]
-        time = [[o.time] for o in observation]
+        progress = [[o.progress] for o in observation]
 
         observation = np.concatenate(
             (
                 np.stack(track_angles),
                 np.stack(track_position),
                 np.stack(track_linear_speed),
-                np.stack(time),
+                np.stack(progress),
             ),
             axis=-1,
         )
