@@ -4,6 +4,8 @@
   "cuda": true,
   "seed": 0,
 
+  "reward_type": "speed",
+
   "rollout_size": 20,
   "worker_count": 32,
 

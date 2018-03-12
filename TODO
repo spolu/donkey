@@ -11,6 +11,6 @@
 - [x] separate policy
 - [x] game ~= 1 run + stall time limit
 - [x] web or pygame based control for human perf
-- [ ] second stage learning reward based on time only
+- [x] second stage learning reward based on time only (time/speed rewards)
 - [ ] multiple run on same machine
 - [ ] race / self play

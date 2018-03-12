@@ -10,13 +10,21 @@ import math
 from eventlet.green import threading
 
 MAX_SPEED = 10.0
+
 STALL_SPEED = 0.1
 MAX_STALL_TIME = 10
+
 OFF_TRACK_DISTANCE = 6.0
+
+PROGRESS_INCREMENT = 0.05
+REFERENCE_LAP_TIME = 30.0
+
 CAMERA_CHANNEL = 3
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
+
 CONTROL_SIZE = 2
+
 ANGLES_WINDOW = 8
 
 Observation = collections.namedtuple(
@@ -30,6 +38,7 @@ class Donkey:
         self.simulation_time_scale = config.get('simulation_time_scale')
         self.simulation_step_interval = config.get('simulation_step_interval')
         self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
+        self.reward_type = config.get('reward_type')
         self.started = False
         self.simulation = simulation.Simulation(
             True,
@@ -45,7 +54,8 @@ class Donkey:
 
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
-        self.last_unstall = 0.0
+        self.last_unstall_time = 0.0
+        self.last_rewarded_progress = 0.0
 
     def observation_from_telemetry(self, telemetry):
         """
@@ -109,11 +119,27 @@ class Donkey:
             telemetry['velocity']['z'],
         ])
 
+        progress = self.track.progress(position) / self.track.length
+        time = telemetry['time'] - self.last_reset_time
+
         track_linear_speed = self.track.linear_speed(position, velocity)
         track_lateral_speed = self.track.lateral_speed(position, velocity)
         track_position = self.track.position(position)
 
-        return (2 * track_linear_speed - track_lateral_speed - np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+        if self.reward_type == "speed":
+            return (
+                2 * track_linear_speed -
+                track_lateral_speed -
+                np.linalg.norm(track_position)
+            ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+
+        if self.reward_type == "time":
+            if (progress - self.last_rewarded_progress) > PROGRESS_INCREMENT:
+                self.last_rewarded_progress = progress
+                return 1.0 - time / (progress * REFERENCE_LAP_TIME)
+            return 0.0
+
+        return 0.0
 
     def done_from_telemetry(self, telemetry):
         position = np.array([
@@ -136,14 +162,15 @@ class Donkey:
         track_linear_speed = self.track.linear_speed(position, velocity)
         time = telemetry['time'] - self.last_reset_time
         if track_linear_speed > STALL_SPEED:
-            self.last_unstall = time
-        elif (time - self.last_unstall > MAX_STALL_TIME):
+            self.last_unstall_time = time
+        elif (time - self.last_unstall_time > MAX_STALL_TIME):
             return True
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
         progress = self.track.progress(position) / self.track.length
         if self.last_progress > progress + 0.1:
+            print("TIME: {}".format(time))
             return True
         else:
             self.last_progress = progress
@@ -169,7 +196,8 @@ class Donkey:
         self.last_reset_time = telemetry['time']
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
-        self.last_unstall = 0.0
+        self.last_unstall_time = 0.0
+        self.last_rewarded_progress = 0.0
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
