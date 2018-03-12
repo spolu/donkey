@@ -22,13 +22,17 @@ import donkey
 OBSERVATION_SIZE = 2 + donkey.ANGLES_WINDOW
 
 def preprocess(observation):
-    angles = [o.track_angles for o in observation]
+    track_angles = [o.track_angles for o in observation]
     track_position = [[o.track_position] for o in observation]
-    speed = [[o.track_speed] for o in observation]
+    track_linear_speed = [[o.track_linear_speed] for o in observation]
     # position = [o.position  / 100.0 for o in observation]
 
     observation = np.concatenate(
-        (np.stack(angles), np.stack(track_position), np.stack(speed)),
+        (
+            np.stack(track_angles),
+            np.stack(track_position),
+            np.stack(track_linear_speed),
+        ),
         axis=-1,
     )
     observation = torch.from_numpy(observation).float()

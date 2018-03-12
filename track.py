@@ -94,7 +94,7 @@ class Track:
         v = self.points[closests[1]] - position
         return np.linalg.norm(np.cross(u, v)) / np.linalg.norm(u-v)
 
-    def speed(self, position, velocity, offset=0):
+    def linear_speed(self, position, velocity, offset=0):
         """
         Returns the linear speed along the track given a position and a
         velocity.

@@ -20,7 +20,7 @@ ANGLES_WINDOW = 8
 
 Observation = collections.namedtuple(
     'Observation',
-    'time, track_angles, track_position, track_speed, position, velocity, acceleration, camera'
+    'time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
 )
 
 class Donkey:
@@ -77,13 +77,13 @@ class Donkey:
             track_angles.append(self.track.angle(position, velocity, i) / math.pi)
 
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
-        track_speed = self.track.speed(position, velocity) / MAX_SPEED
+        track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
 
         return Observation(
             time,
             track_angles,
             track_position,
-            track_speed,
+            track_linear_speed,
             position,
             velocity,
             acceleration,
@@ -102,11 +102,11 @@ class Donkey:
             telemetry['velocity']['z'],
         ])
 
-        track_speed = self.track.speed(position, velocity)
+        track_linear_speed = self.track.linear_speed(position, velocity)
         track_lateral_speed = self.track.lateral_speed(position, velocity)
         track_position = self.track.position(position)
 
-        return (2 * track_speed - track_lateral_speed - np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+        return (2 * track_linear_speed - track_lateral_speed - np.linalg.norm(track_position)) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
     def done_from_telemetry(self, telemetry):
         if (telemetry['time'] - self.last_reset_time) > MAX_GAME_TIME:
