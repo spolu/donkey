@@ -214,14 +214,14 @@ class Model:
                 action.data.cpu().numpy(),
             )
 
-            print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-                value.data[0][0],
-                action.data[0][0],
-                action.data[0][1],
-                done[0],
-                reward[0],
-                observation[0].progress,
-            ))
+            # print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+            #     value.data[0][0],
+            #     action.data[0][0],
+            #     action.data[0][1],
+            #     done[0],
+            #     reward[0],
+            #     observation[0].progress,
+            # ))
             sys.stdout.flush()
 
             observation = self.policy.preprocess(observation)
@@ -268,7 +268,7 @@ class Model:
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         for e in range(self.ppo_epoch_count):
-            generator = self.rollouts.feed_forward_generator(advantages)
+            generator = self.rollouts.recurrent_generator(advantages)
 
             for sample in generator:
                 observations_batch, \

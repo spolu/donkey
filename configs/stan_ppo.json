@@ -4,13 +4,13 @@
   "cuda": true,
   "seed": 0,
 
-  "reward_type": "time",
+  "reward_type": "speed",
 
-  "rollout_size": 256,
-  "worker_count": 8,
-  "mini_batch_count": 32,
+  "rollout_size": 20,
+  "worker_count": 64,
+  "mini_batch_count": 8,
 
-  "hidden_size": 128,
+  "hidden_size": 256,
 
   "learning_rate": 0.00007,
   "gamma": 0.99,
