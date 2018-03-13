@@ -7,7 +7,7 @@
   "reward_type": "speed",
 
   "rollout_size": 20,
-  "worker_count": 64,
+  "worker_count": 32,
   "mini_batch_count": 8,
 
   "hidden_size": 256,
