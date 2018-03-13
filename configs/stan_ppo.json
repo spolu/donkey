@@ -4,7 +4,7 @@
   "cuda": true,
   "seed": 0,
 
-  "reward_type": "speed",
+  "reward_type": "time",
 
   "rollout_size": 256,
   "worker_count": 8,
