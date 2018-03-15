@@ -23,7 +23,7 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            policy.inputs_size(),
+            *(policy.inputs_shape()),
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -197,7 +197,7 @@ class Model:
         values, hiddens, log_probs, entropy = self.policy.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
-                self.policy.inputs_size(),
+                *(self.policy.inputs_shape()),
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,

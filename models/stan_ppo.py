@@ -26,7 +26,7 @@ class PPOStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            policy.inputs_size(),
+            *(policy.inputs_shape()),
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,

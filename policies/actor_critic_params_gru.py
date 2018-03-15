@@ -47,8 +47,8 @@ class Policy(nn.Module):
         self.fc1_v.bias.data.fill_(0)
         self.fc2_v.bias.data.fill_(0)
 
-    def inputs_size(self):
-        return INPUTS_SIZE
+    def inputs_shape(self):
+        return (INPUTS_SIZE,)
 
     def preprocess(self, observation):
         track_angles = [o.track_angles for o in observation]
