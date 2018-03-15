@@ -222,7 +222,6 @@ class Model:
             #     reward[0],
             #     observation[0].progress,
             # ))
-            sys.stdout.flush()
 
             observation = self.policy.preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
@@ -330,6 +329,8 @@ class Model:
                 value_loss.data[0],
                 action_loss.data[0],
             ))
+        sys.stdout.flush()
+
 
         if self.batch_count % 10 == 0 and self.save_dir:
             print("Saving models and optimizer: save_dir={}".format(self.save_dir))

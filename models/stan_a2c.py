@@ -146,13 +146,14 @@ class Model:
                 differential=False,
             )
 
-            print("VALUE/STEERING/THROTTLE/DONE/REWARD: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
-                value.data[0][0],
-                action.data[0][0],
-                action.data[0][1],
-                done[0],
-                reward[0],
-            ))
+            # print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+            #     value.data[0][0],
+            #     action.data[0][0],
+            #     action.data[0][1],
+            #     done[0],
+            #     reward[0],
+            #     observation[0].progress,
+            # ))
 
             observation = self.policy.preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
@@ -249,6 +250,7 @@ class Model:
                 value_loss.data[0],
                 action_loss.data[0],
             ))
+        sys.stdout.flush()
 
         if self.batch_count % 100 == 0 and self.save_dir:
             print("Saving models and optimizer: save_dir={}".format(self.save_dir))
@@ -293,13 +295,16 @@ class Model:
                     differential=False,
                 )
 
-                print("VALUE/STEERING/THROTTLE/DONE/REWARD: {:.2f} {:.2f} {:.2f} {} {:.2f}".format(
+                print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
                     value.data[0][0],
                     action.data[0][0],
                     action.data[0][1],
                     done[0],
                     reward[0],
+                    observation[0].progress,
                 ))
+                sys.stdout.flush()
+
 
                 final_reward += reward[0]
                 end = done[0]
