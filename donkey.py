@@ -19,7 +19,7 @@ OFF_TRACK_DISTANCE = 6.0
 PROGRESS_INCREMENT = 0.05
 REFERENCE_LAP_TIME = 50.0
 
-CAMERA_CHANNEL = 3
+CAMERA_STACK_SIZE = 4
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 
@@ -57,17 +57,30 @@ class Donkey:
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
 
+        self.camera_stack = None
+
     def observation_from_telemetry(self, telemetry):
         """
         Returns a named tuple with physical measurements as well as camera.
         """
         camera = cv2.imdecode(
             np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
-            cv2.IMREAD_COLOR,
+            cv2.IMREAD_GRAYSCALE,
         ).astype(np.float)
 
-        # Scale and transpose to 3x120x160.
-        camera = np.transpose(camera / 255.0, (2, 0, 1))
+        # Scale, size is 120x160.
+        camera = camera / 255.0
+
+        if self.camera_stack is None:
+            self.camera_stack = np.zeros((CAMERA_STACK_SIZE, CAMERA_WIDTH, CAMERA_HEIGHT))
+            for i in range(CAMERA_STACK_SIZE):
+                self.camera_stack[i] = np.copy(camera)
+        else:
+            for i in reversed(range(CAMERA_STACK_SIZE)):
+                if i > 0:
+                    self.camera_stack[i] = self.camera_stack[i-1]
+                else:
+                    self.camera_stack[i] = np.copy(camera)
 
         position = np.array([
             telemetry['position']['x'],
@@ -104,7 +117,7 @@ class Donkey:
             position,
             velocity,
             acceleration,
-            camera,
+            np.copy(self.camera_stack),
         )
 
     def reward_from_telemetry(self, telemetry):
@@ -198,6 +211,8 @@ class Donkey:
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
+
+        self.camera_stack = None
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))

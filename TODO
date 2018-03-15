@@ -14,5 +14,6 @@
 - [x] web or pygame based control for human perf
 - [x] second stage learning reward based on time only (time/speed rewards)
    - best lap time: 28.7
+- [x] stack BW images
 - [ ] multiple run on same machine
 - [ ] multiple donkeys in simulation
