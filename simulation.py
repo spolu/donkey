@@ -5,6 +5,7 @@ import eventlet.wsgi
 import collections
 import os
 import subprocess
+import socket
 
 from flask import Flask
 from eventlet.green import threading
@@ -74,6 +75,13 @@ def hello(sid, data):
     client['condition'].notify()
     client['condition'].release()
 
+def get_free_tcp_port():
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp.bind(('', 0))
+    addr, port = tcp.getsockname()
+    tcp.close()
+    return port
+
 def run_server():
     global app
     global sio
@@ -88,9 +96,12 @@ def run_server():
 
 def init_server():
     global inited
+    global port
 
     if inited:
         return
+
+    port = get_free_tcp_port()
 
     # This threading call is imported from eventlet.green. Magic!
     # See http://eventlet.net/doc/patching.html#monkeypatching-the-standard-library
@@ -160,6 +171,7 @@ class Simulation:
             self.process = subprocess.Popen(cmd, env=self.env)
 
         self.client['condition'].wait()
+
         self.client['condition'].release()
         print("Simulation started: id={} sid={}".format(
             self.client['id'], self.client['sid'],
