@@ -10,37 +10,80 @@ from torch.distributions import Normal
 
 import donkey
 
-INPUTS_SIZE = 3 + donkey.ANGLES_WINDOW
+INPUTS_SIZE = 2 + donkey.ANGLES_WINDOW
 
 class Policy(nn.Module):
     def __init__(self, config):
         super(Policy, self).__init__()
         self.hidden_size = config.get('hidden_size')
+        self.recurring_cell = config.get('recurring_cell')
         self.config = config
 
-        self.fc1_a = nn.Linear(INPUTS_SIZE, self.hidden_size)
+        if self.recurring_cell == "gru":
+            self.fc1 = nn.Linear(INPUTS_SIZE, self.hidden_size)
+            self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
+        else:
+            self.fc1_a = nn.Linear(INPUTS_SIZE, self.hidden_size)
+            self.fc1_v = nn.Linear(INPUTS_SIZE, self.hidden_size)
+
         self.fc2_a = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc3_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
 
-        self.fc1_v = nn.Linear(INPUTS_SIZE, self.hidden_size)
         self.fc2_v = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc3_v = nn.Linear(self.hidden_size, 1)
 
         self.train()
 
-        nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc3_a.weight.data, nn.init.calculate_gain('tanh'))
-        self.fc1_a.bias.data.fill_(0)
         self.fc2_a.bias.data.fill_(0)
         self.fc3_a.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc3_v.weight.data, nn.init.calculate_gain('linear'))
-        self.fc1_v.bias.data.fill_(0)
         self.fc2_v.bias.data.fill_(0)
         self.fc3_v.bias.data.fill_(0)
+
+        if self.recurring_cell == "gru":
+            nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('tanh'))
+            self.fc1.bias.data.fill_(0)
+
+            nn.init.xavier_normal(self.gru.weight_ih.data)
+            nn.init.xavier_normal(self.gru.weight_hh.data)
+            self.gru.bias_ih.data.fill_(0)
+            self.gru.bias_hh.data.fill_(0)
+        else:
+            nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
+            nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
+            self.fc1_a.bias.data.fill_(0)
+            self.fc1_v.bias.data.fill_(0)
+
+    def forward(self, inputs, hiddens, masks):
+        if self.recurring_cell == "gru":
+            x = F.tanh(self.fc1(inputs))
+
+            if inputs.size(0) == hiddens.size(0):
+                x = hiddens = self.gru(x, hiddens * masks)
+            else:
+                x = x.view(-1, hiddens.size(0), x.size(1))
+                masks = masks.view(-1, hiddens.size(0), 1)
+                outputs = []
+                for i in range(x.size(0)):
+                    hx = hiddens = self.gru(x[i], hiddens * masks[i])
+                    outputs.append(hx)
+                x = torch.cat(outputs, 0)
+            a = v = x = F.tanh(x)
+        else:
+            a = F.tanh(self.fc1_a(inputs))
+            v = F.tanh(self.fc1_v(inputs))
+
+        a = F.tanh(self.fc2_a(a))
+        a = F.tanh(self.fc3_a(a))
+
+        v = F.tanh(self.fc2_v(v))
+        v = self.fc3_v(v)
+
+        return v, a, hiddens
 
     def inputs_shape(self):
         return (INPUTS_SIZE,)
@@ -49,14 +92,14 @@ class Policy(nn.Module):
         track_angles = [o.track_angles for o in observation]
         track_position = [[o.track_position] for o in observation]
         track_linear_speed = [[o.track_linear_speed] for o in observation]
-        progress = [[o.progress] for o in observation]
+        # progress = [[o.progress] for o in observation]
 
         observation = np.concatenate(
             (
                 np.stack(track_angles),
                 np.stack(track_position),
                 np.stack(track_linear_speed),
-                np.stack(progress),
+                # np.stack(progress),
             ),
             axis=-1,
         )
@@ -106,14 +149,3 @@ class Policy(nn.Module):
         entropy = entropy.sum(-1, keepdim=True)
 
         return value, hiddens, log_probs, entropy
-
-    def forward(self, inputs, hiddens, masks):
-        a = F.tanh(self.fc1_a(inputs))
-        a = F.tanh(self.fc2_a(a))
-        a = F.tanh(self.fc3_a(a))
-
-        v = F.tanh(self.fc1_v(inputs))
-        v = F.tanh(self.fc2_v(v))
-        v = self.fc3_v(v)
-
-        return v, a, hiddens
