@@ -69,7 +69,7 @@ class Donkey:
         ).astype(np.float)
 
         # Scale, size is 120x160.
-        camera = camera / 255.0
+        camera = camera / 127.5 - 1
 
         if self.camera_stack is None:
             self.camera_stack = np.zeros((CAMERA_STACK_SIZE, CAMERA_WIDTH, CAMERA_HEIGHT))

@@ -1,12 +1,12 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_params_gru",
+  "policy": "actor_critic_pixels_mlp",
   "cuda": true,
   "seed": 0,
 
   "reward_type": "speed",
 
-  "rollout_size": 20,
+  "rollout_size": 256,
   "worker_count": 32,
   "mini_batch_count": 8,
 
