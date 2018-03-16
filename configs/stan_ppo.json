@@ -1,7 +1,7 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_params_gru",
-  "recurring_cell": "none",
+  "policy": "actor_critic_params",
+  "recurring_cell": "gru",
   "cuda": true,
   "seed": 0,
 
