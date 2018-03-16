@@ -214,14 +214,14 @@ class Model:
                 action.data.cpu().numpy(),
             )
 
-            # print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-            #     value.data[0][0],
-            #     action.data[0][0],
-            #     action.data[0][1],
-            #     done[0],
-            #     reward[0],
-            #     observation[0].progress,
-            # ))
+            print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                value.data[0][0],
+                action.data[0][0],
+                action.data[0][1],
+                done[0],
+                reward[0],
+                observation[0].progress,
+            ))
 
             observation = self.policy.preprocess(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
