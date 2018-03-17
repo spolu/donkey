@@ -17,7 +17,10 @@ class Policy(nn.Module):
         self.recurring_cell = config.get('recurring_cell')
         self.config = config
 
-        self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
+        if self.recurring_cell == "gru":
+            self.cv1 = nn.Conv2d(1, 24, 5, stride=2)
+        else:
+            self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
         self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
         self.cv3 = nn.Conv2d(32, 64, 5, stride=2)
         self.cv4 = nn.Conv2d(64, 64, 3, stride=2)
@@ -102,10 +105,16 @@ class Policy(nn.Module):
         return v, a, hiddens
 
     def inputs_shape(self):
-        return (donkey.CAMERA_STACK_SIZE, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT)
+        if self.recurring_cell == "gru":
+            return (1, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT)
+        else:
+            return (donkey.CAMERA_STACK_SIZE, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT)
 
     def preprocess(self, observation):
-        cameras = [o.camera for o in observation]
+        if self.recurring_cell == "gru":
+            cameras = [o.camera[0].reshape(1, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT) for o in observation]
+        else:
+            cameras = [o.camera for o in observation]
         observation = np.concatenate(
             (
                 np.stack(cameras),
