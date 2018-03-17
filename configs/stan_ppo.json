@@ -17,7 +17,7 @@
   "gamma": 0.99,
   "tau": 0.95,
 
-  "ppo_epoch_count": 15,
+  "ppo_epoch_count": 10,
   "ppo_clip": 0.2,
 
   "action_loss_coeff": 1.0,
