@@ -8,11 +8,11 @@ public class RoadBuilder : MonoBehaviour {
 	public float roadHeightOffset = 0.0f;
 	public float roadOffsetW = 0.0f;
 	public bool doFlattenAtStart = true;
-	public bool doErodeTerrain = true;
-	public bool doGenerateTerrain = true;
 	public bool doFlattenArroundRoad = true;
-	public bool doLiftRoadToTerrain = false;
-
+	public bool doLiftRoadToTerrain = true;
+	public string pathToLoad = "none";
+	public CarPath path;
+		
 	public Terrain terrain;
 
 	public GameObject roadPrefabMesh;
@@ -25,6 +25,12 @@ public class RoadBuilder : MonoBehaviour {
 	Texture2D customRoadTexure;
 
 	GameObject createdRoad;
+
+	void Awake () 	
+	{
+		MakePointPath();
+		InitRoad(path);			
+	}
 
 	void Start()
 	{
@@ -65,6 +71,39 @@ public class RoadBuilder : MonoBehaviour {
 		ms.y *= -1.0f;
 		mr.material.mainTextureScale = ms;
 	}
+
+	void MakePointPath()
+	{
+		TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
+
+		if(bindata == null)
+			return;
+
+		string[] lines = bindata.text.Split('\n');
+
+		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
+
+		path = new CarPath();
+
+		Vector3 np = Vector3.zero;
+
+		float offsetY = -0.1f;
+
+		foreach(string line in lines)
+		{
+			string[] tokens = line.Split(',');
+
+			if (tokens.Length != 3)
+				continue;
+			np.x = float.Parse(tokens[0]);
+			np.y = float.Parse(tokens[1]) + offsetY;
+			np.z = float.Parse(tokens[2]);
+			PathNode p = new PathNode();
+			p.pos = np;
+			path.nodes.Add(p);
+		}
+	}
+
 
 	public void InitRoad(CarPath path)
 	{

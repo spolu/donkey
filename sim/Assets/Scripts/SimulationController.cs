@@ -35,8 +35,8 @@ public class SimulationController : MonoBehaviour
 	private float fpsAccumulator = 0.0f;
 	private int fpsFrameCount  = 0;
 	private float fpsValue = 0.0f;
-
 	private string socketIOUrl = "ws://127.0.0.1:9091/socket.io/?EIO=4&transport=websocket";
+	private string trackPath;
 
 	void Awake()
 	{
@@ -57,6 +57,9 @@ public class SimulationController : MonoBehaviour
 			}
 			if (args [i] == "-socketIOPort") {
 				socketIOUrl = "ws://127.0.0.1:" + args[i+1] + "/socket.io/?EIO=4&transport=websocket";
+			}
+			if (args [i] == "-trackPath") {
+				trackPath = args[i+1];
 			}
 		}
 
@@ -220,6 +223,7 @@ public class SimulationController : MonoBehaviour
 
 		// Reset the car to its initial state.
 		car.RestorePosRot ();
+		// Redraw the track
 
 		Resume ();
 	}
