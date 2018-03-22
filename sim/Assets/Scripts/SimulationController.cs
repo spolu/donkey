@@ -234,7 +234,6 @@ public class SimulationController : MonoBehaviour
 
 		// Reset the car to its initial state.
 		car.RestorePosRot ();
-		// Redraw the track
 
 		Resume ();
 	}
