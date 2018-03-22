@@ -149,7 +149,7 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField ("throttle", car.GetThrottle ());
 				m.json.AddField ("brake", car.GetBrake ());
 
-				m.json.AddField ("camera", System.Convert.ToBase64String (camSensor.GetImage ().EncodeToJPG ()));
+				m.json.AddField ("camera", System.Convert.ToBase64String (camSensor.GetImage ().EncodeToPNG ()));
 
 				JSONObject position = new JSONObject (JSONObject.Type.OBJECT);
 				position.AddField ("x", car.GetPosition ().x);
