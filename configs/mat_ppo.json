@@ -1,15 +1,19 @@
 {
-  "model": "mat_ppo",
+  "model": "stan_ppo",
+  "policy": "actor_critic_pixels",
+  "recurring_cell": "gru",
   "cuda": true,
   "seed": 0,
 
-  "rollout_size": 80,
+  "reward_type": "speed",
+
+  "rollout_size": 92,
   "worker_count": 32,
   "mini_batch_count": 8,
 
   "hidden_size": 256,
 
-  "learning_rate": 0.0002,
+  "learning_rate": 0.0001,
   "gamma": 0.99,
   "tau": 0.95,
 
