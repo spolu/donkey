@@ -123,3 +123,8 @@ class Track:
         v = self.points[closests[1]] - self.points[closests[0]]
         p -= np.linalg.norm(v) - np.dot(t, u)
         return p
+
+if __name__ == "__main__":
+    t = Track()
+    for p in t.points:
+        print("{:.1f},{:.1f},{:.1f}".format(p[0]-46.7, p[1], p[2]))
