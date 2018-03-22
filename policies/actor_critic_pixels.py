@@ -23,7 +23,6 @@ class Policy(nn.Module):
         self.cv4 = nn.Conv2d(64, 64, 3, stride=2)
         self.cv5 = nn.Conv2d(64, 64, 3, stride=1)
         self.fc1 = nn.Linear(1152, self.hidden_size)
-        self.dp1 = nn.Dropout(p=0.1)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -76,7 +75,6 @@ class Policy(nn.Module):
         x = x.view(-1, 1152)
 
         x = F.elu(self.fc1(x))
-        x = self.dp1(x)
 
         if self.recurring_cell == "gru":
             if inputs.size(0) == hiddens.size(0):
