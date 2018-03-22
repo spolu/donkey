@@ -17,6 +17,7 @@ public class SimulationController : MonoBehaviour
 
 	public GameObject carObject;
 	public CameraSensor camSensor;
+	public RoadBuilder roadBuilder;
 
 	private ICar car;
 	private SocketIOComponent _socket;
@@ -70,6 +71,12 @@ public class SimulationController : MonoBehaviour
 	void Start()
 	{
 		Debug.Log ("SimulationController initializing");
+
+		if (trackPath != null) {
+			roadBuilder.pathToLoad = trackPath;
+		}
+		roadBuilder.DestroyRoad();
+		roadBuilder.BuildRoad();
 
 		Time.captureFramerate = captureFrameRate;
 
@@ -221,9 +228,12 @@ public class SimulationController : MonoBehaviour
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
 
+		// Redraw the track
+		roadBuilder.DestroyRoad();
+		roadBuilder.BuildRoad ();
+
 		// Reset the car to its initial state.
 		car.RestorePosRot ();
-		// Redraw the track
 
 		Resume ();
 	}

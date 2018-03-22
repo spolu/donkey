@@ -28,8 +28,7 @@ public class RoadBuilder : MonoBehaviour {
 
 	void Awake () 	
 	{
-		MakePointPath();
-		InitRoad(path);			
+		BuildRoad();
 	}
 
 	void Start()
@@ -102,6 +101,12 @@ public class RoadBuilder : MonoBehaviour {
 			p.pos = np;
 			path.nodes.Add(p);
 		}
+	}
+
+	public void BuildRoad()
+	{
+		MakePointPath();
+		InitRoad(path);                 
 	}
 
 
