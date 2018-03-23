@@ -13,8 +13,6 @@ sudo apt-get install cuda
 
 [restart]
 
-sudo nvidia-smi -pm 1
-
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod +x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh
@@ -33,6 +31,21 @@ sudo apt-get install libnss3 xserver-xorg libgconf-2-4 gnuplot
 Set the following env variables in `.bashrc`:
 ```
 UNITY_SERIAL=
+UNITY_USERNAME=
+UNITY_PASSWORD=
+```
+
+
+# At each restart
+
+```
+sudo nvidia-smi -pm 1
+# For K80
+sudo nvidia-smi -ac 2505,875
+sudo nvidia-smi --auto-boost-default=DISABLED
+
+sudo bash
+/usr/bin/X :1 &
 ```
 
 # Useful resources

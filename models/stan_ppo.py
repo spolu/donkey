@@ -313,10 +313,10 @@ class Model:
         )
 
         print(
-            ("{}, timesteps {}, FPS {}, " + \
-             "mean/median R {:.1f}/{:.1f}, " + \
-             "min/max R {:.1f}/{:.1f}, " + \
-             "entropy loss {:.5f}, value loss {:.5f}, action loss {:.5f}").
+            ("STEP {} timesteps {} FPS {} " + \
+             "mean/median R {:.1f} {:.1f} " + \
+             "min/max R {:.1f} {:.1f} " + \
+             "entropy_loss {:.5f} value_loss {:.5f} action_loss {:.5f}").
             format(
                 self.batch_count,
                 total_num_steps,
