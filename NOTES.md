@@ -22,12 +22,13 @@ conda install pytorch torchvision cuda91 -c pytorch
 pip install eventlet python-socketio flask opencv-python
 
 sudo apt-get update
-sudo apt-get install libgtk2.0-0 libnss3 xserver-xorg libgconf-2-4 gnuplot htop libarchive13
+sudo apt-get install libgtk2.0-0 libnss3 xserver-xorg libgconf-2-4 gnuplot htop libarchive13 make
 
 wget http://beta.unity3d.com/download/3c89f8d277f5/UnitySetup-2017.3.0f1
 chmod +x UnitySetup-2017.3.0f1
 mkdir -p ~/opt/unity3d
 ./UnitySetup-2017.3.0f1 --unattended --install-location=~/opt/unity3d
+
 ```
 
 Set the following env variables in `.bashrc`:
