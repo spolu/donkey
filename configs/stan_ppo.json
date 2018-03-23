@@ -1,6 +1,6 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels",
+  "policy": "actor_critic_pixels_fixed_std",
   "recurring_cell": "gru",
   "cuda": true,
   "seed": 0,
