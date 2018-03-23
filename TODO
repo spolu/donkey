@@ -1,8 +1,8 @@
 # stan
 
+- [x] try a 1 GPU instance eventually have multiple of them
 - [ ] try fixed std normal exploration
 - [ ] try orstein-hullenbeck exploration with normal logprobs
 - [ ] try discrete action space
 - [ ] plot action/value/entropy loss min/max/mean/media reward
-- [ ] try a 1 GPU instance eventually have multiple of them
 - [ ] multiple donkeys in simulation
