@@ -118,8 +118,8 @@ class Policy(nn.Module):
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
 
-        if self.config.get('fixded_action_std'):
-            action_std = self.config.get('action_std') * torch.ones(x.size()).float()
+        if self.config.get('fixed_action_std'):
+            action_std = self.config.get('fixed_action_std') * torch.ones(x.size()).float()
             if self.config.get('cuda'):
                 action_std = action_std.cuda()
             action_std = autograd.Variable(action_std)
@@ -147,8 +147,8 @@ class Policy(nn.Module):
     def evaluate(self, inputs, hiddens, masks, actions):
         value, x, hiddens = self(inputs, hiddens, masks)
 
-        if self.config.get('fixded_action_std'):
-            action_std = self.config.get('action_std') * torch.ones(x.size()).float()
+        if self.config.get('fixed_action_std'):
+            action_std = self.config.get('fixed_action_std') * torch.ones(x.size()).float()
             if self.config.get('cuda'):
                 action_std = action_std.cuda()
             action_std = autograd.Variable(action_std)
