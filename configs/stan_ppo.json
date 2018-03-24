@@ -1,11 +1,11 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels_fixed_std",
+  "policy": "actor_critic_pixels",
   "cuda": true,
   "seed": 1,
 
   "recurring_cell": "gru",
-  "action_std": 0.1,
+  "fixed_action_std": 0.5,
 
   "reward_type": "speed",
 
