@@ -86,7 +86,7 @@ public class RoadBuilder : MonoBehaviour {
 
 		Vector3 np = Vector3.zero;
 
-		float offsetY = -0.1f;
+		float offsetY = 0.0f;
 
 		foreach(string line in lines)
 		{
