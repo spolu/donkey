@@ -38,8 +38,7 @@ UNITY_USERNAME=
 UNITY_PASSWORD=
 ```
 
-
-# At each restart
+## At reboot
 
 ```
 sudo nvidia-smi -pm 1

@@ -148,10 +148,24 @@ class Simulation:
 
         self.client['condition'].acquire()
 
+        sim_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                'build/sim',
+            ),
+        )
+        if os.uname().sysname == 'Darwin':
+            sim_path = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(__file__), 
+                    'build/sim.app/Contents/MacOS/sim'
+                ),
+            )
+
         # Start simulation.
         if self.launch:
             cmd = [
-                self.env['SIM_PATH'],
+                sim_path,
                 "-simulationClientID",
                 str(self.client['id']),
                 "-simulationTimeScale",
