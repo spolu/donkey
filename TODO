@@ -3,6 +3,7 @@
 - [x] try a 1 GPU instance eventually have multiple of them
 - [x] try fixed std normal exploration
 - [x] plot action/value/entropy loss min/max/mean/media reward
+- [x] add telemetry image to human game to check how turns are seen
 - [x] move to 3 laps
 - [ ] try capped speed reward
 - [ ] try orstein-hullenbeck exploration with normal logprobs
