@@ -54,6 +54,7 @@ class Donkey:
         self.step_count = 0
 
         self.lap_count = 0
+        self.last_lap_time = 0.0
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
@@ -158,7 +159,7 @@ class Donkey:
         if self.reward_type == "time":
             if (progress - self.last_rewarded_progress) > PROGRESS_INCREMENT:
                 self.last_rewarded_progress = progress
-                return 1.0 - time / (progress * REFERENCE_LAP_TIME)
+                return 1.0 - (time - self.last_lap_time) / (progress * REFERENCE_LAP_TIME)
             return 0.0
 
         return 0.0
@@ -191,11 +192,13 @@ class Donkey:
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
         progress = self.track.progress(position) / self.track.length
-        if self.last_progress > progress:
-            print("LAP TIME: {}".format(time))
+        if self.last_progress > progress + 0.5:
+            print("LAP TIME: {}".format(time - self.last_lap_time))
             if self.lap_count == 2:
                 return True
             self.lap_count += 1
+            self.last_lap_time = time
+            self.last_rewarded_progress = 0.0
         self.last_progress = progress
 
         return False
@@ -219,6 +222,7 @@ class Donkey:
         self.last_reset_time = telemetry['time']
 
         self.lap_count = 0
+        self.last_lap_time = 0.0
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
