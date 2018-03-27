@@ -16,8 +16,9 @@ MAX_STALL_TIME = 10
 
 OFF_TRACK_DISTANCE = 6.0
 
-PROGRESS_INCREMENT = 0.05
-REFERENCE_LAP_TIME = 50.0
+LAP_COUNT = 3
+PROGRESS_INCREMENT = 0.01
+REFERENCE_LAP_TIME = 100.0
 
 CAMERA_STACK_SIZE = 4
 CAMERA_WIDTH = 120
@@ -52,6 +53,7 @@ class Donkey:
 
         self.step_count = 0
 
+        self.lap_count = 0
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
@@ -146,6 +148,13 @@ class Donkey:
                 np.linalg.norm(track_position)
             ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
+        if self.reward_type == "speed_cap":
+            return (
+                2 * max(track_linear_speed, 1.0) -
+                track_lateral_speed -
+                np.linalg.norm(track_position)
+            ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+
         if self.reward_type == "time":
             if (progress - self.last_rewarded_progress) > PROGRESS_INCREMENT:
                 self.last_rewarded_progress = progress
@@ -182,11 +191,12 @@ class Donkey:
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
         progress = self.track.progress(position) / self.track.length
-        if self.last_progress > progress + 0.1:
+        if self.last_progress > progress:
             print("LAP TIME: {}".format(time))
-            return True
-        else:
-            self.last_progress = progress
+            if self.lap_count == 2:
+                return True
+            self.lap_count += 1
+        self.last_progress = progress
 
         return False
 
@@ -207,6 +217,8 @@ class Donkey:
                 self.simulation.reset()
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
+
+        self.lap_count = 0
         self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
