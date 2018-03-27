@@ -25,6 +25,7 @@ def transition():
         'progress': observations.progress,
         'time': observations.time,
         'linear_speed': observations.track_linear_speed,
+        'camera': observations.camera[donkey.CAMERA_STACK_SIZE-1].tolist(),
     }
 
 def run_server():
