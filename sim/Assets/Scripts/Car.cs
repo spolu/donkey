@@ -80,7 +80,16 @@ public class Car : MonoBehaviour, ICar {
 
 		rb.isKinematic = false;
 	}
-		
+
+	public void SetPosition(Vector3 pos)
+	{
+		rb.isKinematic = true;
+
+		rb.position = pos;
+
+		rb.isKinematic = false;
+	}
+				
 	public float GetSteering()
 	{
 		return requestSteering;
@@ -121,7 +130,7 @@ public class Car : MonoBehaviour, ICar {
 	{
 		return this.transform.position;
 	}
-		
+				
 	public bool IsStill()
 	{
 		return rb.IsSleeping();

@@ -21,7 +21,7 @@ inited = False
 
 clients = []
 lock = threading.Lock()
-
+un
 def client_for_id(client_id):
     global lock
     global clients

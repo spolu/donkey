@@ -77,6 +77,7 @@ public class SimulationController : MonoBehaviour
 		}
 		roadBuilder.DestroyRoad();
 		roadBuilder.BuildRoad();
+		Vector3 trackStartPos = roadBuilder.path.nodes[0].pos;
 
 		Time.captureFramerate = captureFrameRate;
 
@@ -86,7 +87,7 @@ public class SimulationController : MonoBehaviour
 		_socket.On ("reset", OnReset);
 
 		car = carObject.GetComponent<ICar>();
-
+		car.SetPosition (trackStartPos);
 		car.SavePosRot ();
 	}
 
@@ -231,6 +232,8 @@ public class SimulationController : MonoBehaviour
 		// Redraw the track
 		roadBuilder.DestroyRoad();
 		roadBuilder.BuildRoad ();
+		Vector3 trackStartPos = roadBuilder.path.nodes [0].pos;
+		car.SetPosition (trackStartPos);
 
 		// Reset the car to its initial state.
 		car.RestorePosRot ();
