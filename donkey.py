@@ -217,7 +217,7 @@ class Donkey:
                 self.simulation.stop()
                 self.simulation.start()
             else:
-                self.simulation.reset()
+                self.simulation.reset(donkey.track)
         telemetry = self.simulation.telemetry()
         self.last_reset_time = telemetry['time']
 
@@ -272,7 +272,7 @@ class Donkey:
         self.step_count += 1
 
         if done:
-            self.reset()
+            self.reset(donkey.track)
             # If we're done we read the new observations post reset.
             observation = self.observation_from_telemetry(telemetry)
 

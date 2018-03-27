@@ -36,8 +36,7 @@ public class SimulationController : MonoBehaviour
 	private float fpsAccumulator = 0.0f;
 	private int fpsFrameCount  = 0;
 	private float fpsValue = 0.0f;
-	private string socketIOUrl = "ws://127.0.0.1:9091/socket.io/?EIO=4&transport=websocket";
-	private string trackPath;
+	private string socketIOUrl = "ws://127.0.0.1:49796/socket.io/?EIO=4&transport=websocket";
 
 	void Awake()
 	{
@@ -59,9 +58,6 @@ public class SimulationController : MonoBehaviour
 			if (args [i] == "-socketIOPort") {
 				socketIOUrl = "ws://127.0.0.1:" + args[i+1] + "/socket.io/?EIO=4&transport=websocket";
 			}
-			if (args [i] == "-trackPath") {
-				trackPath = args[i+1];
-			}
 		}
 
 		_socket = GetComponent<SocketIOComponent>();
@@ -72,11 +68,8 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("SimulationController initializing");
 
-		if (trackPath != null) {
-			roadBuilder.pathToLoad = trackPath;
-		}
 		roadBuilder.DestroyRoad();
-		roadBuilder.BuildRoad();
+		roadBuilder.BuildRoad(null);
 		Vector3 trackStartPos = roadBuilder.path.nodes[0].pos;
 
 		Time.captureFramerate = captureFrameRate;
@@ -229,9 +222,12 @@ public class SimulationController : MonoBehaviour
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
 
+		//Parse track
+		string trackPath = ev.data.GetField("track").str;
+
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		roadBuilder.BuildRoad ();
+		roadBuilder.BuildRoad (trackPath);
 		Vector3 trackStartPos = roadBuilder.path.nodes [0].pos;
 		car.SetPosition (trackStartPos);
 

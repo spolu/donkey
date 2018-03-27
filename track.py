@@ -9,7 +9,7 @@ Track interface
 class Track:
     def __init__(self):
         self.points = np.array(
-            np.loadtxt('track.coordinates', delimiter=','),
+            np.loadtxt('short_track.coordinates', delimiter=','),
         )
         self.length = 0.0
         for i in range(len(self.points)):

@@ -21,7 +21,7 @@ inited = False
 
 clients = []
 lock = threading.Lock()
-un
+
 def client_for_id(client_id):
     global lock
     global clients
@@ -198,7 +198,9 @@ class Simulation:
         self.client['condition'].acquire()
 
         with lock:
-            sio.emit('reset', data={}, room=self.client['sid'])
+            sio.emit('reset', data={
+                'track': str()
+            }, room=self.client['sid'])
 
         self.client['condition'].wait()
         self.client['condition'].release()
@@ -214,11 +216,13 @@ class Simulation:
             self.client['id'], self.client['sid'],
         ))
 
-    def reset(self):
+    def reset(self, track):
         self.client['condition'].acquire()
 
         with lock:
-            sio.emit('reset', data={}, room=self.client['sid'])
+            sio.emit('reset', data={
+                'track': str(track.points)
+            }, room=self.client['sid'])
 
         self.client['condition'].wait()
         self.client['condition'].release()
