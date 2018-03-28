@@ -104,7 +104,7 @@ def init_server():
     port = get_free_tcp_port()
 
     env = os.environ.copy()
-    if env['SIMULATION_PORT']:
+    if 'SIMULATION_PORT' in env:
         port = int(env['SIMULATION_PORT'])
 
     # This threading call is imported from eventlet.green. Magic!

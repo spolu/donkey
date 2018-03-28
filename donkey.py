@@ -150,11 +150,19 @@ class Donkey:
             ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
         if self.reward_type == "speed_cap":
-            return (
-                2 * max(track_linear_speed, 1.0) -
-                track_lateral_speed -
-                np.linalg.norm(track_position)
-            ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+            if track_linear_speed > 1.0:
+                return (
+                    - (track_linear_speed - 1.0) -
+                    track_lateral_speed -
+                    np.linalg.norm(track_position)
+                ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+            else:
+                return (
+                    (track_linear_speed - 1.0) -
+                    track_lateral_speed -
+                    np.linalg.norm(track_position)
+                ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+
 
         if self.reward_type == "time":
             if (progress - self.last_rewarded_progress) > PROGRESS_INCREMENT:
