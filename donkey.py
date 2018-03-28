@@ -158,7 +158,7 @@ class Donkey:
                 ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
             else:
                 return (
-                    (track_linear_speed - 1.0) -
+                    track_linear_speed -
                     track_lateral_speed -
                     np.linalg.norm(track_position)
                 ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
