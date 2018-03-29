@@ -7,6 +7,8 @@ import os
 import subprocess
 import socket
 
+import track
+
 from flask import Flask
 from eventlet.green import threading
 
@@ -197,11 +199,13 @@ class Simulation:
 
         self.client['condition'].acquire()
 
+        short_track = track.Track()
         with lock:
             sio.emit('reset', data={
-                'track': str()
+                'track': short_track.points_str()
             }, room=self.client['sid'])
 
+        print(short_track.points_str())
         self.client['condition'].wait()
         self.client['condition'].release()
         print("Received initial telemetry: id={} sid={}".format(
@@ -221,7 +225,7 @@ class Simulation:
 
         with lock:
             sio.emit('reset', data={
-                'track': str(track.points)
+                'track': track.points_str()
             }, room=self.client['sid'])
 
         self.client['condition'].wait()

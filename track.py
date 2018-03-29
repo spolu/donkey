@@ -124,7 +124,12 @@ class Track:
         p -= np.linalg.norm(v) - np.dot(t, u)
         return p
 
+    def points_str(self):
+        point_str = ''
+        for p in self.points:
+            point_str += ','.join(map(str, p)) + ';'
+        return point_str
+
 if __name__ == "__main__":
     t = Track()
-    for p in t.points:
-        print("{:.1f},{:.1f},{:.1f}".format(p[0]-46.7, p[1], p[2]))
+    print(t.points_str())

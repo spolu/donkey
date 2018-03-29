@@ -84,7 +84,7 @@ public class RoadBuilder : MonoBehaviour {
 		if(pathString == null)
 			return;
 
-		string[] lines = pathString.Split('\n');
+		string[] lines = pathString.Split(';');
 
 		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
 

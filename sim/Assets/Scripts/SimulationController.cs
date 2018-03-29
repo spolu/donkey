@@ -36,7 +36,7 @@ public class SimulationController : MonoBehaviour
 	private float fpsAccumulator = 0.0f;
 	private int fpsFrameCount  = 0;
 	private float fpsValue = 0.0f;
-	private string socketIOUrl = "ws://127.0.0.1:9091/socket.io/?EIO=4&transport=websocket";
+	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
 	void Awake()
 	{
@@ -228,7 +228,7 @@ public class SimulationController : MonoBehaviour
 		// Redraw the track
 		roadBuilder.DestroyRoad();
 		roadBuilder.BuildRoad (trackPath);
-		Vector3 trackStartPos = roadBuilder.path.nodes [0].pos;
+		Vector3 trackStartPos = roadBuilder.path.nodes[0].pos;
 		car.SetPosition (trackStartPos);
 
 		// Reset the car to its initial state.
