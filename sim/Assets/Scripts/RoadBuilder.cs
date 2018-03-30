@@ -7,14 +7,8 @@ public class RoadBuilder : MonoBehaviour {
 	public float roadWidth = 1.0f;
 	public float roadHeightOffset = 0.0f;
 	public float roadOffsetW = 0.0f;
-	public bool doFlattenAtStart = true;
-	public bool doFlattenArroundRoad = true;
-	public bool doLiftRoadToTerrain = true;
 	public string pathToLoad = "none";
-	public CarPath path;
 		
-	public Terrain terrain;
-
 	public GameObject roadPrefabMesh;
 
 	public int iRoadTexture = 0;
@@ -71,24 +65,24 @@ public class RoadBuilder : MonoBehaviour {
 		mr.material.mainTextureScale = ms;
 	}
 
-	void MakePointPath(string pathData)
+	CarPath MakePointPath(string pathData)
 	{
-		string pData = pathData;
+		// string pData = pathData;
 
-		if(pathData == null) {
-			//load default path as default
-			TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
-			pData = bindata.text;
-		}
+		// if(pathData == null) {
+		//	//load default path as default
+		//	TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
+		//	pData = bindata.text;
+		// }
 
-		if(pData == null)
-			return;
+		if(pathData == null)
+			return null;
 
-		string[] lines = pData.Split(';');
+		string[] lines = pathData.Split(';');
 
 		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
 
-		path = new CarPath();
+		CarPath path = new CarPath();
 
 		Vector3 np = Vector3.zero;
 
@@ -107,12 +101,18 @@ public class RoadBuilder : MonoBehaviour {
 			p.pos = np;
 			path.nodes.Add(p);
 		}
+
+		return path;
 	}
 
-	public void BuildRoad(string pathData)
+	public CarPath BuildRoad(string pathData)
 	{
-		MakePointPath(pathData);
-		InitRoad(path);                 
+		CarPath path = MakePointPath(pathData);
+
+		if (path != null)
+			InitRoad(path);
+		
+		return path;
 	}
 
 
@@ -180,11 +180,6 @@ public class RoadBuilder : MonoBehaviour {
 				vLength = posB - posA;
 				vWidth = Vector3.Cross(vLength, Vector3.up);
 
-				if(doLiftRoadToTerrain)
-				{
-					posA.y = terrain.SampleHeight(posA) + 1.0f;
-				}
-
 				posA.y += roadHeightOffset;
 			}
 			else
@@ -230,7 +225,5 @@ public class RoadBuilder : MonoBehaviour {
 		mesh.uv = uv;
 
 		mesh.RecalculateBounds();
-
-
 	}
 }

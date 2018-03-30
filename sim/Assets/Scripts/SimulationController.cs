@@ -38,6 +38,8 @@ public class SimulationController : MonoBehaviour
 	private float fpsValue = 0.0f;
 	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
+	private float carStartY = 0.6f;
+
 	void Awake()
 	{
 		string[] args = System.Environment.GetCommandLineArgs ();
@@ -68,10 +70,6 @@ public class SimulationController : MonoBehaviour
 	{
 		Debug.Log ("SimulationController initializing");
 
-		roadBuilder.DestroyRoad();
-		roadBuilder.BuildRoad(null);
-		Vector3 trackStartPos = roadBuilder.path.nodes[0].pos;
-
 		Time.captureFramerate = captureFrameRate;
 
 		_socket.On ("open", OnOpen);
@@ -80,8 +78,6 @@ public class SimulationController : MonoBehaviour
 		_socket.On ("reset", OnReset);
 
 		car = carObject.GetComponent<ICar>();
-		car.SetPosition (trackStartPos);
-		car.SavePosRot ();
 	}
 
 	private void OnEnable()
@@ -227,12 +223,14 @@ public class SimulationController : MonoBehaviour
 
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		roadBuilder.BuildRoad (trackPath);
-		Vector3 trackStartPos = roadBuilder.path.nodes[0].pos;
-		car.SetPosition (trackStartPos);
+		CarPath path = roadBuilder.BuildRoad(trackPath);
 
-		// Reset the car to its initial state.
-		car.RestorePosRot ();
+		Vector3 trackStartPos = Vector3.zero;
+		if (path != null)
+			trackStartPos = path.nodes[0].pos;
+		trackStartPos.y = carStartY;
+
+		car.Set(trackStartPos, Quaternion.identity);
 
 		Resume ();
 	}

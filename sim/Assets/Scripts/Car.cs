@@ -41,19 +41,6 @@ public class Car : MonoBehaviour, ICar {
 
 		requestTorque = 0f;
 		requestSteering = 0f;
-
-		SavePosRot();
-	}
-
-	public void SavePosRot()
-	{
-		startPos = transform.position;
-		startRot = transform.rotation;
-	}
-
-	public void RestorePosRot()
-	{
-		Set(startPos, startRot);
 	}
 
 	public void RequestThrottle(float val)
