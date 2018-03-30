@@ -17,6 +17,7 @@ public class SimulationController : MonoBehaviour
 
 	public GameObject carObject;
 	public CameraSensor camSensor;
+	public RoadBuilder roadBuilder;
 
 	private ICar car;
 	private SocketIOComponent _socket;
@@ -35,8 +36,9 @@ public class SimulationController : MonoBehaviour
 	private float fpsAccumulator = 0.0f;
 	private int fpsFrameCount  = 0;
 	private float fpsValue = 0.0f;
+	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
-	private string socketIOUrl = "ws://127.0.0.1:9091/socket.io/?EIO=4&transport=websocket";
+	private float carStartY = 0.6f;
 
 	void Awake()
 	{
@@ -76,8 +78,6 @@ public class SimulationController : MonoBehaviour
 		_socket.On ("reset", OnReset);
 
 		car = carObject.GetComponent<ICar>();
-
-		car.SavePosRot ();
 	}
 
 	private void OnEnable()
@@ -170,8 +170,6 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField ("acceleration", acceleration);
 
 				Send (m);
-				//Pause ();
-				Debug.Log ("WILL PAUSE");
 				Pause ();
 			}
 		}
@@ -218,8 +216,19 @@ public class SimulationController : MonoBehaviour
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
 
-		// Reset the car to its initial state.
-		car.RestorePosRot ();
+		//Parse track
+		string trackPath = ev.data.GetField("track").str;
+
+		// Redraw the track
+		roadBuilder.DestroyRoad();
+		CarPath path = roadBuilder.BuildRoad(trackPath);
+
+		Vector3 trackStartPos = Vector3.zero;
+		if (path != null)
+			trackStartPos = path.nodes[0].pos;
+		trackStartPos.y = carStartY;
+
+		car.Set(trackStartPos, Quaternion.identity);
 
 		Resume ();
 	}

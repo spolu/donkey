@@ -10,6 +10,8 @@ import socket
 from flask import Flask
 from eventlet.green import threading
 
+import track
+
 """
 Shared underlying socket.io server
 """
@@ -122,11 +124,12 @@ Command = collections.namedtuple(
 )
 
 class Simulation:
-    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate):
+    def __init__(self, track, launch, headless, time_scale, step_interval, capture_frame_rate):
         global lock
         global clients
-        self.headless = headless
+        self.track = track
         self.launch = launch
+        self.headless = headless
         self.time_scale = time_scale
         self.step_interval = step_interval
         self.capture_frame_rate = capture_frame_rate
@@ -198,7 +201,9 @@ class Simulation:
         self.client['condition'].acquire()
 
         with lock:
-            sio.emit('reset', data={}, room=self.client['sid'])
+            sio.emit('reset', data={
+                'track': self.track.serialize()
+            }, room=self.client['sid'])
 
         self.client['condition'].wait()
         self.client['condition'].release()
@@ -214,11 +219,13 @@ class Simulation:
             self.client['id'], self.client['sid'],
         ))
 
-    def reset(self):
+    def reset(self, track):
         self.client['condition'].acquire()
 
         with lock:
-            sio.emit('reset', data={}, room=self.client['sid'])
+            sio.emit('reset', data={
+                'track': self.track.serialize()
+            }, room=self.client['sid'])
 
         self.client['condition'].wait()
         self.client['condition'].release()
@@ -252,6 +259,7 @@ class Simulation:
 
 if __name__ == "__main__":
     s = Simulation(
+        track.Track(),
         False,
         False,
         1.0,

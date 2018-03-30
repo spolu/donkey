@@ -123,3 +123,13 @@ class Track:
         v = self.points[closests[1]] - self.points[closests[0]]
         p -= np.linalg.norm(v) - np.dot(t, u)
         return p
+
+    def serialize(self):
+        serialized = ''
+        for p in self.points:
+            serialized += ','.join(map(str, p)) + ';'
+        return serialized
+
+if __name__ == "__main__":
+    t = Track()
+    print(t.serialize())

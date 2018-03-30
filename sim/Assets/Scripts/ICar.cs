@@ -20,7 +20,7 @@ public interface ICar
 	Vector3 GetVelocity();
 	Vector3 GetAccelleration();
 
- 	// Save and restore State
-	void SavePosRot();
-	void RestorePosRot();
+	// Set position
+	void Set(Vector3 pos, Quaternion rot);
+	void SetPosition(Vector3 pos);
 }
