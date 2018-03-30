@@ -152,7 +152,7 @@ class Donkey:
             ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
 
         if self.reward_type == "speed_cap":
-            if track_linear_speed > 1.0:
+            if track_linear_speed > 2.0:
                 return (
                     - (track_linear_speed - 1.0) -
                     track_lateral_speed -
