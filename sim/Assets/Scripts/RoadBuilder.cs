@@ -5,15 +5,12 @@ using UnityEngine;
 public class RoadBuilder : MonoBehaviour {
 
 	public float roadWidth = 1.0f;
-	public float roadHeightOffset = 0.0f;
 	public float roadOffsetW = 0.0f;
-	public string pathToLoad = "none";
 		
 	public GameObject roadPrefabMesh;
 
 	public int iRoadTexture = 0;
 	public Texture2D[] roadTextures;
-	public float[] roadOffsets;
 	public float[] roadWidths;
 
 	Texture2D customRoadTexure;
@@ -22,7 +19,6 @@ public class RoadBuilder : MonoBehaviour {
 
 	void Awake () 	
 	{
-		BuildRoad(null);
 	}
 
 	void Start()
@@ -40,17 +36,13 @@ public class RoadBuilder : MonoBehaviour {
 		iRoadTexture += 1;
 	}
 
-	public void SetNewRoadVariation(int iVariation)
+	public void SetRoadVariation(int iVariation)
 	{
 		if(roadTextures.Length > 0)		
 			customRoadTexure = roadTextures[ iVariation % roadTextures.Length ];
 
-		if(roadOffsets.Length > 0)
-			roadOffsetW = roadOffsets[ iVariation % roadOffsets.Length ];
-
 		if(roadWidths.Length > 0)
 			roadWidth = roadWidths[ iVariation % roadWidths.Length ];
-		
 	}
 
 	public void NegateYTiling()
@@ -67,14 +59,6 @@ public class RoadBuilder : MonoBehaviour {
 
 	CarPath MakePointPath(string pathData)
 	{
-		// string pData = pathData;
-
-		// if(pathData == null) {
-		//	//load default path as default
-		//	TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
-		//	pData = bindata.text;
-		// }
-
 		if(pathData == null)
 			return null;
 
@@ -115,7 +99,6 @@ public class RoadBuilder : MonoBehaviour {
 		return path;
 	}
 
-
 	public void InitRoad(CarPath path)
 	{
 		
@@ -126,19 +109,9 @@ public class RoadBuilder : MonoBehaviour {
 		mf.mesh = mesh;
 		createdRoad = go;
 
-		if(customRoadTexure != null)
-		{
-			mr.material.mainTexture = customRoadTexure;
-		}
-		else if(roadTextures != null && iRoadTexture < roadTextures.Length)
-		{
-			Texture2D t = roadTextures[iRoadTexture];
+		SetRoadVariation (iRoadTexture % roadTextures.Length);
 
-			if(mr != null && t != null)
-			{
-				mr.material.mainTexture = t;
-			}
-		}
+		mr.material.mainTexture = customRoadTexure;
 
 		go.tag = "road_mesh";
 
@@ -177,20 +150,20 @@ public class RoadBuilder : MonoBehaviour {
 				posA = nodeA.pos;
 				posB = nodeB.pos;
 
-				vLength = posB - posA;
-				vWidth = Vector3.Cross(vLength, Vector3.up);
-
-				posA.y += roadHeightOffset;
 			}
 			else
 			{
 				PathNode nodeA = path.nodes[iNode];
+				PathNode nodeB = path.nodes[0];
 				posA = nodeA.pos;
-				posA.y += roadHeightOffset;
+				posB = nodeB.pos;
 			}
 
-			Vector3 leftPos = posA + vWidth.normalized * roadWidth + vWidth.normalized * roadOffsetW;
-			Vector3 rightPos = posA - vWidth.normalized * roadWidth + vWidth.normalized * roadOffsetW;
+			vLength = posB - posA;
+			vWidth = Vector3.Cross(vLength, Vector3.up);
+				
+			Vector3 leftPos = posA + vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
+			Vector3 rightPos = posA - vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
 
 			vertices[iVert] = leftPos;
 			vertices[iVert + 1] = rightPos;

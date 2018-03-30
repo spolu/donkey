@@ -170,8 +170,6 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField ("acceleration", acceleration);
 
 				Send (m);
-				//Pause ();
-				Debug.Log ("WILL PAUSE");
 				Pause ();
 			}
 		}
