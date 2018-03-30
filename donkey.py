@@ -40,19 +40,21 @@ class Donkey:
         self.simulation_step_interval = config.get('simulation_step_interval')
         self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
         self.reward_type = config.get('reward_type')
+
         self.started = False
+
+        self.track = track.Track()
         self.simulation = simulation.Simulation(
+            self.track,
             True,
             self.simulation_headless,
             self.simulation_time_scale,
             self.simulation_step_interval,
             self.simulation_capture_frame_rate,
         )
-        self.track = track.Track()
+
         self.last_reset_time = 0.0
-
         self.step_count = 0
-
         self.lap_count = 0
         self.last_lap_time = 0.0
         self.last_controls = np.zeros(2)

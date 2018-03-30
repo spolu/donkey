@@ -7,8 +7,6 @@ import os
 import subprocess
 import socket
 
-import track
-
 from flask import Flask
 from eventlet.green import threading
 
@@ -124,11 +122,12 @@ Command = collections.namedtuple(
 )
 
 class Simulation:
-    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate):
+    def __init__(self, track, launch, headless, time_scale, step_interval, capture_frame_rate):
         global lock
         global clients
-        self.headless = headless
+        self.track = track
         self.launch = launch
+        self.headless = headless
         self.time_scale = time_scale
         self.step_interval = step_interval
         self.capture_frame_rate = capture_frame_rate
@@ -199,13 +198,11 @@ class Simulation:
 
         self.client['condition'].acquire()
 
-        short_track = track.Track()
         with lock:
             sio.emit('reset', data={
-                'track': short_track.points_str()
+                'track': track.serialize()
             }, room=self.client['sid'])
 
-        print(short_track.points_str())
         self.client['condition'].wait()
         self.client['condition'].release()
         print("Received initial telemetry: id={} sid={}".format(
@@ -225,7 +222,7 @@ class Simulation:
 
         with lock:
             sio.emit('reset', data={
-                'track': track.points_str()
+                'track': track.serialize()
             }, room=self.client['sid'])
 
         self.client['condition'].wait()
@@ -260,6 +257,7 @@ class Simulation:
 
 if __name__ == "__main__":
     s = Simulation(
+        track.Track(),
         False,
         False,
         1.0,

@@ -9,7 +9,7 @@ Track interface
 class Track:
     def __init__(self):
         self.points = np.array(
-            np.loadtxt('short_track.coordinates', delimiter=','),
+            np.loadtxt('track.coordinates', delimiter=','),
         )
         self.length = 0.0
         for i in range(len(self.points)):
@@ -124,12 +124,12 @@ class Track:
         p -= np.linalg.norm(v) - np.dot(t, u)
         return p
 
-    def points_str(self):
-        point_str = ''
+    def serialize(self):
+        serialized = ''
         for p in self.points:
-            point_str += ','.join(map(str, p)) + ';'
-        return point_str
+            serialized += ','.join(map(str, p)) + ';'
+        return serialized
 
 if __name__ == "__main__":
     t = Track()
-    print(t.points_str())
+    print(t.serialize())
