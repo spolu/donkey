@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 
 """
 Track interface
@@ -6,10 +7,12 @@ Track interface
 
 # import pdb; pdb.set_trace()
 
+SPAN_DIST = 5.0
+
 class Track:
     def __init__(self):
         self.points = np.array(
-            np.loadtxt('track.coordinates', delimiter=','),
+            np.loadtxt('coordinates/warehouse.coordinates', delimiter=','),
         )
         self.length = 0.0
         for i in range(len(self.points)):
@@ -130,6 +133,87 @@ class Track:
             serialized += ','.join(map(str, p)) + ';'
         return serialized
 
+class ScriptElemState(Enum):
+    STRAIGHT = 1
+    CURVE = 2
+    ANGLE = 3
+
+class ScriptElem:
+    def __init__(self, state, value, count):
+        self.state = state
+        self.value = value
+        self.count = count
+
+
+class Script:
+    def __init__(self, filename):
+        self.elems = []
+
+        with open(filename) as f:
+            for line in f:
+                tokens = line.split(" ")
+
+                command = tokens[0]
+                arg = tokens[1]
+
+                if command == "DY":
+                    e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
+                if command == "L":
+                    e = ScriptElem(ScriptElemState.CURVE, -1.0, int(arg))
+                if command == "R":
+                    e = ScriptElem(ScriptElemState.CURVE, 1.0, int(arg))
+                if command == "S":
+                    e = ScriptElem(ScriptElemState.STRAIGHT, 0, int(arg))
+
+                self.elems.append(e)
+
+    def points(self):
+        dY = 0.0
+        turn = 0.0
+
+        s = np.array((0, 0, 0))
+        span = np.array((0, SPAN_DIST, 0))
+
+        points = []
+
+        for se in self.elems:
+            if se.state == ScriptElemState.ANGLE:
+                turn = se.value
+            if se.state == ScriptElemState.CURVE:
+                turn = 0.0
+                dY = se.value * turn
+            if se.state == ScriptElemState.STRAIGHT:
+                dY = 0.0
+                turn = 0.0
+
+            for i in range(se.count):
+                points.append(np.copy(s))
+                span = self.rot_y(dY) * span / np.linalg.norm(span) * spanDist
+                s += span
+
+    def rot_y(angle):
+        theta = np.radians(angle)
+        c, s = np.cos(theta), np.sin(theta)
+
+        return np.array((
+            (c, 0, s),
+            (0, 1, 0),
+            (-s, 0, c),
+        ))
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
-    t = Track()
-    print(t.serialize())
+    # t = Track()
+    # print(t.serialize())
+
+    s = Script('coordinates/newwolrd.script')
+    print(s.points())
+

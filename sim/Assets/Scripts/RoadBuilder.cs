@@ -6,7 +6,7 @@ public class RoadBuilder : MonoBehaviour {
 
 	public float roadWidth = 1.0f;
 	public float roadOffsetW = 0.0f;
-		
+
 	public GameObject roadPrefabMesh;
 
 	public int iRoadTexture = 0;
@@ -17,7 +17,7 @@ public class RoadBuilder : MonoBehaviour {
 
 	GameObject createdRoad;
 
-	void Awake () 	
+	void Awake ()
 	{
 	}
 
@@ -38,7 +38,7 @@ public class RoadBuilder : MonoBehaviour {
 
 	public void SetRoadVariation(int iVariation)
 	{
-		if(roadTextures.Length > 0)		
+		if(roadTextures.Length > 0)
 			customRoadTexure = roadTextures[ iVariation % roadTextures.Length ];
 
 		if(roadWidths.Length > 0)
@@ -50,7 +50,7 @@ public class RoadBuilder : MonoBehaviour {
 		//todo
 		if(createdRoad == null)
 			return;
-		
+
 		MeshRenderer mr = createdRoad.GetComponent<MeshRenderer>();
 		Vector2 ms = mr.material.mainTextureScale;
 		ms.y *= -1.0f;
@@ -95,7 +95,7 @@ public class RoadBuilder : MonoBehaviour {
 
 		if (path != null)
 			InitRoad(path);
-		
+
 		return path;
 	}
 
@@ -164,7 +164,7 @@ public class RoadBuilder : MonoBehaviour {
 
 			vLength = posB - posA;
 			vWidth = Vector3.Cross(vLength, Vector3.up);
-				
+
 			Vector3 leftPos = posA + vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
 			Vector3 rightPos = posA - vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
 
@@ -190,7 +190,7 @@ public class RoadBuilder : MonoBehaviour {
 
 			iNode++;
 		}
-			
+
 		int iVertOffset = 0;
 		int iTriOffset = 0;
 
