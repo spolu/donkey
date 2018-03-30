@@ -101,15 +101,15 @@ public class RoadBuilder : MonoBehaviour {
 
 	public void InitRoad(CarPath path)
 	{
-		
+		SetRoadVariation (iRoadTexture % roadTextures.Length);
+
 		GameObject go = GameObject.Instantiate(roadPrefabMesh);
 		MeshRenderer mr = go.GetComponent<MeshRenderer>();
 		MeshFilter mf = go.GetComponent<MeshFilter>();
 		Mesh mesh = new Mesh();
+
 		mf.mesh = mesh;
 		createdRoad = go;
-
-		SetRoadVariation (iRoadTexture % roadTextures.Length);
 
 		mr.material.mainTexture = customRoadTexure;
 
@@ -121,8 +121,8 @@ public class RoadBuilder : MonoBehaviour {
 
 		Vector3[] vertices = new Vector3[numVerts];
 
-		int numTriIndecies = numTris * 3;
-		int[] tri = new int[numTriIndecies];
+		int numTriIndexes = numTris * 3;
+		int[] tri = new int[numTriIndexes];
 
 		int numNormals = numVerts;
 		Vector3[] normals = new Vector3[numNormals];
@@ -137,6 +137,9 @@ public class RoadBuilder : MonoBehaviour {
 
 		Vector3 posA = Vector3.zero;
 		Vector3 posB = Vector3.zero;
+
+		Vector3 lastLeftPos = Vector3.zero;
+		Vector3 lastRightPos = Vector3.zero;
 
 		Vector3 vLength = Vector3.one;
 		Vector3 vWidth = Vector3.one;
@@ -165,15 +168,29 @@ public class RoadBuilder : MonoBehaviour {
 			Vector3 leftPos = posA + vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
 			Vector3 rightPos = posA - vWidth.normalized * roadWidth + Vector3.up * roadOffsetW;
 
-			vertices[iVert] = leftPos;
-			vertices[iVert + 1] = rightPos;
+			// Prevent visual artifact in tight turns
+			if (lastLeftPos != Vector3.zero) {
+				if (Vector3.Dot (vLength, leftPos - lastLeftPos) < 0.0) {
+					leftPos = lastLeftPos;
+				}
+			}
+			if (lastRightPos != Vector3.zero) {
+				if (Vector3.Dot (vLength, rightPos - lastRightPos) < 0.0) {
+					rightPos = lastRightPos;
+				}
+			}
+			lastLeftPos = leftPos;
+			lastRightPos = rightPos;
+
+			vertices [iVert] = leftPos;
+			vertices [iVert + 1] = rightPos;
 
 			uv[iVert] = new Vector2(0.2f * iNode, 0.0f);
 			uv[iVert + 1] = new Vector2(0.2f * iNode, 1.0f);
 
 			iNode++;
 		}
-
+			
 		int iVertOffset = 0;
 		int iTriOffset = 0;
 
