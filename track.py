@@ -151,18 +151,22 @@ class Script:
 
         with open(filename) as f:
             for line in f:
-                tokens = line.split(" ")
+                tokens = line.strip().split(" ")
 
                 command = tokens[0]
                 arg = tokens[1]
 
+                e = None
+
+                print("{}-{}".format(command, arg))
+
                 if command == "DY":
                     e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
-                if command == "L":
+                elif command == "L":
                     e = ScriptElem(ScriptElemState.CURVE, -1.0, int(arg))
-                if command == "R":
+                elif command == "R":
                     e = ScriptElem(ScriptElemState.CURVE, 1.0, int(arg))
-                if command == "S":
+                elif command == "S":
                     e = ScriptElem(ScriptElemState.STRAIGHT, 0, int(arg))
 
                 self.elems.append(e)
@@ -180,40 +184,35 @@ class Script:
             if se.state == ScriptElemState.ANGLE:
                 turn = se.value
             if se.state == ScriptElemState.CURVE:
-                turn = 0.0
                 dY = se.value * turn
+                turn = 0.0
             if se.state == ScriptElemState.STRAIGHT:
                 dY = 0.0
                 turn = 0.0
 
             for i in range(se.count):
                 points.append(np.copy(s))
-                span = self.rot_y(dY) * span / np.linalg.norm(span) * spanDist
-                s += span
+                print(span)
+                span = np.dot(self.rot_y(dY), span) / np.linalg.norm(span) * SPAN_DIST
+                s = s + span
+                print(s)
 
-    def rot_y(angle):
+        return points
+
+    def rot_y(self, angle):
         theta = np.radians(angle)
         c, s = np.cos(theta), np.sin(theta)
 
         return np.array((
-            (c, 0, s),
-            (0, 1, 0),
-            (-s, 0, c),
+            (c, -s, 0),
+            (s, c, 0),
+            (0, 0, 1),
         ))
-
-
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     # t = Track()
     # print(t.serialize())
 
-    s = Script('coordinates/newwolrd.script')
+    s = Script('coordinates/newworld.script')
     print(s.points())
 
