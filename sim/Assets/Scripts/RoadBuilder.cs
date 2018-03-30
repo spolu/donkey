@@ -73,18 +73,18 @@ public class RoadBuilder : MonoBehaviour {
 
 	void MakePointPath(string pathData)
 	{
-		string pathString = pathData;
+		string pData = pathData;
 
-		if(pathString == null) {
+		if(pathData == null) {
 			//load default path as default
 			TextAsset bindata = Resources.Load(pathToLoad) as TextAsset;
-			pathString = bindata.text;
+			pData = bindata.text;
 		}
 
-		if(pathString == null)
+		if(pData == null)
 			return;
 
-		string[] lines = pathString.Split(';');
+		string[] lines = pData.Split(';');
 
 		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
 
@@ -109,9 +109,9 @@ public class RoadBuilder : MonoBehaviour {
 		}
 	}
 
-	public void BuildRoad(string trackPath)
+	public void BuildRoad(string pathData)
 	{
-		MakePointPath(trackPath);
+		MakePointPath(pathData);
 		InitRoad(path);                 
 	}
 
