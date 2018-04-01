@@ -1,13 +1,13 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels",
+  "policy": "actor_critic_angles",
   "cuda": true,
   "seed": 1,
 
   "recurring_cell": "gru",
   "fixed_action_std": false,
 
-  "reward_type": "speed_cap",
+  "reward_type": "speed",
 
   "rollout_size": 20,
   "worker_count": 32,

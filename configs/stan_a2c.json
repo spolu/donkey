@@ -1,6 +1,6 @@
 {
   "model": "stan_a2c",
-  "policy": "actor_critic_params_mlp",
+  "policy": "actor_critic_angles",
   "cuda": true,
   "seed": 0,
 
