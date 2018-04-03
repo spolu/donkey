@@ -11,9 +11,8 @@ SPAN_DIST = 5.0
 
 class Track:
     def __init__(self):
-        self.points = np.array(
-            np.loadtxt('coordinates/warehouse.coordinates', delimiter=','),
-        )
+        s = Script('coordinates/newworld.script')
+        self.points = s.points()
         self.length = 0.0
         for i in range(len(self.points)):
             self.length += np.linalg.norm(
@@ -144,7 +143,6 @@ class ScriptElem:
         self.value = value
         self.count = count
 
-
 class Script:
     def __init__(self, filename):
         self.elems = []
@@ -156,10 +154,9 @@ class Script:
                 command = tokens[0]
                 arg = tokens[1]
 
+                # print("{}-{}".format(command, arg))
+
                 e = None
-
-                print("{}-{}".format(command, arg))
-
                 if command == "DY":
                     e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
                 elif command == "L":
@@ -173,29 +170,34 @@ class Script:
 
     def points(self):
         dY = 0.0
-        turn = 0.0
+        angle = 0.0
 
         s = np.array((0, 0, 0))
-        span = np.array((0, SPAN_DIST, 0))
+        span = np.array((0, 0, SPAN_DIST))
 
         points = []
 
         for se in self.elems:
             if se.state == ScriptElemState.ANGLE:
-                turn = se.value
+                angle = se.value
             if se.state == ScriptElemState.CURVE:
-                dY = se.value * turn
-                turn = 0.0
+                dY = se.value * angle
+                angle = 0.0
             if se.state == ScriptElemState.STRAIGHT:
                 dY = 0.0
-                turn = 0.0
+                angle = 0.0
 
             for i in range(se.count):
                 points.append(np.copy(s))
-                print(span)
                 span = np.dot(self.rot_y(dY), span) / np.linalg.norm(span) * SPAN_DIST
                 s = s + span
-                print(s)
+
+        # interpolate to first point
+        points.append([
+            0.001 * points[-1][0] + 0.999 * points[0][0],
+            0.001 * points[-1][1] + 0.999 * points[0][1],
+            0.001 * points[-1][2] + 0.999 * points[0][2],
+        ])
 
         return points
 
@@ -204,15 +206,13 @@ class Script:
         c, s = np.cos(theta), np.sin(theta)
 
         return np.array((
-            (c, -s, 0),
-            (s, c, 0),
-            (0, 0, 1),
+            (c, 0, s),
+            (0, 1, 0),
+            (-s, 0, c),
         ))
 
 if __name__ == "__main__":
-    # t = Track()
-    # print(t.serialize())
-
-    s = Script('coordinates/newworld.script')
-    print(s.points())
+    s = Script('coordinates/warehouse.script')
+    for p in s.points():
+        print(p)
 
