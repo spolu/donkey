@@ -11,6 +11,8 @@ from torch.distributions import Normal
 
 import donkey
 
+# import pdb; pdb.set_trace()
+
 class Policy(nn.Module):
     def __init__(self, config):
         super(Policy, self).__init__()
@@ -23,7 +25,7 @@ class Policy(nn.Module):
         self.cv2_a = nn.Conv2d(32, 64, 4, stride=2)
         self.cv3_a = nn.Conv2d(64, 64, 3, stride=1)
 
-        self.fc1_a = nn.Linear(1152, self.hidden_size)
+        self.fc1_a = nn.Linear(11264, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru_a = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -38,7 +40,7 @@ class Policy(nn.Module):
         self.cv2_v = nn.Conv2d(32, 64, 4, stride=2)
         self.cv3_v = nn.Conv2d(64, 64, 3, stride=1)
 
-        self.fc1_v = nn.Linear(1152 + donkey.ANGLES_WINDOW, self.hidden_size)
+        self.fc1_v = nn.Linear(11264 + donkey.ANGLES_WINDOW, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru_v = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -93,25 +95,21 @@ class Policy(nn.Module):
             self.gru_v.bias_hh.data.fill_(0)
 
     def forward(self, inputs, hiddens, masks):
-        pixels = np.zeros((
-            donkey.CAMERA_STACK_SIZE,
-            donkey.CAMERA_WIDTH,
-            donkey.CAMERA_HEIGHT,
-        )) * inputs.size(0)
-        angles = [0.0] * inputs.size(0)
-
-        for i in len(inputs):
-            for j in donkey.CAMERA_STACK_SIZE:
-                pixels[i][j] = inputs[i][j]
-            for j in range(donkey.ANGLES_WINDOW):
-                angles[i][j] =  inputs[i][donkey.CAMERA_STACK_SIZE][0][j]
+        # A little bit of pytorch magic to extract camera pixels and angles
+        # from the packed input.
+        pixels_inputs, stack = torch.split(
+            inputs, (donkey.CAMERA_STACK_SIZE), dim=1
+        )
+        angles_inputs = stack.split(1, 2)[0].split(
+            (donkey.ANGLES_WINDOW), 3,
+        )[0].contiguous().view(-1, donkey.ANGLES_WINDOW)
 
         # Action network.
-        a = F.relu(self.cv1_a(pixels))
+        a = F.relu(self.cv1_a(pixels_inputs))
         a = F.relu(self.cv2_a(a))
         a = F.relu(self.cv3_a(a))
 
-        a = a.view(-1, 1152)
+        a = a.view(-1, 11264)
         a = F.relu(self.fc1_a(a))
 
         if self.recurring_cell == "gru":
@@ -129,16 +127,16 @@ class Policy(nn.Module):
 
         angles = self.fc2_a(a)
 
-        a = F.tanh(self.fc3_a(torch.cat((a, angles))))
+        a = F.tanh(self.fc3_a(torch.cat((a, angles), 1)))
         a = F.tanh(self.fc4_a(a))
 
         # Value network.
-        v = F.relu(self.cv1_v(pixels))
+        v = F.relu(self.cv1_v(pixels_inputs))
         v = F.relu(self.cv2_v(v))
         v = F.relu(self.cv3_v(v))
 
-        v = v.view(-1, 1152)
-        v = F.tanh(self.fc1_v(torch.cat((v, angles))))
+        v = v.view(-1, 11264)
+        v = F.tanh(self.fc1_v(torch.cat((v, angles_inputs), 1)))
 
         if self.recurring_cell == "gru":
             if inputs.size(0) == hiddens.size(0):
@@ -170,14 +168,14 @@ class Policy(nn.Module):
         )
 
     def preprocess(self, observation):
-        pack = np.zeros((
+        pack = [np.zeros((
             donkey.CAMERA_STACK_SIZE + 1,
             donkey.CAMERA_WIDTH,
             donkey.CAMERA_HEIGHT,
-        )) * len(observations)
-        for o in len(observation):
+        ))] * len(observation)
+        for o in range(len(observation)):
             for i in range(donkey.CAMERA_STACK_SIZE):
-                pack[o][i] = observation[o].cameras[i]
+                pack[o][i] = observation[o].camera[i]
             for i in range(donkey.ANGLES_WINDOW):
                 pack[o][donkey.CAMERA_STACK_SIZE][0][i] = observation[o].track_angles[i]
 

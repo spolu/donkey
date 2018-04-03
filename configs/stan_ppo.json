@@ -1,6 +1,6 @@
 {
   "model": "stan_ppo",
-  "policy": "actor_critic_angles",
+  "policy": "actor_pixels_auxiliary_angles_critic_pixels_angles",
   "cuda": true,
   "seed": 1,
 
@@ -11,7 +11,7 @@
 
   "rollout_size": 20,
   "worker_count": 32,
-  "mini_batch_count": 8,
+  "mini_batch_count": 1,
 
   "hidden_size": 256,
 
