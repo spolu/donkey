@@ -107,7 +107,11 @@ push-seed () {
 ```
 
 
-### Useful resources
+### Resources
 
 https://cloud.google.com/compute/docs/gpus/add-gpus#install-driver-script
 https://towardsdatascience.com/how-to-run-unity-on-amazon-cloud-or-without-monitor-3c10ce022639
+
+## Read list
+
+https://www.youtube.com/watch?v=b_lBL2yhU5A&feature=youtu.be
