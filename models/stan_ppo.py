@@ -26,7 +26,12 @@ class PPOStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            *(policy.inputs_shape()),
+            *(policy.input_shape()),
+        )
+        self.auxiliaries = torch.zeros(
+            self.rollout_size + 1,
+            self.worker_count,
+            *(policy.auxiliary_shape()),
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -42,6 +47,7 @@ class PPOStorage:
 
     def cuda(self):
         self.observations = self.observations.cuda()
+        self.auxiliaries = self.auxiliaries.cuda()
         self.hiddens = self.hiddens.cuda()
         self.rewards = self.rewards.cuda()
         self.values = self.values.cuda()
@@ -50,8 +56,9 @@ class PPOStorage:
         self.actions = self.actions.cuda()
         self.masks = self.masks.cuda()
 
-    def insert(self, step, observations, hidden, action, log_prob, value, reward, mask):
+    def insert(self, step, observations, auxiliaries, hidden, action, log_prob, value, reward, mask):
         self.observations[step + 1].copy_(observations)
+        self.auxiliaries[step + 1].copy_(auxiliaries)
         self.hiddens[step + 1].copy_(hidden)
         self.actions[step].copy_(action)
         self.log_probs[step].copy_(log_prob)
@@ -74,6 +81,7 @@ class PPOStorage:
 
     def after_update(self):
         self.observations[0].copy_(self.observations[-1])
+        self.auxiliaries[0].copy_(self.auxiliaries[-1])
         self.hiddens[0].copy_(self.hiddens[-1])
         self.masks[0].copy_(self.masks[-1])
 
@@ -83,6 +91,7 @@ class PPOStorage:
 
         for start in range(0, self.worker_count, mini_batch_size):
             observations_batch = []
+            auxiliaries_batch = []
             hiddens_batch = []
             actions_batch = []
             returns_batch = []
@@ -93,6 +102,7 @@ class PPOStorage:
             for offset in range(mini_batch_size):
                 idx = permutation[start + offset]
                 observations_batch.append(self.observations[:-1, idx])
+                auxiliaries_batch.append(self.auxiliaries[:-1, idx])
                 hiddens_batch.append(self.hiddens[0:1, idx])
                 actions_batch.append(self.actions[:, idx])
                 returns_batch.append(self.returns[:-1, idx])
@@ -102,6 +112,7 @@ class PPOStorage:
 
             yield \
                 torch.cat(observations_batch, 0), \
+                torch.cat(auxiliaries_batch, 0), \
                 torch.cat(hiddens_batch, 0), \
                 torch.cat(actions_batch, 0), \
                 torch.cat(returns_batch, 0), \
@@ -121,6 +132,8 @@ class PPOStorage:
 
             observations_batch = self.observations[:-1].view(-1,
                                         *self.observations.size()[2:])[indices]
+            auxiliaries_batch = self.auxiliaries[:-1].view(-1,
+                                        *self.auxiliaries.size()[2:])[indices]
             hiddens_batch = self.hiddens[:-1].view(-1, self.hiddens.size(-1))[indices]
             actions_batch = self.actions.view(-1, self.actions.size(-1))[indices]
             returns_batch = self.returns[:-1].view(-1, 1)[indices]
@@ -130,6 +143,7 @@ class PPOStorage:
 
             yield \
                 observations_batch, \
+                auxiliaries_batch, \
                 hiddens_batch, \
                 actions_batch, \
                 returns_batch, \
@@ -149,6 +163,7 @@ class Model:
         self.action_loss_coeff = config.get('action_loss_coeff')
         self.value_loss_coeff = config.get('value_loss_coeff')
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
+        self.auxiliary_loss_coeff = config.get('auxiliary_loss_coeff')
         self.grad_norm_max = config.get('grad_norm_max')
 
         self.policy = policy
@@ -162,6 +177,7 @@ class Model:
             self.policy.parameters(),
             self.learning_rate,
         )
+        self.auxiliary_loss = nn.MSELoss()
 
         self.rollouts = PPOStorage(config, policy)
 
@@ -189,8 +205,12 @@ class Model:
 
     def initialize(self):
         observation = self.envs.reset()
-        observation = self.policy.preprocess(observation)
+
+        auxiliary = self.policy.auxiliary(observation)
+        observation = self.policy.input(observation)
+
         self.rollouts.observations[0].copy_(observation)
+        self.rollouts.auxiliaries[0].copy_(auxiliary)
 
         if self.cuda:
             self.policy.cuda()
@@ -198,7 +218,7 @@ class Model:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, angles, hidden, log_prob, entropy = self.policy.action(
+            value, action, auxiliary, hidden, log_prob, entropy = self.policy.action(
                 autograd.Variable(
                     self.rollouts.observations[step], requires_grad=False,
                 ),
@@ -223,7 +243,9 @@ class Model:
                 observation[0].progress,
             ))
 
-            observation = self.policy.preprocess(observation)
+            auxiliary = self.policy.auxiliary(observation)
+            observation = self.policy.input(observation)
+
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
@@ -241,6 +263,7 @@ class Model:
             self.rollouts.insert(
                 step,
                 observation,
+                auxiliary,
                 hidden.data,
                 action.data,
                 log_prob.data,
@@ -271,6 +294,7 @@ class Model:
 
             for sample in generator:
                 observations_batch, \
+                    auxiliaries_batch, \
                     hiddens_batch, \
                     actions_batch, \
                     returns_batch, \
@@ -278,16 +302,12 @@ class Model:
                     log_probs_batch, \
                     advantage_targets = sample
 
-            values, angles, hiddens, log_probs, entropy = self.policy.evaluate(
+            values, auxiliaries, hiddens, log_probs, entropy = self.policy.evaluate(
                 autograd.Variable(observations_batch),
                 autograd.Variable(hiddens_batch),
                 autograd.Variable(masks_batch),
                 autograd.Variable(actions_batch),
             )
-
-            if angles is not None:
-                # TODO auxiliary loss for angles
-                pass
 
             advantage_targets = autograd.Variable(advantage_targets)
             ratio = torch.exp(log_probs - autograd.Variable(log_probs_batch))
@@ -299,11 +319,16 @@ class Model:
             value_loss = (autograd.Variable(returns_batch) - values).pow(2).mean()
             entropy_loss = -entropy.mean()
 
+            auxiliary_loss = 0.0
+            if auxiliaries is not None:
+                auxiliary_loss = self.auxiliary_loss(auxiliaries, autograd.Variable(auxiliaries_batch))
+
             self.optimizer.zero_grad()
 
             (value_loss * self.value_loss_coeff +
              action_loss * self.action_loss_coeff +
-             entropy_loss * self.entropy_loss_coeff).backward()
+             entropy_loss * self.entropy_loss_coeff +
+             auxiliary_loss * self.auxiliary_loss_coeff).backward()
 
             nn.utils.clip_grad_norm(self.policy.parameters(), self.grad_norm_max)
 
@@ -320,7 +345,10 @@ class Model:
             ("STEP {} timesteps {} FPS {} " + \
              "mean/median R {:.1f} {:.1f} " + \
              "min/max R {:.1f} {:.1f} " + \
-             "entropy_loss {:.5f} value_loss {:.5f} action_loss {:.5f}").
+             "entropy_loss {:.5f} " + \
+             "value_loss {:.5f} " + \
+             "action_loss {:.5f} " + \
+             "auxiliary_loss {:.5f}").
             format(
                 self.batch_count,
                 total_num_steps,
@@ -332,6 +360,7 @@ class Model:
                 entropy_loss.data[0],
                 value_loss.data[0],
                 action_loss.data[0],
+                auxiliary_loss.data[0],
             ))
         sys.stdout.flush()
 
@@ -361,7 +390,7 @@ class Model:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, angles, hidden, log_prob, entropy = self.policy.action(
+                value, action, auxiliary, hidden, log_prob, entropy = self.policy.action(
                     autograd.Variable(
                         self.rollouts.observations[step], requires_grad=False,
                     ),
@@ -396,7 +425,9 @@ class Model:
                     print("REWARD: {}".format(final_reward))
                     final_reward = 0.0
 
-                observation = self.policy.preprocess(observation)
+                auxiliary = self.policy.auxiliary(observation)
+                observation = self.policy.input(observation)
+
                 reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
                 mask = torch.FloatTensor(
                     [[0.0] if done_ else [1.0] for done_ in done]
@@ -409,6 +440,7 @@ class Model:
                 self.rollouts.insert(
                     step,
                     observation,
+                    auxiliary,
                     hidden.data,
                     action.data,
                     log_prob.data,

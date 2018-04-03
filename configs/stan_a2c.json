@@ -4,6 +4,7 @@
   "cuda": true,
   "seed": 0,
 
+  "recurring_cell": "gru",
   "reward_type": "speed",
 
   "rollout_size": 20,

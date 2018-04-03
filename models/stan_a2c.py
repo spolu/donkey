@@ -23,7 +23,7 @@ class A2CStorage:
         self.observations = torch.zeros(
             self.rollout_size + 1,
             self.worker_count,
-            *(policy.inputs_shape()),
+            *(policy.input_shape()),
         )
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
@@ -120,7 +120,7 @@ class Model:
 
     def initialize(self):
         observation = self.envs.reset()
-        observation = self.policy.preprocess(observation)
+        observation = self.policy.input(observation)
         self.rollouts.observations[0].copy_(observation)
 
         if self.cuda:
@@ -129,7 +129,7 @@ class Model:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, hidden, log_prob, entropy = self.policy.action(
+            value, action, auxiliary, hidden, log_prob, entropy = self.policy.action(
                 autograd.Variable(
                     self.rollouts.observations[step], requires_grad=False,
                 ),
@@ -155,7 +155,7 @@ class Model:
             #     observation[0].progress,
             # ))
 
-            observation = self.policy.preprocess(observation)
+            observation = self.policy.input(observation)
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
@@ -194,10 +194,10 @@ class Model:
 
         self.rollouts.compute_returns(next_value)
 
-        values, hiddens, log_probs, entropy = self.policy.evaluate(
+        values, auxiliaries, hiddens, log_probs, entropy = self.policy.evaluate(
             autograd.Variable(self.rollouts.observations[:-1].view(
                 -1,
-                *(self.policy.inputs_shape()),
+                *(self.policy.input_shape()),
             )),
             autograd.Variable(self.rollouts.hiddens[0].view(
                 -1, self.hidden_size,
@@ -277,7 +277,7 @@ class Model:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, hidden, entropy = self.policy.action(
+                value, action, auxiliary, hidden, entropy = self.policy.action(
                     autograd.Variable(
                         self.rollouts.observations[step], requires_grad=False,
                     ),
@@ -313,7 +313,7 @@ class Model:
                     print("REWARD: {}".format(final_reward))
                     final_reward = 0.0
 
-                observation = self.policy.preprocess(observation)
+                observation = self.policy.input(observation)
                 reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
                 mask = torch.FloatTensor(
                     [[0.0] if done_ else [1.0] for done_ in done]
