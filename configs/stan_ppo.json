@@ -4,14 +4,14 @@
   "cuda": true,
   "seed": 1,
 
-  "recurring_cell": "gru",
+  "recurring_cell": "none",
   "fixed_action_std": false,
 
   "reward_type": "speed",
 
   "rollout_size": 20,
   "worker_count": 32,
-  "mini_batch_count": 1,
+  "mini_batch_count": 8,
 
   "hidden_size": 256,
 
