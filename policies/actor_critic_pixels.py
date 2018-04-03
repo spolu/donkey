@@ -96,7 +96,7 @@ class Policy(nn.Module):
         v = F.tanh(self.fc1_v(x))
         v = self.fc2_v(v)
 
-        return v, a, hiddens
+        return v, a, None, hiddens
 
     def inputs_shape(self):
         return (donkey.CAMERA_STACK_SIZE, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT)
@@ -114,7 +114,7 @@ class Policy(nn.Module):
         return observation
 
     def action(self, inputs, hiddens, masks, deterministic=False):
-        value, x, hiddens = self(inputs, hiddens, masks)
+        value, x, angles, hiddens = self(inputs, hiddens, masks)
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
@@ -145,10 +145,10 @@ class Policy(nn.Module):
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1, keepdim=True)
 
-        return value, actions, hiddens, log_probs, entropy
+        return value, actions, angles, hiddens, log_probs, entropy
 
     def evaluate(self, inputs, hiddens, masks, actions):
-        value, x, hiddens = self(inputs, hiddens, masks)
+        value, x, angles, hiddens = self(inputs, hiddens, masks)
 
         slices = torch.split(x, donkey.CONTROL_SIZE, 1)
         action_mean = slices[0]
@@ -174,4 +174,4 @@ class Policy(nn.Module):
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1, keepdim=True)
 
-        return value, hiddens, log_probs, entropy
+        return value, angles, hiddens, log_probs, entropy

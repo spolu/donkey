@@ -198,7 +198,7 @@ class Model:
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, hidden, log_prob, entropy = self.policy.action(
+            value, action, angles, hidden, log_prob, entropy = self.policy.action(
                 autograd.Variable(
                     self.rollouts.observations[step], requires_grad=False,
                 ),
@@ -278,12 +278,16 @@ class Model:
                     log_probs_batch, \
                     advantage_targets = sample
 
-            values, hiddens, log_probs, entropy = self.policy.evaluate(
+            values, angles, hiddens, log_probs, entropy = self.policy.evaluate(
                 autograd.Variable(observations_batch),
                 autograd.Variable(hiddens_batch),
                 autograd.Variable(masks_batch),
                 autograd.Variable(actions_batch),
             )
+
+            if angles is not None:
+                # TODO auxiliary loss for angles
+                pass
 
             advantage_targets = autograd.Variable(advantage_targets)
             ratio = torch.exp(log_probs - autograd.Variable(log_probs_batch))
@@ -357,7 +361,7 @@ class Model:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, hidden, log_prob, entropy = self.policy.action(
+                value, action, angles, hidden, log_prob, entropy = self.policy.action(
                     autograd.Variable(
                         self.rollouts.observations[step], requires_grad=False,
                     ),
