@@ -99,7 +99,7 @@ class Policy(nn.Module):
                     hx = hiddens = self.gru(x[i], hiddens * masks[i])
                     outputs.append(hx)
                 x = torch.cat(outputs, 0)
-            x = F.tanh(a)
+            x = F.tanh(x)
 
         # Action network.
         angles = self.ax1_a(x)
