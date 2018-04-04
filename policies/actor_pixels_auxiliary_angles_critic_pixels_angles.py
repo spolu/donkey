@@ -95,7 +95,7 @@ class Policy(nn.Module):
                 x = x.view(-1, hiddens.size(0), x.size(1))
                 masks = masks.view(-1, hiddens.size(0), 1)
                 outputs = []
-                for i in range(a.size(0)):
+                for i in range(x.size(0)):
                     hx = hiddens = self.gru(x[i], hiddens * masks[i])
                     outputs.append(hx)
                 x = torch.cat(outputs, 0)
