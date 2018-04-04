@@ -35,17 +35,21 @@ Observation = collections.namedtuple(
 
 class Donkey:
     def __init__(self, config):
+        self.track_name = config.get('track_name')
+        self.track_randomized = config.get('track_randomized')
+        self.reward_type = config.get('reward_type')
         self.simulation_headless = config.get('simulation_headless')
         self.simulation_time_scale = config.get('simulation_time_scale')
         self.simulation_step_interval = config.get('simulation_step_interval')
         self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
-        self.reward_type = config.get('reward_type')
 
         self.started = False
 
-        self.track = track.Track()
+        self.track = track.Track(self.track_name)
+        if self.track_randomized:
+            self.track.randomize()
+
         self.simulation = simulation.Simulation(
-            self.track,
             True,
             self.simulation_headless,
             self.simulation_time_scale,
@@ -219,13 +223,16 @@ class Donkey:
         initial observation (see `observation_from_telemetry`). `reset` must be
         called at least once before calling `step`.
         """
+        if self.track_randomized:
+            self.track.randomize()
+
         if not self.started:
             self.started = True
-            self.simulation.start()
+            self.simulation.start(self.track)
         else:
             if random.randint(1, 50) == 1:
                 self.simulation.stop()
-                self.simulation.start()
+                self.simulation.start(self.track)
             else:
                 self.simulation.reset(self.track)
         telemetry = self.simulation.telemetry()

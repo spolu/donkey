@@ -1,4 +1,7 @@
 {
+  "track_name": "newworld",
+  "track_randomized": true,
+
   "model": "stan_a2c",
   "policy": "actor_critic_angles",
   "cuda": true,

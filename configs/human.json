@@ -1,5 +1,9 @@
 {
+  "track_name": "newworld",
+  "track_randomized": true,
+
   "reward_type": "time",
+
   "simulation_headless": false,
   "simulation_time_scale": 2.0,
   "simulation_step_interval": 0.2,

@@ -1,4 +1,7 @@
 {
+  "track_name": "newworld",
+  "track_randomized": true,
+
   "model": "stan_ppo",
   "policy": "actor_critic_pixels",
   "recurring_cell": "gru",

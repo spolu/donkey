@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from enum import Enum
 
@@ -9,15 +11,78 @@ Track interface
 
 SPAN_DIST = 5.0
 
+def rot_y(theta):
+    c, s = np.cos(theta), np.sin(theta)
+
+    return np.array((
+        (c, 0, s),
+        (0, 1, 0),
+        (-s, 0, c),
+    ))
+
 class Track:
-    def __init__(self):
-        s = Script('coordinates/newworld.script')
-        self.points = s.points()
+    def __init__(self, name):
+        self.name = name
+        self.script = Script('coordinates/' + name + '.script')
+
+        self.points = self.script.points()
+
+        # interpolate to first point
+        self.points.append([
+            0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
+            0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
+            0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
+        ])
+
+        # recompute length
         self.length = 0.0
         for i in range(len(self.points)):
             self.length += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
             )
+
+    def randomize(self):
+        """
+        Randomize track by randomly applying symetry to the track and picking
+        translating such that the starting location is picked randomly.
+        """
+        self.points = self.script.points()
+
+        if random.randint(0, 1) == 1:
+            for i in range(len(self.points)):
+                self.points[i][0] = -self.points[i][0]
+        if random.randint(0, 1) == 1:
+            for i in range(len(self.points)):
+                self.points[i][2] = -self.points[i][2]
+
+        position = random.randint(0, len(self.points)-1)
+        for i in range(position):
+            v = self.points[1] - self.points[0]
+            for j in range(len(self.points)):
+                u = [0, 0, 1]
+                w = v / np.linalg.norm(v)
+                theta = -np.sign(np.linalg.det([
+                    u,
+                    w,
+                    [0,1,0],
+                ])) * np.arccos(np.dot(u, w))
+                self.points[j] = np.dot(rot_y(theta), self.points[j] - v)
+            self.points = self.points[1:] + self.points[:1]
+
+        # interpolate to first point
+        self.points.append([
+            0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
+            0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
+            0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
+        ])
+
+        # recompute length
+        self.length = 0.0
+        for i in range(len(self.points)):
+            self.length += np.linalg.norm(
+                self.points[self.next(i)] - self.points[i],
+            )
+
 
     def prev(self, point):
         if point - 1 < 0:
@@ -189,30 +254,11 @@ class Script:
 
             for i in range(se.count):
                 points.append(np.copy(s))
-                span = np.dot(self.rot_y(dY), span) / np.linalg.norm(span) * SPAN_DIST
+                span = np.dot(
+                    rot_y(np.radians(dY)),
+                    span,
+                ) / np.linalg.norm(span) * SPAN_DIST
                 s = s + span
 
-        # interpolate to first point
-        points.append([
-            0.001 * points[-1][0] + 0.999 * points[0][0],
-            0.001 * points[-1][1] + 0.999 * points[0][1],
-            0.001 * points[-1][2] + 0.999 * points[0][2],
-        ])
-
         return points
-
-    def rot_y(self, angle):
-        theta = np.radians(angle)
-        c, s = np.cos(theta), np.sin(theta)
-
-        return np.array((
-            (c, 0, s),
-            (0, 1, 0),
-            (-s, 0, c),
-        ))
-
-if __name__ == "__main__":
-    s = Script('coordinates/warehouse.script')
-    for p in s.points():
-        print(p)
 
