@@ -20,11 +20,13 @@ class Policy(nn.Module):
         self.recurring_cell = config.get('recurring_cell')
         self.config = config
 
-        self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 32, 8, stride=4)
-        self.cv2 = nn.Conv2d(32, 64, 4, stride=2)
-        self.cv3 = nn.Conv2d(64, 64, 3, stride=1)
+        self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
+        self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
+        self.cv3 = nn.Conv2d(32, 64, 5, stride=2)
+        self.cv4 = nn.Conv2d(64, 64, 3, stride=2)
+        self.cv5 = nn.Conv2d(64, 64, 3, stride=1)
 
-        self.fc1 = nn.Linear(11264, self.hidden_size)
+        self.fc1 = nn.Linear(1152, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -45,9 +47,13 @@ class Policy(nn.Module):
         nn.init.xavier_normal(self.cv1.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.cv2.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.cv3.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.cv4.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.cv5.weight.data, nn.init.calculate_gain('relu'))
         self.cv1.bias.data.fill_(0)
         self.cv2.bias.data.fill_(0)
         self.cv3.bias.data.fill_(0)
+        self.cv4.bias.data.fill_(0)
+        self.cv5.bias.data.fill_(0)
 
         nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
@@ -84,8 +90,10 @@ class Policy(nn.Module):
         x = F.relu(self.cv1(pixels_inputs))
         x = F.relu(self.cv2(x))
         x = F.relu(self.cv3(x))
+        x = F.relu(self.cv4(x))
+        x = F.relu(self.cv5(x))
 
-        x = x.view(-1, 11264)
+        x = x.view(-1, 1152)
         x = F.relu(self.fc1(x))
 
         if self.recurring_cell == "gru":
