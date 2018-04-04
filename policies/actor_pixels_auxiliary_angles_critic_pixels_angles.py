@@ -20,79 +20,56 @@ class Policy(nn.Module):
         self.recurring_cell = config.get('recurring_cell')
         self.config = config
 
-        # Action network.
-        self.cv1_a = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 32, 8, stride=4)
-        self.cv2_a = nn.Conv2d(32, 64, 4, stride=2)
-        self.cv3_a = nn.Conv2d(64, 64, 3, stride=1)
+        self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 32, 8, stride=4)
+        self.cv2 = nn.Conv2d(32, 64, 4, stride=2)
+        self.cv3 = nn.Conv2d(64, 64, 3, stride=1)
 
-        self.fc1_a = nn.Linear(11264, self.hidden_size)
+        self.fc1 = nn.Linear(11264, self.hidden_size)
 
         if self.recurring_cell == "gru":
-            self.gru_a = nn.GRUCell(self.hidden_size, self.hidden_size)
+            self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
 
-        self.fc2_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
+        # Action network.
+        self.ax1_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
 
-        self.fc3_a = nn.Linear(self.hidden_size + donkey.ANGLES_WINDOW, self.hidden_size)
-        self.fc4_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
+        self.fc2_a = nn.Linear(self.hidden_size + donkey.ANGLES_WINDOW, self.hidden_size)
+        self.fc3_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
 
         # Value network.
-        self.cv1_v = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 32, 8, stride=4)
-        self.cv2_v = nn.Conv2d(32, 64, 4, stride=2)
-        self.cv3_v = nn.Conv2d(64, 64, 3, stride=1)
-
-        self.fc1_v = nn.Linear(11264 + donkey.ANGLES_WINDOW, self.hidden_size)
-
-        if self.recurring_cell == "gru":
-            self.gru_v = nn.GRUCell(self.hidden_size, self.hidden_size)
-
-        self.fc2_v = nn.Linear(self.hidden_size, self.hidden_size)
+        self.fc2_v = nn.Linear(self.hidden_size + donkey.ANGLES_WINDOW, self.hidden_size)
         self.fc3_v = nn.Linear(self.hidden_size, 1)
 
         self.train()
 
         # Initialization
-        nn.init.xavier_normal(self.cv1_a.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.cv2_a.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.cv3_a.weight.data, nn.init.calculate_gain('relu'))
-        self.cv1_a.bias.data.fill_(0)
-        self.cv2_a.bias.data.fill_(0)
-        self.cv3_a.bias.data.fill_(0)
+        nn.init.xavier_normal(self.cv1.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.cv2.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.cv3.weight.data, nn.init.calculate_gain('relu'))
+        self.cv1.bias.data.fill_(0)
+        self.cv2.bias.data.fill_(0)
+        self.cv3.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.cv1_v.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.cv2_v.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal(self.cv3_v.weight.data, nn.init.calculate_gain('relu'))
-        self.cv1_v.bias.data.fill_(0)
-        self.cv2_v.bias.data.fill_(0)
-        self.cv3_v.bias.data.fill_(0)
+        nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
+        self.fc1.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('relu'))
-        self.fc1_a.bias.data.fill_(0)
-        nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('relu'))
-        self.fc1_v.bias.data.fill_(0)
+        if self.recurring_cell == "gru":
+            nn.init.xavier_normal(self.gru.weight_ih.data)
+            nn.init.xavier_normal(self.gru.weight_hh.data)
+            self.gru.bias_ih.data.fill_(0)
+            self.gru.bias_hh.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('linear'))
-        self.fc2_a.bias.data.fill_(0)
+        nn.init.xavier_normal(self.ax1_a.weight.data, nn.init.calculate_gain('linear'))
+        self.ax1_a.bias.data.fill_(0)
 
+        nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc3_a.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc4_a.weight.data, nn.init.calculate_gain('tanh'))
+        self.fc2_a.bias.data.fill_(0)
         self.fc3_a.bias.data.fill_(0)
-        self.fc4_a.bias.data.fill_(0)
 
         nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc3_v.weight.data, nn.init.calculate_gain('linear'))
         self.fc2_v.bias.data.fill_(0)
         self.fc3_v.bias.data.fill_(0)
-
-        if self.recurring_cell == "gru":
-            nn.init.xavier_normal(self.gru_a.weight_ih.data)
-            nn.init.xavier_normal(self.gru_a.weight_hh.data)
-            self.gru_a.bias_ih.data.fill_(0)
-            self.gru_a.bias_hh.data.fill_(0)
-
-            nn.init.xavier_normal(self.gru_v.weight_ih.data)
-            nn.init.xavier_normal(self.gru_v.weight_hh.data)
-            self.gru_v.bias_ih.data.fill_(0)
-            self.gru_v.bias_hh.data.fill_(0)
 
     def forward(self, inputs, hiddens, masks):
         # A little bit of pytorch magic to extract camera pixels and angles
@@ -104,54 +81,34 @@ class Policy(nn.Module):
             (donkey.ANGLES_WINDOW), 3,
         )[0].contiguous().view(-1, donkey.ANGLES_WINDOW)
 
-        # Action network.
-        a = F.relu(self.cv1_a(pixels_inputs))
-        a = F.relu(self.cv2_a(a))
-        a = F.relu(self.cv3_a(a))
+        x = F.relu(self.cv1_a(pixels_inputs))
+        x = F.relu(self.cv2_a(a))
+        x = F.relu(self.cv3_a(a))
 
-        a = a.view(-1, 11264)
-        a = F.relu(self.fc1_a(a))
+        x = a.view(-1, 11264)
+        x = F.relu(self.fc1_a(a))
 
         if self.recurring_cell == "gru":
             if inputs.size(0) == hiddens.size(0):
-                a = hiddens = self.gru_a(a, hiddens * masks)
+                x = hiddens = self.gru(x, hiddens * masks)
             else:
-                a = a.view(-1, hiddens.size(0), a.size(1))
+                x = x.view(-1, hiddens.size(0), x.size(1))
                 masks = masks.view(-1, hiddens.size(0), 1)
                 outputs = []
                 for i in range(a.size(0)):
-                    ha = hiddens = self.gru_a(a[i], hiddens * masks[i])
-                    outputs.append(ha)
-                a = torch.cat(outputs, 0)
-            a = F.tanh(a)
+                    hx = hiddens = self.gru(x[i], hiddens * masks[i])
+                    outputs.append(hx)
+                x = torch.cat(outputs, 0)
+            x = F.tanh(a)
 
-        angles = self.fc2_a(a)
+        # Action network.
+        angles = self.ax1_a(x)
 
-        a = F.tanh(self.fc3_a(torch.cat((a, angles), 1)))
-        a = F.tanh(self.fc4_a(a))
+        a = F.tanh(self.fc2_a(torch.cat((x, angles), 1)))
+        a = F.tanh(self.fc3_a(a))
 
         # Value network.
-        v = F.relu(self.cv1_v(pixels_inputs))
-        v = F.relu(self.cv2_v(v))
-        v = F.relu(self.cv3_v(v))
-
-        v = v.view(-1, 11264)
-        v = F.tanh(self.fc1_v(torch.cat((v, angles_inputs), 1)))
-
-        if self.recurring_cell == "gru":
-            if inputs.size(0) == hiddens.size(0):
-                v = hiddens = self.gru_v(v, hiddens * masks)
-            else:
-                v = v.view(-1, hiddens.size(0), v.size(1))
-                masks = masks.view(-1, hiddens.size(0), 1)
-                outputs = []
-                for i in range(v.size(0)):
-                    hv = hiddens = self.gru_v(v[i], hiddens * masks[i])
-                    outputs.append(hv)
-                v = torch.cat(outputs, 0)
-            v = F.tanh(v)
-
-        v = F.tanh(self.fc2_v(v))
+        v = F.tanh(self.fc2_v(torch.cat((x, angles_inputs), 1)))
         v = self.fc3_v(v)
 
         return v, a, angles, hiddens
