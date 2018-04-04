@@ -113,6 +113,9 @@ class Policy(nn.Module):
 
         return observation
 
+    def auxiliary_present(self):
+        return False
+
     def auxiliary_shape(self):
         return (donkey.ANGLES_WINDOW,)
 
