@@ -167,4 +167,4 @@ class Policy(nn.Module):
         entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
         entropy = entropy.sum(-1, keepdim=True)
 
-        return value, hiddens, auxiliary, log_probs, entropy
+        return value, auxiliary, hiddens, log_probs, entropy

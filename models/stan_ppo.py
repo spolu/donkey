@@ -320,7 +320,7 @@ class Model:
             entropy_loss = -entropy.mean()
 
             auxiliary_loss = 0.0
-            if auxiliaries is not self.policy.auxiliary_present():
+            if self.policy.auxiliary_present():
                 auxiliary_loss = self.auxiliary_loss(
                     auxiliaries, autograd.Variable(auxiliaries_batch),
                 )
