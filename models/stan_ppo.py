@@ -316,10 +316,15 @@ class Model:
                 ratio * advantage_targets,
                 torch.clamp(ratio, 1.0 - self.ppo_clip, 1.0 + self.ppo_clip) * advantage_targets,
             ).mean()
+
             value_loss = (autograd.Variable(returns_batch) - values).pow(2).mean()
+
             entropy_loss = -entropy.mean()
 
-            auxiliary_loss = 0.0
+            auxiliary_loss = autograd.Variable(torch.zeros(1))
+            if self.cuda:
+                auxiliary_loss = auxiliary_loss.cuda()
+
             if self.policy.auxiliary_present():
                 auxiliary_loss = self.auxiliary_loss(
                     auxiliaries, autograd.Variable(auxiliaries_batch),
