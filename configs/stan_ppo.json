@@ -15,7 +15,7 @@
 
   "hidden_size": 256,
 
-  "learning_rate": 0.00007,
+  "learning_rate": 0.0004,
   "gamma": 0.99,
   "tau": 0.95,
 

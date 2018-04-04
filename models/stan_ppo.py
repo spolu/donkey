@@ -321,7 +321,9 @@ class Model:
 
             auxiliary_loss = 0.0
             if auxiliaries is not None:
-                auxiliary_loss = self.auxiliary_loss(auxiliaries, autograd.Variable(auxiliaries_batch))
+                auxiliary_loss = self.auxiliary_loss(
+                    auxiliaries, autograd.Variable(auxiliaries_batch),
+                )
 
             self.optimizer.zero_grad()
 
