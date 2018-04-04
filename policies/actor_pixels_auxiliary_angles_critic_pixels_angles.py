@@ -82,11 +82,11 @@ class Policy(nn.Module):
         )[0].contiguous().view(-1, donkey.ANGLES_WINDOW)
 
         x = F.relu(self.cv1(pixels_inputs))
-        x = F.relu(self.cv2(a))
-        x = F.relu(self.cv3(a))
+        x = F.relu(self.cv2(x))
+        x = F.relu(self.cv3(x))
 
-        x = a.view(-1, 11264)
-        x = F.relu(self.fc1(a))
+        x = x.view(-1, 11264)
+        x = F.relu(self.fc1(x))
 
         if self.recurring_cell == "gru":
             if inputs.size(0) == hiddens.size(0):

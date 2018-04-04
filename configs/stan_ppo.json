@@ -4,7 +4,7 @@
   "cuda": true,
   "seed": 1,
 
-  "recurring_cell": "none",
+  "recurring_cell": "gru",
   "fixed_action_std": false,
 
   "reward_type": "speed",
