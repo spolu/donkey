@@ -28,6 +28,8 @@ class Policy(nn.Module):
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
 
+        self.ax1_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
+
         self.fc1_a = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
 
@@ -49,6 +51,9 @@ class Policy(nn.Module):
 
         nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
+
+        nn.init.xavier_normal(self.ax1_a.weight.data, nn.init.calculate_gain('linear'))
+        self.ax1_a.bias.data.fill_(0)
 
         nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
         nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
@@ -90,13 +95,15 @@ class Policy(nn.Module):
                 x = torch.cat(outputs, 0)
             x = F.tanh(x)
 
+        angles = self.ax1_a(x)
+
         a = F.tanh(self.fc1_a(x))
         a = F.tanh(self.fc2_a(a))
 
         v = F.tanh(self.fc1_v(x))
         v = self.fc2_v(v)
 
-        return v, a, None, hiddens
+        return v, a, angles, hiddens
 
     def input_shape(self):
         return (donkey.CAMERA_STACK_SIZE, donkey.CAMERA_WIDTH, donkey.CAMERA_HEIGHT)
@@ -114,7 +121,7 @@ class Policy(nn.Module):
         return observation
 
     def auxiliary_present(self):
-        return False
+        return True
 
     def auxiliary_shape(self):
         return (donkey.ANGLES_WINDOW,)

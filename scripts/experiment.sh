@@ -31,4 +31,5 @@ cp $CONFIG $TEMP/config.json
 ./scripts/update_experiment.sh $$ $EXPERIMENT $TEMP &
 
 # Start the fuzzer on the config in the background
-$PYTHON trainer.py $CONFIG $ARGS > $TEMP/out.log 2>&1
+touch $TEMP/out.log
+$PYTHON trainer.py $CONFIG $ARGS >> $TEMP/out.log 2>&1
