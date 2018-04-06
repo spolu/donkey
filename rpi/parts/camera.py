@@ -27,7 +27,7 @@ class PiCamera(BaseCamera):
         self.frame = None
         self.on = True
 
-        print('PiCamera loaded.. .warming camera')
+        print('PiCamera loaded... warming camera')
         time.sleep(2)
 
 
@@ -38,6 +38,7 @@ class PiCamera(BaseCamera):
         return frame
 
     def update(self):
+        print("PiCamera update")
         # keep looping infinitely until the thread is stopped
         for f in self.stream:
             # grab the frame from the stream and clear the stream in

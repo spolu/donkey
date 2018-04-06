@@ -7,9 +7,9 @@ Created on Sun Jun 25 10:44:24 2017
 """
 
 import time
-from threading import Thread
-from .memory import Memory
+import threading
 
+from memory import Memory
 
 class Vehicle():
     def __init__(self, mem=None):
@@ -46,7 +46,7 @@ class Vehicle():
         entry['run_condition'] = run_condition
 
         if threaded:
-            t = Thread(target=part.update, args=())
+            t = threading.Thread(target=part.update, args=())
             t.daemon = True
             entry['thread'] = t
 

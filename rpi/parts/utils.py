@@ -16,132 +16,6 @@ import subprocess
 from PIL import Image
 import numpy as np
 
-'''
-IMAGES
-'''
-
-def scale(im, size=128):
-    '''
-    accepts: PIL image, size of square sides
-    returns: PIL image scaled so sides lenght = size 
-    '''
-    size = (size,size)
-    im.thumbnail(size, Image.ANTIALIAS)
-    return im
-
-
-def img_to_binary(img):
-    '''
-    accepts: PIL image
-    returns: binary stream (used to save to database)
-    '''
-    f = BytesIO()
-    img.save(f, format='jpeg')
-    return f.getvalue()
-
-
-def arr_to_binary(arr):
-    '''
-    accepts: numpy array with shape (Hight, Width, Channels)
-    returns: binary stream (used to save to database)
-    '''
-    img = arr_to_img(arr)
-    return img_to_binary(img)
-
-
-def arr_to_img(arr):
-    '''
-    accepts: numpy array with shape (Hight, Width, Channels)
-    returns: binary stream (used to save to database)
-    '''
-    arr = np.uint8(arr)
-    img = Image.fromarray(arr)
-    return img
-
-def img_to_arr(img):
-    '''
-    accepts: numpy array with shape (Hight, Width, Channels)
-    returns: binary stream (used to save to database)
-    '''
-    return np.array(img)
-
-
-def binary_to_img(binary):
-    '''
-    accepts: binary file object from BytesIO
-    returns: PIL image
-    '''
-    img = BytesIO(binary)
-    return Image.open(img)
-
-
-def norm_img(img):
-    return (img - img.mean() / np.std(img))/255.0
-
-
-def create_video(img_dir_path, output_video_path):
-    import envoy
-    # Setup path to the images with telemetry.
-    full_path = os.path.join(img_dir_path, 'frame_*.png')
-
-    # Run ffmpeg.
-    command = ("""ffmpeg
-               -framerate 30/1
-               -pattern_type glob -i '%s'
-               -c:v libx264
-               -r 15
-               -pix_fmt yuv420p
-               -y
-               %s""" % (full_path, output_video_path))
-    response = envoy.run(command)
-
-
-
-
-
-
-
-
-
-
-
-'''
-FILES
-'''
-
-
-def most_recent_file(dir_path, ext=''):
-    '''
-    return the most recent file given a directory path and extension
-    '''
-    query = dir_path + '/*' + ext
-    newest = min(glob.iglob(query), key=os.path.getctime)
-    return newest
-
-
-def make_dir(path):
-    real_path = os.path.expanduser(path)
-    if not os.path.exists(real_path):
-        os.makedirs(real_path)
-    return real_path
-
-
-def zip_dir(dir_path, zip_path):
-    """ 
-    Create and save a zipfile of a one level directory
-    """
-    file_paths = glob.glob(dir_path + "/*") #create path to search for files.
-    
-    zf = zipfile.ZipFile(zip_path, 'w')
-    dir_name = os.path.basename(dir_path)
-    for p in file_paths:
-        file_name = os.path.basename(p)
-        zf.write(p, arcname=os.path.join(dir_name, file_name))
-    zf.close()
-    return zip_path
-
-
-
 
 '''
 BINNING
@@ -169,7 +43,7 @@ def bin_Y(Y):
         arr[linear_bin(y)] = 1
         d.append(arr)
     return np.array(d) 
-        
+
 def unbin_Y(Y):
     d=[]
     for y in Y:
@@ -178,8 +52,8 @@ def unbin_Y(Y):
     return np.array(d)
 
 def map_range(x, X_min, X_max, Y_min, Y_max):
-    ''' 
-    Linear mapping between two ranges of values 
+    '''
+    Linear mapping between two ranges of values
     '''
     X_range = X_max - X_min
     Y_range = Y_max - Y_min

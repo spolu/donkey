@@ -1,13 +1,11 @@
 """
 actuators.py
-Classes to control the motors and servos. These classes 
+Classes to control the motors and servos. These classes
 are wrapped in a mixer class before being used in the drive loop.
 """
 
 import time
-
-import donkeycar as dk
-
+import utils
 
 class PCA9685:
     '''
@@ -45,7 +43,7 @@ class PWMSteering:
 
     def run(self, angle):
         #map absolute angle to angle that vehicle can implement.
-        pulse = dk.utils.map_range(angle,
+        pulse = utils.map_range(angle,
                                 self.LEFT_ANGLE, self.RIGHT_ANGLE,
                                 self.left_pulse, self.right_pulse)
 
@@ -80,12 +78,12 @@ class PWMThrottle:
 
     def run(self, throttle):
         if throttle > 0:
-            pulse = dk.utils.map_range(throttle,
-                                    0, self.MAX_THROTTLE, 
+            pulse = utils.map_range(throttle,
+                                    0, self.MAX_THROTTLE,
                                     self.zero_pulse, self.max_pulse)
         else:
-            pulse = dk.utils.map_range(throttle,
-                                    self.MIN_THROTTLE, 0, 
+            pulse = utils.map_range(throttle,
+                                    self.MIN_THROTTLE, 0,
                                     self.min_pulse, self.zero_pulse)
 
         self.controller.set_pulse(pulse)
@@ -106,7 +104,7 @@ class Adafruit_DCMotor_Hat:
 
         self.FORWARD = Adafruit_MotorHAT.FORWARD
         self.BACKWARD = Adafruit_MotorHAT.BACKWARD
-        self.mh = Adafruit_MotorHAT(addr=0x60) 
+        self.mh = Adafruit_MotorHAT(addr=0x60)
 
         self.motor = self.mh.getMotor(motor_num)
         self.motor_num = motor_num
@@ -124,7 +122,7 @@ class Adafruit_DCMotor_Hat:
             raise ValueError( "Speed must be between 1(forward) and -1(reverse)")
 
         self.speed = speed
-        self.throttle = int(dk.utils.map_range(abs(speed), -1, 1, -255, 255))
+        self.throttle = int(utils.map_range(abs(speed), -1, 1, -255, 255))
 
         if speed > 0:
             self.motor.run(self.FORWARD)
