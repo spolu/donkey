@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Usage:
-    donkey.py (drive) [--model=<model>]
+    donkey.py (drive) [--load_dir=<load_dir>]
 
 Options:
     -h --help        Show this screen.
@@ -16,22 +16,27 @@ import config
 from parts.camera import PiCamera
 from parts.transform import Lambda
 from parts.actuator import PCA9685, PWMSteering, PWMThrottle
-# from parts.human import Human
+from parts.runner import Runner
 from parts.web_controller.web import LocalWebController
 
-def drive(cfg, model_path=None):
+def drive(cfg, load_dir=None):
     #Initialize car
     V = vehicle.Vehicle()
     cam = PiCamera(resolution=cfg.CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
-    if model_path is None:
+    if load_dir is None:
         ctr = LocalWebController()
-
-    V.add(ctr,
-          inputs=['cam/image_array'],
-          outputs=['angle', 'throttle'],
-          threaded=True)
+        V.add(ctr,
+              inputs=['cam/image_array'],
+              outputs=['angle', 'throttle'],
+              threaded=True)
+    else:
+        ctr = Runner(load_dir)
+        V.add(ctr,
+              inputs=['cam/image_array'],
+              outputs=['angle', 'throttle'],
+              threaded=False)
 
     steering_controller = PCA9685(cfg.STEERING_CHANNEL)
     steering = PWMSteering(controller=steering_controller,
@@ -47,7 +52,7 @@ def drive(cfg, model_path=None):
     V.add(steering, inputs=['angle'])
     V.add(throttle, inputs=['throttle'])
 
-    print("You can now go to d2.local:8887 to drive.")
+    print("You can now go to http://d2.local:8887 to drive.")
 
     #run the vehicle
     V.start(rate_hz=cfg.DRIVE_LOOP_HZ,
@@ -58,4 +63,4 @@ if __name__ == '__main__':
     cfg = config.load_config("config_defaults.py")
 
     if args['drive']:
-        drive(cfg, model_path = args['--model'])
+        drive(cfg, load_dir = args['--load_dir'])

@@ -16,3 +16,7 @@ http://book.duckietown.org/master/duckiebook/pytorch_install.html
 ### Swap
 
 Increase by editing: /etc/dphys-swapfile
+
+### Send code to donkey
+
+rsync -arv --exclude '.*' /Users/stan/src/donkey/rpi pi@d2.local:~/
