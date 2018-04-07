@@ -3,6 +3,7 @@
   "track_randomized": true,
   "reward_type": "speed",
   "action_type": "discrete",
+  "speed_limit": 0,
 
   "model": "stan_ppo",
   "policy": "actor_critic_pixels",

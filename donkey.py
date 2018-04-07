@@ -40,6 +40,7 @@ class Donkey:
         self.track_randomized = config.get('track_randomized')
         self.reward_type = config.get('reward_type')
         self.action_type = config.get('action_type')
+        self.speed_limit = config.get('speed_limit')
 
         self.simulation_headless = config.get('simulation_headless')
         self.simulation_time_scale = config.get('simulation_time_scale')
@@ -67,6 +68,7 @@ class Donkey:
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
+        self.last_track_linear_speed = 0.0
 
         self.camera_stack = None
 
@@ -115,6 +117,7 @@ class Donkey:
 
         track_position = self.track.position(position) / OFF_TRACK_DISTANCE
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
+        self.last_track_linear_speed = track_linear_speed
 
         progress = self.track.progress(position) / self.track.length
         time = telemetry['time'] - self.last_reset_time
@@ -245,6 +248,7 @@ class Donkey:
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
+        self.last_track_linear_speed = 0.0
 
         self.camera_stack = None
 
@@ -311,6 +315,10 @@ class Donkey:
             if throttle_brake < 0.0:
                 throttle = 0.0
                 brake = -throttle_brake
+
+        if self.speed_limit > 0.0:
+            if self.last_track_linear_speed > self.speed_limit:
+                throttle = 0.0
 
         command = simulation.Command(steering, throttle, brake)
 

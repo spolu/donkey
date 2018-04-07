@@ -1,6 +1,8 @@
 {
   "track_name": "newworld",
   "track_randomized": true,
+  "action_type": "continuous",
+  "speed_limit": 0.0,
 
   "reward_type": "time",
 
