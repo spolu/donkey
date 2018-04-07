@@ -29,7 +29,7 @@
   "action_loss_coeff": 1.0,
   "value_loss_coeff": 0.5,
   "entropy_loss_coeff": 0.01,
-  "auxiliary_loss_coeff": 0.1,
+  "auxiliary_loss_coeff": 0.0,
 
   "grad_norm_max": 0.5,
 
