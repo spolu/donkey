@@ -46,7 +46,7 @@ class PPOStorage:
             )
         else:
             self.actions = torch.zeros(
-                self.rollout_size, self.worker_count, donkey.CONTROL_SIZE,
+                self.rollout_size, self.worker_count, donkey.CONTINUOUS_CONTROL_SIZE,
             )
         self.masks = torch.ones(self.rollout_size + 1, self.worker_count, 1)
 
@@ -249,7 +249,7 @@ class Model:
                     observation[0].progress,
                 ))
             else:
-                print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
                     value.data[0][0],
                     action.data[0][0],
                     action.data[0][1],
@@ -438,7 +438,7 @@ class Model:
                         observation[0].progress,
                     ))
                 else:
-                    print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                    print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
                         value.data[0][0],
                         action.data[0][0],
                         action.data[0][1],

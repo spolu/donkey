@@ -164,7 +164,7 @@ class Policy(nn.Module):
 
             return value, actions, auxiliary, hiddens, action_log_probs, entropy
         else:
-            slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+            slices = torch.split(x, donkey.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()
@@ -210,7 +210,7 @@ class Policy(nn.Module):
 
             return value, auxiliary, hiddens, action_log_probs, entropy
         else:
-            slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+            slices = torch.split(x, donkey.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()
