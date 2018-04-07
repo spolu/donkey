@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.autograd as autograd
 
-from torch.distributions import Normal
+from torch.distributions import Normal, Categorical
 
 import donkey
 
@@ -16,6 +16,7 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
+        self.action_type = config.get('action_type')
         self.config = config
 
         self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
@@ -31,7 +32,10 @@ class Policy(nn.Module):
         self.ax1_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
 
         self.fc1_a = nn.Linear(self.hidden_size, self.hidden_size)
-        self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTROL_SIZE)
+        if self.action_type == 'discrete':
+            self.fc2_a = nn.Linear(self.hidden_size, donkey.DISCRETE_CONTROL_SIZE)
+        else:
+            self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTINUOUS_CONTROL_SIZE)
 
         self.fc1_v = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc2_v = nn.Linear(self.hidden_size, 1)
@@ -56,7 +60,10 @@ class Policy(nn.Module):
         self.ax1_a.bias.data.fill_(0)
 
         nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
+        if self.action_type == 'discrete':
+            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('linear'))
+        else:
+            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
         self.fc1_a.bias.data.fill_(0)
         self.fc2_a.bias.data.fill_(0)
 
@@ -98,7 +105,10 @@ class Policy(nn.Module):
         angles = self.ax1_a(x)
 
         a = F.tanh(self.fc1_a(x))
-        a = F.tanh(self.fc2_a(a))
+        if self.action_type == 'discrete':
+            a = self.fc2_a(a)
+        else:
+            a = F.tanh(self.fc2_a(a))
 
         v = F.tanh(self.fc1_v(x))
         v = self.fc2_v(v)
@@ -142,62 +152,86 @@ class Policy(nn.Module):
     def action(self, inputs, hiddens, masks, deterministic=False):
         value, x, auxiliary, hiddens = self(inputs, hiddens, masks)
 
-        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
-        action_std = action_logstd.exp()
+        if self.action_type == 'discrete':
+            probs = F.softmax(x, dim=1)
+            log_probs = F.log_softmax(x, dim=1)
 
-        if self.config.get('fixed_action_std'):
-            action_std = (
-                self.config.get('fixed_action_std') *
-                torch.ones(action_mean.size()).float()
-            )
-            if self.config.get('cuda'):
-                action_std = action_std.cuda()
-            action_std = autograd.Variable(action_std)
-            action_logstd = action_std.log()
+            m = Categorical(probs)
+            actions = m.sample().view(-1, 1)
 
-        m = Normal(action_mean, action_std)
+            action_log_probs = log_probs.gather(1, actions)
+            entropy = -(log_probs * probs).sum(-1).mean()
 
-        if deterministic is False:
-            actions = m.sample()
+            return value, actions, auxiliary, hiddens, action_log_probs, entropy
         else:
-            actions = action_mean
+            slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+            action_mean = slices[0]
+            action_logstd = slices[1]
+            action_std = action_logstd.exp()
 
-        # log_probs (sum on actions) -> batch x 1
-        log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+            if self.config.get('fixed_action_std'):
+                action_std = (
+                    self.config.get('fixed_action_std') *
+                    torch.ones(action_mean.size()).float()
+                )
+                if self.config.get('cuda'):
+                    action_std = action_std.cuda()
+                action_std = autograd.Variable(action_std)
+                action_logstd = action_std.log()
 
-        # entropy (sum on actions / mean on batch) -> 1x1
-        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1, keepdim=True)
+            m = Normal(action_mean, action_std)
 
-        return value, actions, auxiliary, hiddens, log_probs, entropy
+            if deterministic is False:
+                actions = m.sample()
+            else:
+                actions = action_mean
+
+            # log_probs (sum on actions) -> batch x 1
+            log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+
+            # entropy (sum on actions / mean on batch) -> 1x1
+            entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
+            entropy = entropy.sum(-1, keepdim=True)
+
+            return value, actions, auxiliary, hiddens, log_probs, entropy
 
     def evaluate(self, inputs, hiddens, masks, actions):
         value, x, auxiliary, hiddens = self(inputs, hiddens, masks)
 
-        slices = torch.split(x, donkey.CONTROL_SIZE, 1)
-        action_mean = slices[0]
-        action_logstd = slices[1]
-        action_std = action_logstd.exp()
+        if self.action_type == 'discrete':
+            probs = F.softmax(x, dim=1)
+            log_probs = F.log_softmax(x, dim=1)
 
-        if self.config.get('fixed_action_std'):
-            action_std = (
-                self.config.get('fixed_action_std') *
-                torch.ones(action_mean.size()).float()
-            )
-            if self.config.get('cuda'):
-                action_std = action_std.cuda()
-            action_std = autograd.Variable(action_std)
-            action_logstd = action_std.log()
+            m = Categorical(probs)
+            actions = m.sample().view(-1, 1)
 
-        m = Normal(action_mean, action_std)
+            action_log_probs = log_probs.gather(1, actions)
+            entropy = -(log_probs * probs).sum(-1).mean()
 
-        # log_probs (sum on actions) -> batch x 1
-        log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+            return value, auxiliary, hiddens, action_log_probs, entropy
+        else:
+            slices = torch.split(x, donkey.CONTROL_SIZE, 1)
+            action_mean = slices[0]
+            action_logstd = slices[1]
+            action_std = action_logstd.exp()
 
-        # entropy (sum on actions / mean on batch) -> 1x1
-        entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
-        entropy = entropy.sum(-1, keepdim=True)
+            if self.config.get('fixed_action_std'):
+                action_std = (
+                    self.config.get('fixed_action_std') *
+                    torch.ones(action_mean.size()).float()
+                )
+                if self.config.get('cuda'):
+                    action_std = action_std.cuda()
+                action_std = autograd.Variable(action_std)
+                action_logstd = action_std.log()
 
-        return value, auxiliary, hiddens, log_probs, entropy
+            m = Normal(action_mean, action_std)
+
+            # log_probs (sum on actions) -> batch x 1
+            log_probs = m.log_prob(actions).sum(-1, keepdim=True)
+
+            # entropy (sum on actions / mean on batch) -> 1x1
+            entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
+            entropy = entropy.sum(-1, keepdim=True)
+
+            return value, auxiliary, hiddens, log_probs, entropy

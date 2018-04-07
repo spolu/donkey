@@ -24,7 +24,8 @@ CAMERA_STACK_SIZE = 4
 CAMERA_WIDTH = 120
 CAMERA_HEIGHT = 160
 
-CONTROL_SIZE = 2
+CONTINUOUS_CONTROL_SIZE = 2
+DISCRETE_CONTROL_SIZE = 9
 
 ANGLES_WINDOW = 8
 
@@ -38,6 +39,8 @@ class Donkey:
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
         self.reward_type = config.get('reward_type')
+        self.action_type = config.get('action_type')
+
         self.simulation_headless = config.get('simulation_headless')
         self.simulation_time_scale = config.get('simulation_time_scale')
         self.simulation_step_interval = config.get('simulation_step_interval')
@@ -250,7 +253,7 @@ class Donkey:
 
         return observation
 
-    def step(self, controls, discrete=False):
+    def step(self, controls):
         """
         Runs a step of the simuation based on input.
         It returns:
@@ -258,7 +261,7 @@ class Donkey:
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
-        if discrete:
+        if self.action_type == 'discrete':
             if controls == 0:
                 throttle = 0.0
                 brake = 0.0
@@ -336,7 +339,6 @@ class Worker(threading.Thread):
     def __init__(self, config):
         self.condition = threading.Condition()
         self.controls = None
-        self.discrete = False
         self.observation = None
         self.reward = 0.0
         self.done = False
@@ -345,7 +347,6 @@ class Worker(threading.Thread):
 
     def reset(self):
         self.controls = None
-        self.discrete = False
         self.reward = 0.0
         self.done = False
         self.observation = self.donkey.reset()
@@ -361,7 +362,7 @@ class Worker(threading.Thread):
             _send_condition.release()
 
             observation, reward, done = self.donkey.step(
-                self.controls, self.discrete,
+                self.controls
             )
 
             self.observation = observation
@@ -388,7 +389,7 @@ class Envs:
 
         return observations
 
-    def step(self, controls, discrete=False):
+    def step(self, controls):
         global _recv_count
         global _send_condition
         global _recv_condition
@@ -399,7 +400,6 @@ class Envs:
         for i in range(len(self.workers)):
             w = self.workers[i]
             w.controls = controls[i]
-            w.discrete = discrete
 
             # Release the workers.
             _send_condition.acquire()

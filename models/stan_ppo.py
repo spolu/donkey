@@ -40,9 +40,14 @@ class PPOStorage:
         self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
         self.returns = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
         self.log_probs = torch.zeros(self.rollout_size, self.worker_count, 1)
-        self.actions = torch.zeros(
-            self.rollout_size, self.worker_count, donkey.CONTROL_SIZE
-        )
+        if config.get('action_type') == 'discrete':
+            self.actions = torch.zeros(
+                self.rollout_size, self.worker_count, 1,
+            )
+        else:
+            self.actions = torch.zeros(
+                self.rollout_size, self.worker_count, donkey.CONTROL_SIZE,
+            )
         self.masks = torch.ones(self.rollout_size + 1, self.worker_count, 1)
 
     def cuda(self):
@@ -165,6 +170,7 @@ class Model:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.auxiliary_loss_coeff = config.get('auxiliary_loss_coeff')
         self.grad_norm_max = config.get('grad_norm_max')
+        self.action_type = config.get('action_type')
 
         self.policy = policy
 
@@ -234,14 +240,23 @@ class Model:
                 action.data.cpu().numpy(),
             )
 
-            print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-                value.data[0][0],
-                action.data[0][0],
-                action.data[0][1],
-                done[0],
-                reward[0],
-                observation[0].progress,
-            ))
+            if self.action_type == 'discrete':
+                print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
+                    value.data[0][0],
+                    action.data[0][0],
+                    done[0],
+                    reward[0],
+                    observation[0].progress,
+                ))
+            else:
+                print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                    value.data[0][0],
+                    action.data[0][0],
+                    action.data[0][1],
+                    done[0],
+                    reward[0],
+                    observation[0].progress,
+                ))
 
             auxiliary = self.policy.auxiliary(observation)
             observation = self.policy.input(observation)
@@ -414,14 +429,23 @@ class Model:
                     action.data.numpy(),
                 )
 
-                print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-                    value.data[0][0],
-                    action.data[0][0],
-                    action.data[0][1],
-                    done[0],
-                    reward[0],
-                    observation[0].progress,
-                ))
+                if self.action_type == 'discrete':
+                    print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
+                        value.data[0][0],
+                        action.data[0][0],
+                        done[0],
+                        reward[0],
+                        observation[0].progress,
+                    ))
+                else:
+                    print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                        value.data[0][0],
+                        action.data[0][0],
+                        action.data[0][1],
+                        done[0],
+                        reward[0],
+                        observation[0].progress,
+                    ))
                 sys.stdout.flush()
 
                 final_reward += reward[0]

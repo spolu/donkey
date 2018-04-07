@@ -1,6 +1,8 @@
 {
   "track_name": "newworld",
   "track_randomized": true,
+  "reward_type": "speed",
+  "action_type": "discrete",
 
   "model": "stan_ppo",
   "policy": "actor_critic_pixels",
@@ -9,8 +11,6 @@
 
   "recurring_cell": "none",
   "fixed_action_std": false,
-
-  "reward_type": "speed",
 
   "rollout_size": 20,
   "worker_count": 32,
