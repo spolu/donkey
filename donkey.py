@@ -61,7 +61,6 @@ class Donkey:
         self.step_count = 0
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
@@ -240,7 +239,6 @@ class Donkey:
 
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_controls = np.zeros(2)
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_progress = 0.0
@@ -252,30 +250,64 @@ class Donkey:
 
         return observation
 
-    def step(self, controls, differential=False):
+    def step(self, controls, discrete=False):
         """
-        `step` takes as input a 2D float numpy array.
+        Runs a step of the simuation based on input.
         It returns:
         - the observation as computed by `observation_from_telemetry`
         - a reward value for the last step
         - a boolean indicating whether the game is finished
         """
-        if differential:
-            self.last_controls += controls
-            controls = self.last_controls
+        if discrete:
+            if controls == 0:
+                throttle = 0.0
+                brake = 0.0
+                steering = 0.0
+            if controls == 1:
+                throttle = 0.5
+                brake = 0.0
+                steering = 0.0
+            if controls == 2:
+                throttle = 1.0
+                brake = 0.0
+                steering = 0.0
+            if controls == 3:
+                throttle = 0.0
+                brake = 0.5
+                steering = 0.0
+            if controls == 4:
+                throttle = 0.0
+                brake = 1.0
+                steering = 0.0
+            if controls == 5:
+                throttle = 0.0
+                brake = 0.0
+                steering = 0.5
+            if controls == 6:
+                throttle = 0.0
+                brake = 0.0
+                steering = 1.0
+            if controls == 7:
+                throttle = 0.0
+                brake = 0.0
+                steering = -0.5
+            if controls == 8:
+                throttle = 0.0
+                brake = 0.0
+                steering = -1.0
+        else:
+            steering = controls[0]
+            throttle_brake = controls[1]
 
-        steering = controls[0]
-        throttle_brake = controls[1]
-
-        throttle= 0.0
-        brake = 0.0
-
-        if throttle_brake > 0.0:
-            throttle = throttle_brake
+            throttle= 0.0
             brake = 0.0
-        if throttle_brake < 0.0:
-            throttle = 0.0
-            brake = -throttle_brake
+
+            if throttle_brake > 0.0:
+                throttle = throttle_brake
+                brake = 0.0
+            if throttle_brake < 0.0:
+                throttle = 0.0
+                brake = -throttle_brake
 
         command = simulation.Command(steering, throttle, brake)
 
@@ -304,7 +336,7 @@ class Worker(threading.Thread):
     def __init__(self, config):
         self.condition = threading.Condition()
         self.controls = None
-        self.differential = False
+        self.discrete = False
         self.observation = None
         self.reward = 0.0
         self.done = False
@@ -313,7 +345,7 @@ class Worker(threading.Thread):
 
     def reset(self):
         self.controls = None
-        self.differential = False
+        self.discrete = False
         self.reward = 0.0
         self.done = False
         self.observation = self.donkey.reset()
@@ -329,7 +361,7 @@ class Worker(threading.Thread):
             _send_condition.release()
 
             observation, reward, done = self.donkey.step(
-                self.controls, self.differential,
+                self.controls, self.discrete,
             )
 
             self.observation = observation
@@ -356,7 +388,7 @@ class Envs:
 
         return observations
 
-    def step(self, controls, differential=False):
+    def step(self, controls, discrete=False):
         global _recv_count
         global _send_condition
         global _recv_condition
@@ -367,7 +399,7 @@ class Envs:
         for i in range(len(self.workers)):
             w = self.workers[i]
             w.controls = controls[i]
-            w.differential = differential
+            w.discrete = discrete
 
             # Release the workers.
             _send_condition.acquire()
