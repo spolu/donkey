@@ -401,7 +401,7 @@ class Model:
 
         return self.running_reward
 
-    def run(self):
+    def run(self, step_callback):
         self.policy.eval()
 
         end = False
@@ -414,20 +414,24 @@ class Model:
             for step in range(self.rollout_size):
                 value, action, auxiliary, hidden, log_prob, entropy = self.policy.action(
                     autograd.Variable(
-                        self.rollouts.observations[step], requires_grad=False,
+                        self.rollouts.observations[step], requires_grad=True,
                     ),
                     autograd.Variable(
-                        self.rollouts.hiddens[step], requires_grad=False,
+                        self.rollouts.hiddens[step], requires_grad=True,
                     ),
                     autograd.Variable(
-                        self.rollouts.masks[step], requires_grad=False,
+                        self.rollouts.masks[step], requires_grad=True,
                     ),
                     deterministic=True,
                 )
 
+                action.mean().backward()
+
                 observation, reward, done = self.envs.step(
                     action.data.numpy(),
                 )
+
+                step_callback(observation, reward, done)
 
                 if self.action_type == 'discrete':
                     print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(

@@ -30,7 +30,7 @@ def transition():
 
 def run_server():
     global app
-    print("Starting shared server: port=9090")
+    print("Starting shared server: port=9091")
     address = ('0.0.0.0', 9091)
     app = socketio.Middleware(sio, app)
     try:

@@ -19,6 +19,7 @@ class Policy(nn.Module):
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
         self.config = config
+        self.gradients = None
 
         self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
         self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
@@ -76,6 +77,12 @@ class Policy(nn.Module):
         nn.init.xavier_normal(self.fc3_v.weight.data, nn.init.calculate_gain('linear'))
         self.fc2_v.bias.data.fill_(0)
         self.fc3_v.bias.data.fill_(0)
+
+    def hook_layers(self):
+        def hook_function(module, grad_in, grad_out):
+            self.gradients = grad_in[0]
+
+        self.cv1.register_backward_hook(hook_function)
 
     def forward(self, inputs, hiddens, masks):
         # A little bit of pytorch magic to extract camera pixels and angles
