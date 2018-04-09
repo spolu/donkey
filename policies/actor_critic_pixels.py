@@ -38,7 +38,7 @@ class Policy(nn.Module):
         else:
             self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTINUOUS_CONTROL_SIZE)
 
-        self.fc1_v = nn.Linear(self.hidden_size + donkey.ANGLES_WINDOW, self.hidden_size)
+        self.fc1_v = nn.Linear(self.hidden_size, self.hidden_size)
         self.fc2_v = nn.Linear(self.hidden_size, 1)
 
         self.train()
@@ -86,16 +86,7 @@ class Policy(nn.Module):
         self.cv1.register_backward_hook(hook_function)
 
     def forward(self, inputs, hiddens, masks):
-        # A little bit of pytorch magic to extract camera pixels and angles
-        # from the packed input.
-        pixels_inputs, stack = torch.split(
-            inputs, (donkey.CAMERA_STACK_SIZE), dim=1
-        )
-        angles_inputs = stack.split(1, 2)[0].split(
-            (donkey.ANGLES_WINDOW), 3,
-        )[0].contiguous().view(-1, donkey.ANGLES_WINDOW)
-
-        x = F.elu(self.cv1(pixels_inputs))
+        x = F.elu(self.cv1(inputs))
         x = F.elu(self.cv2(x))
         x = F.elu(self.cv3(x))
         x = F.elu(self.cv4(x))
@@ -128,37 +119,19 @@ class Policy(nn.Module):
             a = F.tanh(self.fc2_a(a))
 
         # Value network.
-        v = F.tanh(self.fc1_v(torch.cat((x, angles_inputs), 1)))
+        v = F.tanh(self.fc1_v(x))
         v = self.fc2_v(v)
 
         return v, a, angles, hiddens
 
     def input_shape(self):
-        # We encode the angles of the observation as the first floats of an
-        # extra camera layer.
-        assert donkey.CAMERA_HEIGHT > donkey.ANGLES_WINDOW
-
-        return (
-            donkey.CAMERA_STACK_SIZE + 1,
-            donkey.CAMERA_WIDTH,
-            donkey.CAMERA_HEIGHT,
-        )
+        return (4, 120, 160)
 
     def input(self, observation):
-        pack = [np.zeros((
-            donkey.CAMERA_STACK_SIZE + 1,
-            donkey.CAMERA_WIDTH,
-            donkey.CAMERA_HEIGHT,
-        ))] * len(observation)
-        for o in range(len(observation)):
-            for i in range(donkey.CAMERA_STACK_SIZE):
-                pack[o][i] = observation[o].camera[i]
-            for i in range(donkey.ANGLES_WINDOW):
-                pack[o][donkey.CAMERA_STACK_SIZE][0][i] = observation[o].track_angles[i]
-
+        cameras = [o.camera for o in observation]
         observation = np.concatenate(
             (
-                np.stack(pack),
+                np.stack(cameras),
             ),
             axis=-1,
         )

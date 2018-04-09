@@ -1,0 +1,10 @@
+{
+  "policy": "actor_critic_pixels",
+  "cuda": false,
+
+  "action_type": "continuous",
+
+  "recurring_cell": "none",
+  "fixed_action_std": false,
+  "hidden_size": 256
+}
