@@ -6,16 +6,16 @@
   "speed_limit": 2.0,
 
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels",
+  "policy": "actor_critic_pixels_residuals",
   "cuda": true,
   "seed": 1,
 
   "recurring_cell": "none",
   "fixed_action_std": false,
 
-  "rollout_size": 20,
-  "worker_count": 32,
-  "mini_batch_count": 8,
+  "rollout_size": 128,
+  "worker_count": 16,
+  "mini_batch_count": 32,
 
   "hidden_size": 256,
 

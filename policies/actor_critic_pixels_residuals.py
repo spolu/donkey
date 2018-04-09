@@ -12,13 +12,20 @@ from torch.distributions import Normal, Categorical
 import donkey
 
 class BasicBlock(nn.Module):
-    def __init__(self, inplanes, planes, stride=1):
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.conv1 = nn.Conv2d(
+            inplanes, planes, kernel_size=3, stride=stride, padding=1,
+            bias=False,
+        )
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(planes, planes)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=1, padding=1,
+            bias=False,
+        )
         self.bn2 = nn.BatchNorm2d(planes)
+        self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
@@ -30,6 +37,9 @@ class BasicBlock(nn.Module):
 
         out = self.conv2(out)
         out = self.bn2(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
 
         out += residual
         out = self.relu(out)
@@ -43,6 +53,7 @@ class Policy(nn.Module):
         self.action_type = config.get('action_type')
         self.config = config
         self.gradients = None
+        self.inplanes = 64
 
         self.cv1 = nn.Conv2d(
             donkey.CAMERA_STACK_SIZE, 64, kernel_size=7, stride=2, padding=3,
@@ -58,7 +69,7 @@ class Policy(nn.Module):
         self.rs4 = self._make_layer(512, 3)
 
         self.avgpool = nn.AvgPool2d(7, stride=1)
-        self.fc = nn.Linear(512, self.hidden_size)
+        self.fc = nn.Linear(417792, self.hidden_size)
 
         # Action network.
         self.ax1_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
@@ -103,8 +114,17 @@ class Policy(nn.Module):
         self.fc2_v.bias.data.fill_(0)
 
     def _make_layer(self, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.inplanes != planes:
+            downsample = nn.Sequential(
+                nn.Conv2d(
+                    self.inplanes, planes, kernel_size=1, stride=stride,
+                    bias=False
+                ),
+                nn.BatchNorm2d(planes),
+            )
         layers = []
-        layers.append(BasicBlock(self.inplanes, planes, stride))
+        layers.append(BasicBlock(self.inplanes, planes, stride, downsample))
         self.inplanes = planes
         for i in range(1, blocks):
             layers.append(BasicBlock(self.inplanes, planes))
@@ -140,6 +160,7 @@ class Policy(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
+
         x = F.elu(self.fc(x))
 
         # Action network.
