@@ -112,7 +112,7 @@ push-seed () {
 https://cloud.google.com/compute/docs/gpus/add-gpus#install-driver-script
 https://towardsdatascience.com/how-to-run-unity-on-amazon-cloud-or-without-monitor-3c10ce022639
 
-### Install
+## Raspberry Pi 3
 
 ### Miniconda
 
@@ -123,17 +123,36 @@ bash Miniconda3-latest-Linux-armv7l.sh # -> change default directory to /home/pi
 vim /home/pi/.bashrc # -> add: export PATH="/home/pi/miniconda3/bin:$PATH"
 sudo reboot -h now
 
-### PyTorch
-
-http://book.duckietown.org/master/duckiebook/pytorch_install.html
-
 ### Swap
 
 Increase by editing: /etc/dphys-swapfile
 
+### PyTorch
+
+http://book.duckietown.org/master/duckiebook/pytorch_install.html
+
+```
+export NO_DISTRIBUTED=1
+export NO_CUDA=1
+MAX_JOBS=1 python setup.py build
+sudo -E python setup.py install
+```
+
 ### Send code to donkey
 
 rsync -arv --exclude '.*' --exclude 'build' --exclude 'sim' ~/src/donkey pi@dr1ve.local:~/
+
+### Run
+
+Human driver with web client
+```
+python raspi.py configs/raspi.conf
+```
+
+Model
+```
+python raspi.py configs/raspi.conf --load_dir=/home/pi/exp_20180407_1537/
+```
 
 ### Save image of donkey
 
