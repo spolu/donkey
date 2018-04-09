@@ -133,7 +133,7 @@ Increase by editing: /etc/dphys-swapfile
 
 ### Send code to donkey
 
-rsync -arv --exclude '.*' ~/src/donkey pi@dr1ve.local:~/
+rsync -arv --exclude '.*' --exclude 'build' --exclude 'sim' ~/src/donkey pi@dr1ve.local:~/
 
 ### Save image of donkey
 
