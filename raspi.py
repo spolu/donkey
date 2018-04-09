@@ -7,6 +7,7 @@ Options:
     -h --help        Show this screen.
 """
 import os
+import argparse
 
 import raspi.vehicle
 from utils import Config

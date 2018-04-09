@@ -9,7 +9,7 @@ Created on Sun Jun 25 10:44:24 2017
 import time
 import threading
 
-from memory import Memory
+from raspi.memory import Memory
 
 class Vehicle():
     def __init__(self, mem=None):
