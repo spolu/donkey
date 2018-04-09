@@ -20,3 +20,10 @@ Increase by editing: /etc/dphys-swapfile
 ### Send code to donkey
 
 rsync -arv --exclude '.*' /Users/stan/src/donkey/rpi pi@d2.local:~/
+
+### Save image of donkey
+
+`diskutil list`
+`dd if=/dev/disk2 of=~/SDCardBackup.dmg`
+https://thepihut.com/blogs/raspberry-pi-tutorials/17789160-backing-up-and-restoring-your-raspberry-pis-sd-card
+
