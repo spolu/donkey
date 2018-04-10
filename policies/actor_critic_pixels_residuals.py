@@ -11,29 +11,36 @@ from torch.distributions import Normal, Categorical
 
 import donkey
 
-class BasicBlock(nn.Module):
+class ResidualBlock(nn.Module):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(BasicBlock, self).__init__()
+        super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(
             inplanes, planes, kernel_size=3, stride=stride, padding=1,
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(planes)
-        self.relu = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(
             planes, planes, kernel_size=3, stride=1, padding=1,
             bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
-        self.stride = stride
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
 
     def forward(self, x):
         residual = x
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = F.relu(out, inplace=True)
 
         out = self.conv2(out)
         out = self.bn2(out)
@@ -42,9 +49,47 @@ class BasicBlock(nn.Module):
             residual = self.downsample(x)
 
         out += residual
-        out = self.relu(out)
+        out = F.relu(out, inplace=True)
 
         return out
+
+class HeadBlock(nn.Module):
+    def __init__(self, inplanes, hidden_size, nonlinearity, output_size, stride=1):
+        super(HeadBlock, self).__init__()
+        self.conv1 = nn.Conv2d(
+            inplanes, 1, kernel_size=1, stride=stride, padding=1,
+            bias=False,
+        )
+        self.bn1 = nn.BatchNorm2d(1)
+        self.fc1 = nn.Linear(32*42, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+        nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
+        self.fc1.bias.data.fill_(0)
+        nn.init.xavier_normal(self.fc2.weight.data, nn.init.calculate_gain(nonlinearity))
+        self.fc2.bias.data.fill_(0)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+    def forward(self, x):
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = F.relu(out, inplace=True)
+
+        out = out.view(out.size(0), -1)
+        out = self.fc1(out)
+        out = F.relu(out, inplace=True)
+
+        out = self.fc2(out)
+
+        return out
+
 
 class Policy(nn.Module):
     def __init__(self, config):
@@ -60,60 +105,29 @@ class Policy(nn.Module):
             bias=False,
         )
         self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_layer(64, 3)
-        self.rs2 = self._make_layer(128, 4)
-        self.rs3 = self._make_layer(256, 6)
-        self.rs4 = self._make_layer(512, 3)
+        self.rs1 = self._make_residual_layer(64, 2)
+        self.rs2 = self._make_residual_layer(128, 2)
+        self.rs3 = self._make_residual_layer(256, 1)
 
-        self.avgpool = nn.AvgPool2d(7, stride=1)
-        self.fc = nn.Linear(417792, self.hidden_size)
-
-        # Action network.
-        self.ax1_a = nn.Linear(self.hidden_size, donkey.ANGLES_WINDOW)
-
-        self.fc1_a = nn.Linear(self.hidden_size, self.hidden_size)
+        # Action head.
         if self.action_type == 'discrete':
-            self.fc2_a = nn.Linear(self.hidden_size, donkey.DISCRETE_CONTROL_SIZE)
+            self.hd_a = HeadBlock(
+                256, 256, 'linear', donkey.DISCRETE_CONTROL_SIZE,
+            )
         else:
-            self.fc2_a = nn.Linear(self.hidden_size, 2 * donkey.CONTINUOUS_CONTROL_SIZE)
-
-        # Value network.
-        self.fc1_v = nn.Linear(self.hidden_size + donkey.ANGLES_WINDOW, self.hidden_size)
-        self.fc2_v = nn.Linear(self.hidden_size, 1)
+            self.hd_a = HeadBlock(
+                256, 256, 'tanh', 2*donkey.CONTINUOUS_CONTROL_SIZE,
+            )
+        # Auxiliary head.
+        self.hd_x = HeadBlock(256, 256, 'linear', donkey.ANGLES_WINDOW)
+        # Value head.
+        self.hd_v = HeadBlock(256, 256, 'linear', 1)
 
         self.train()
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
-        nn.init.xavier_normal(self.fc.weight.data, nn.init.calculate_gain('relu'))
-        self.fc.bias.data.fill_(0)
-
-        nn.init.xavier_normal(self.ax1_a.weight.data, nn.init.calculate_gain('linear'))
-        self.ax1_a.bias.data.fill_(0)
-
-        nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
-        if self.action_type == 'discrete':
-            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('linear'))
-        else:
-            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
-        self.fc1_a.bias.data.fill_(0)
-        self.fc2_a.bias.data.fill_(0)
-
-        nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('linear'))
-        self.fc1_v.bias.data.fill_(0)
-        self.fc2_v.bias.data.fill_(0)
-
-    def _make_layer(self, planes, blocks, stride=1):
+    def _make_residual_layer(self, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes:
             downsample = nn.Sequential(
@@ -124,10 +138,10 @@ class Policy(nn.Module):
                 nn.BatchNorm2d(planes),
             )
         layers = []
-        layers.append(BasicBlock(self.inplanes, planes, stride, downsample))
+        layers.append(ResidualBlock(self.inplanes, planes, stride, downsample))
         self.inplanes = planes
         for i in range(1, blocks):
-            layers.append(BasicBlock(self.inplanes, planes))
+            layers.append(ResidualBlock(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
@@ -138,72 +152,36 @@ class Policy(nn.Module):
         self.cv1.register_backward_hook(hook_function)
 
     def forward(self, inputs, hiddens, masks):
-        # A little bit of pytorch magic to extract camera pixels and angles
-        # from the packed input.
-        pixels_inputs, stack = torch.split(
-            inputs, (donkey.CAMERA_STACK_SIZE), dim=1
-        )
-        angles_inputs = stack.split(1, 2)[0].split(
-            (donkey.ANGLES_WINDOW), 3,
-        )[0].contiguous().view(-1, donkey.ANGLES_WINDOW)
-
-
-        x = self.cv1(pixels_inputs)
+        x = self.cv1(inputs)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = F.relu(x, inplace=True)
         x = self.maxpool(x)
 
         x = self.rs1(x)
         x = self.rs2(x)
         x = self.rs3(x)
-        x = self.rs4(x)
 
-        x = self.avgpool(x)
-        x = x.view(x.size(0), -1)
-
-        x = F.elu(self.fc(x))
-
-        # Action network.
-        angles = self.ax1_a(x)
-
-        a = F.tanh(self.fc1_a(x))
         if self.action_type == 'discrete':
-            a = self.fc2_a(a)
+            a = self.hd_a(x)
         else:
-            a = F.tanh(self.fc2_a(a))
+            a = F.tanh(self.hd_a(x))
+        ax = self.hd_x(x)
+        v = self.hd_v(x)
 
-        # Value network.
-        v = F.tanh(self.fc1_v(torch.cat((x, angles_inputs), 1)))
-        v = self.fc2_v(v)
-
-        return v, a, angles, hiddens
+        return v, a, ax, hiddens
 
     def input_shape(self):
-        # We encode the angles of the observation as the first floats of an
-        # extra camera layer.
-        assert donkey.CAMERA_HEIGHT > donkey.ANGLES_WINDOW
-
         return (
-            donkey.CAMERA_STACK_SIZE + 1,
+            donkey.CAMERA_STACK_SIZE,
             donkey.CAMERA_WIDTH,
             donkey.CAMERA_HEIGHT,
         )
 
     def input(self, observation):
-        pack = [np.zeros((
-            donkey.CAMERA_STACK_SIZE + 1,
-            donkey.CAMERA_WIDTH,
-            donkey.CAMERA_HEIGHT,
-        ))] * len(observation)
-        for o in range(len(observation)):
-            for i in range(donkey.CAMERA_STACK_SIZE):
-                pack[o][i] = observation[o].camera[i]
-            for i in range(donkey.ANGLES_WINDOW):
-                pack[o][donkey.CAMERA_STACK_SIZE][0][i] = observation[o].track_angles[i]
-
+        cameras = [o.camera for o in observation]
         observation = np.concatenate(
             (
-                np.stack(pack),
+                np.stack(cameras),
             ),
             axis=-1,
         )

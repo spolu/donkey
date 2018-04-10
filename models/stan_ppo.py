@@ -336,7 +336,7 @@ class Model:
 
             entropy_loss = -entropy.mean()
 
-            auxiliary_loss = autograd.Variable(torch.zeros(1))
+            auxiliary_loss = autograd.Variable(torch.zeros(0))
             if self.cuda:
                 auxiliary_loss = auxiliary_loss.cuda()
 

@@ -6,11 +6,11 @@
 - [x] add telemetry image to human game to check how turns are seen
 - [x] move to 3 laps
 - [x] try capped speed reward
+- [x] try discrete action space
+- [~] experiment with residual networks
 - [ ] try orstein-hullenbeck exploration with normal logprobs
-- [ ] try discrete action space
 
 - [x] randomized track
-
 - [ ] randomized physics
 
 - [ ] multiple donkeys in simulation
