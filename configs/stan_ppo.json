@@ -6,7 +6,7 @@
   "speed_limit": 2.0,
 
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels",
+  "policy": "actor_critic_pixels_residuals",
   "cuda": true,
   "seed": 1,
 

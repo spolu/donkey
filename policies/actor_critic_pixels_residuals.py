@@ -86,24 +86,24 @@ class Policy(nn.Module):
             256, 1, kernel_size=1, stride=1, padding=1, bias=False,
         )
         self.bn2 = nn.BatchNorm2d(1)
-        self.fc1 = nn.Linear(32*42, hidden_size)
+        self.fc1 = nn.Linear(32*42, self.hidden_size)
 
         # Action head.
         if self.action_type == 'discrete':
             self.hd_a = HeadBlock(
-                256, 'linear', donkey.DISCRETE_CONTROL_SIZE,
+                self.hidden_size, 'linear', donkey.DISCRETE_CONTROL_SIZE,
             )
         else:
             self.hd_a = HeadBlock(
-                256, 'tanh', 2*donkey.CONTINUOUS_CONTROL_SIZE,
+                self.hidden_size, 'tanh', 2*donkey.CONTINUOUS_CONTROL_SIZE,
             )
         # Auxiliary head.
-        self.hd_x = HeadBlock(256, 'linear', donkey.ANGLES_WINDOW)
+        self.hd_x = HeadBlock(self.hidden_size, 'linear', donkey.ANGLES_WINDOW)
         # Value head.
-        self.hd_v = HeadBlock(256, 'linear', 1)
+        self.hd_v = HeadBlock(self.hidden_size, 'linear', 1)
 
-        nn.init.xavier_normal(self.fc1_hd.weight.data, nn.init.calculate_gain('relu'))
-        self.fc1_hd.bias.data.fill_(0)
+        nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
+        self.fc1.bias.data.fill_(0)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -146,7 +146,7 @@ class Policy(nn.Module):
         x = self.cv2(x)
         x = self.bn2(x)
         x = F.relu(x, inplace=True)
-        x = x.view(out.size(0), -1)
+        x = x.view(x.size(0), -1)
         x = self.fc1(x)
         x = F.relu(x, inplace=True)
 
