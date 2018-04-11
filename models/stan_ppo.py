@@ -352,7 +352,10 @@ class Model:
              entropy_loss * self.entropy_loss_coeff +
              auxiliary_loss * self.auxiliary_loss_coeff).backward()
 
-            nn.utils.clip_grad_norm(self.policy.parameters(), self.grad_norm_max)
+            if self.grad_norm_max > 0.0:
+                nn.utils.clip_grad_norm(
+                    self.policy.parameters(), self.grad_norm_max,
+                )
 
             self.optimizer.step()
 
@@ -414,18 +417,16 @@ class Model:
             for step in range(self.rollout_size):
                 value, action, auxiliary, hidden, log_prob, entropy = self.policy.action(
                     autograd.Variable(
-                        self.rollouts.observations[step], requires_grad=True,
+                        self.rollouts.observations[step], requires_grad=False,
                     ),
                     autograd.Variable(
-                        self.rollouts.hiddens[step], requires_grad=True,
+                        self.rollouts.hiddens[step], requires_grad=False,
                     ),
                     autograd.Variable(
-                        self.rollouts.masks[step], requires_grad=True,
+                        self.rollouts.masks[step], requires_grad=False,
                     ),
                     deterministic=True,
                 )
-
-                action.mean().backward()
 
                 observation, reward, done = self.envs.step(
                     action.data.numpy(),

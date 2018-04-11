@@ -18,11 +18,11 @@
   "worker_count": 16,
   "mini_batch_count": 32,
 
-  "learning_rate": 0.0001,
+  "learning_rate": 0.0002,
   "gamma": 0.99,
   "tau": 0.95,
 
-  "ppo_epoch_count": 10,
+  "ppo_epoch_count": 20,
   "ppo_clip": 0.2,
 
   "action_loss_coeff": 1.0,
@@ -30,7 +30,7 @@
   "entropy_loss_coeff": 0.01,
   "auxiliary_loss_coeff": 0.5,
 
-  "grad_norm_max": 0.5,
+  "grad_norm_max": 0.0,
 
   "simulation_headless": true,
   "simulation_time_scale": 5.0,

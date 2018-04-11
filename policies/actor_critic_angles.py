@@ -18,7 +18,6 @@ class Policy(nn.Module):
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
         self.config = config
-        self.gradients = None
 
         if self.recurring_cell == "gru":
             self.fc1 = nn.Linear(INPUTS_SIZE, self.hidden_size)
@@ -58,9 +57,6 @@ class Policy(nn.Module):
             nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
             self.fc1_a.bias.data.fill_(0)
             self.fc1_v.bias.data.fill_(0)
-
-    def hook_layers(self):
-        pass
 
     def forward(self, inputs, hiddens, masks):
         if self.recurring_cell == "gru":

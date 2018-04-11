@@ -20,7 +20,6 @@ observations = None
 reward = None
 done = None
 policy = None
-gradients = None
 
 def transition():
     return {
@@ -30,7 +29,6 @@ def transition():
         'time': observations.time,
         'linear_speed': observations.track_linear_speed,
         'camera': observations.camera[0].tolist(),
-        'gradients': gradients[0][0].data.numpy().tolist(),
     }
 
 def run_server():
@@ -75,8 +73,6 @@ def run(args):
     module = __import__('models.' + cfg.get('model'))
     model = getattr(module, cfg.get('model')).Model(cfg, policy, None, args.load_dir)
 
-    policy.hook_layers()
-
     episode = 0
     model.initialize()
 
@@ -86,17 +82,16 @@ def run(args):
             global reward
             global done
             global policy
-            global gradients
 
             observations = o[0]
             reward = r
             done = d
 
-            gradients = policy.gradients / policy.gradients.max()
-
             sio.emit('transition', transition())
             sio.emit('next')
+
         reward = model.run(step_callback)
+
         print("DONE {}".format(reward))
 
 if __name__ == "__main__":

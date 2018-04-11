@@ -14,36 +14,27 @@ import donkey
 class ResidualBlock(nn.Module):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(ResidualBlock, self).__init__()
-        self.conv1 = nn.Conv2d(
+        self.cv1_rs = nn.Conv2d(
             inplanes, planes, kernel_size=3, stride=stride, padding=1,
             bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(
+        self.bn1_rs = nn.BatchNorm2d(planes)
+        self.cv2_rs = nn.Conv2d(
             planes, planes, kernel_size=3, stride=1, padding=1,
             bias=False,
         )
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2_rs = nn.BatchNorm2d(planes)
         self.downsample = downsample
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
-
 
     def forward(self, x):
         residual = x
 
-        out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.cv1_rs(x)
+        out = self.bn1_rs(out)
         out = F.relu(out, inplace=True)
 
-        out = self.conv2(out)
-        out = self.bn2(out)
+        out = self.cv2_rs(out)
+        out = self.bn2_rs(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -54,39 +45,20 @@ class ResidualBlock(nn.Module):
         return out
 
 class HeadBlock(nn.Module):
-    def __init__(self, inplanes, hidden_size, nonlinearity, output_size, stride=1):
+    def __init__(self, hidden_size, nonlinearity, output_size, stride=1):
         super(HeadBlock, self).__init__()
-        self.conv1 = nn.Conv2d(
-            inplanes, 1, kernel_size=1, stride=stride, padding=1,
-            bias=False,
-        )
-        self.bn1 = nn.BatchNorm2d(1)
-        self.fc1 = nn.Linear(32*42, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc1_hd = nn.Linear(hidden_size, hidden_size)
+        self.fc2_hd = nn.Linear(hidden_size, output_size)
 
-        nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
-        self.fc1.bias.data.fill_(0)
-        nn.init.xavier_normal(self.fc2.weight.data, nn.init.calculate_gain(nonlinearity))
-        self.fc2.bias.data.fill_(0)
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+        nn.init.xavier_normal(self.fc1_hd.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.fc2_hd.weight.data, nn.init.calculate_gain(nonlinearity))
+        self.fc1_hd.bias.data.fill_(0)
+        self.fc2_hd.bias.data.fill_(0)
 
     def forward(self, x):
-        out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.fc1_hd(x)
         out = F.relu(out, inplace=True)
-
-        out = out.view(out.size(0), -1)
-        out = self.fc1(out)
-        out = F.relu(out, inplace=True)
-
-        out = self.fc2(out)
+        out = self.fc2_hd(out)
 
         return out
 
@@ -97,7 +69,6 @@ class Policy(nn.Module):
         self.hidden_size = config.get('hidden_size')
         self.action_type = config.get('action_type')
         self.config = config
-        self.gradients = None
         self.inplanes = 64
 
         self.cv1 = nn.Conv2d(
@@ -107,23 +78,40 @@ class Policy(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_residual_layer(64, 2)
-        self.rs2 = self._make_residual_layer(128, 2)
+        self.rs1 = self._make_residual_layer(64, 1)
+        self.rs2 = self._make_residual_layer(128, 1)
         self.rs3 = self._make_residual_layer(256, 1)
+
+        self.cv2 = nn.Conv2d(
+            256, 1, kernel_size=1, stride=1, padding=1, bias=False,
+        )
+        self.bn2 = nn.BatchNorm2d(1)
+        self.fc1 = nn.Linear(32*42, hidden_size)
 
         # Action head.
         if self.action_type == 'discrete':
             self.hd_a = HeadBlock(
-                256, 256, 'linear', donkey.DISCRETE_CONTROL_SIZE,
+                256, 'linear', donkey.DISCRETE_CONTROL_SIZE,
             )
         else:
             self.hd_a = HeadBlock(
-                256, 256, 'tanh', 2*donkey.CONTINUOUS_CONTROL_SIZE,
+                256, 'tanh', 2*donkey.CONTINUOUS_CONTROL_SIZE,
             )
         # Auxiliary head.
-        self.hd_x = HeadBlock(256, 256, 'linear', donkey.ANGLES_WINDOW)
+        self.hd_x = HeadBlock(256, 'linear', donkey.ANGLES_WINDOW)
         # Value head.
-        self.hd_v = HeadBlock(256, 256, 'linear', 1)
+        self.hd_v = HeadBlock(256, 'linear', 1)
+
+        nn.init.xavier_normal(self.fc1_hd.weight.data, nn.init.calculate_gain('relu'))
+        self.fc1_hd.bias.data.fill_(0)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
         self.train()
 
@@ -145,12 +133,6 @@ class Policy(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def hook_layers(self):
-        def hook_function(module, grad_in, grad_out):
-            self.gradients = grad_in[0]
-
-        self.cv1.register_backward_hook(hook_function)
-
     def forward(self, inputs, hiddens, masks):
         x = self.cv1(inputs)
         x = self.bn1(x)
@@ -160,6 +142,13 @@ class Policy(nn.Module):
         x = self.rs1(x)
         x = self.rs2(x)
         x = self.rs3(x)
+
+        x = self.cv2(x)
+        x = self.bn2(x)
+        x = F.relu(x, inplace=True)
+        x = x.view(out.size(0), -1)
+        x = self.fc1(x)
+        x = F.relu(x, inplace=True)
 
         if self.action_type == 'discrete':
             a = self.hd_a(x)
