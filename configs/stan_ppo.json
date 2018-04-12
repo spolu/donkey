@@ -6,7 +6,7 @@
   "speed_limit": 2.0,
 
   "model": "stan_ppo",
-  "policy": "actor_critic_pixels_residuals",
+  "policy": "actor_critic_pixels",
   "cuda": true,
   "seed": 1,
 
@@ -18,7 +18,7 @@
   "worker_count": 16,
   "mini_batch_count": 32,
 
-  "learning_rate": 0.0002,
+  "learning_rate": 0.0001,
   "gamma": 0.99,
   "tau": 0.95,
 
@@ -30,7 +30,7 @@
   "entropy_loss_coeff": 0.01,
   "auxiliary_loss_coeff": 0.5,
 
-  "grad_norm_max": 0.0,
+  "grad_norm_max": 1.0,
 
   "simulation_headless": true,
   "simulation_time_scale": 1.0,
