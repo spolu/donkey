@@ -106,7 +106,6 @@ push-seed () {
 }
 ```
 
-
 ### Resources
 
 https://cloud.google.com/compute/docs/gpus/add-gpus#install-driver-script
@@ -159,6 +158,24 @@ python raspi.py configs/raspi.conf --load_dir=/home/pi/exp_20180407_1537/
 `diskutil list`
 `dd if=/dev/disk2 of=~/SDCardBackup.dmg`
 https://thepihut.com/blogs/raspberry-pi-tutorials/17789160-backing-up-and-restoring-your-raspberry-pis-sd-card
+
+## Simulation Notes
+
+```
+delta = timeScale / frameRate
+real_timeStep = timeStep +- delta
+```
+
+If we want `real_timetep = 0.05 +- 0.01` we need timeScale/frameRate <= 0.01.
+At this rate, we're bounded to I/O more than faster timeScale, hence:
+
+In practice the following settings are pretty lightweight and result in an
+effective timestep of 0.06:
+```
+timeScale = 1.0
+timeStep = 0.05
+frameRate = 50
+```
 
 ## Read list
 
