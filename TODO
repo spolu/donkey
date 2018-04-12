@@ -9,6 +9,8 @@
 - [x] try discrete action space
 - [~] experiment with residual networks
 - [ ] try orstein-hullenbeck exploration with normal logprobs
+- [ ] try augmenting the stack frame
+- [ ] try reshaping the reward to go negative instead of stopping on road exit
 
 - [x] randomized track
 - [ ] randomized physics

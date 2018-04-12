@@ -45,17 +45,18 @@ def disconnect(sid):
 def telemetry(sid, data):
     # print("Received telemetry: sid={} client_id={}".format(sid, data['id']))
 
-    # if int(data['id']) == 0:
-    #     print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
-    #         data['time'],
-    #         data['fps'],
-    #         data['last_resume'],
-    #         data['last_pause'],
-    #         data['last_telemetry'],
-    #         data['delta'],
-    #         data['fixed_delta'],
-    #         data['time_scale'],
-    #     ))
+    if int(data['id']) == 0:
+        print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} real_delta={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
+            data['time'],
+            data['fps'],
+            data['last_resume'],
+            data['last_pause'],
+            data['last_telemetry'],
+            data['last_telemetry'] - data['last_resume'],
+            data['delta'],
+            data['fixed_delta'],
+            data['time_scale'],
+        ))
 
     # Record telemetry on the client and notify.
     client = client_for_id(int(data['id']))
@@ -255,13 +256,3 @@ class Simulation:
         telemetry = self.client['telemetry']
         self.client['condition'].release()
         return telemetry
-
-if __name__ == "__main__":
-    s = Simulation(
-        False,
-        False,
-        1.0,
-        0.2,
-        0,
-    )
-    s.start(track.Track("newworld"))

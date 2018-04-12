@@ -7,7 +7,7 @@
   "reward_type": "time",
 
   "simulation_headless": false,
-  "simulation_time_scale": 2.0,
-  "simulation_step_interval": 0.2,
-  "simulation_capture_frame_rate": 0
+  "simulation_time_scale": 1.0,
+  "simulation_step_interval": 0.1,
+  "simulation_capture_frame_rate": 1000
 }
