@@ -106,6 +106,7 @@ push-seed () {
 }
 ```
 
+
 ### Resources
 
 https://cloud.google.com/compute/docs/gpus/add-gpus#install-driver-script
@@ -125,6 +126,7 @@ sudo reboot -h now
 ### Swap
 
 Increase by editing: /etc/dphys-swapfile
+If not enough increase by editing /sbin/dphys-swapfile
 
 ### PyTorch
 
@@ -145,12 +147,12 @@ rsync -arv --exclude '.*' --exclude 'build' --exclude 'sim' ~/src/donkey pi@dr1v
 
 Human driver with web client
 ```
-python raspi.py configs/raspi.conf
+python raspi.py configs/raspi.json
 ```
 
 Model
 ```
-python raspi.py configs/raspi.conf --load_dir=/home/pi/exp_20180407_1537/
+python raspi.py configs/raspi.json --load_dir=/home/pi/exp_20180407_1537/
 ```
 
 ### Save image of donkey
@@ -158,24 +160,6 @@ python raspi.py configs/raspi.conf --load_dir=/home/pi/exp_20180407_1537/
 `diskutil list`
 `dd if=/dev/disk2 of=~/SDCardBackup.dmg`
 https://thepihut.com/blogs/raspberry-pi-tutorials/17789160-backing-up-and-restoring-your-raspberry-pis-sd-card
-
-## Simulation Notes
-
-```
-delta = timeScale / frameRate
-real_timeStep = timeStep +- delta
-```
-
-If we want `real_timetep = 0.05 +- 0.01` we need timeScale/frameRate <= 0.01.
-At this rate, we're bounded to I/O more than faster timeScale, hence:
-
-In practice the following settings are pretty lightweight and result in an
-effective timestep of 0.06:
-```
-timeScale = 1.0
-timeStep = 0.05
-frameRate = 50
-```
 
 ## Read list
 
