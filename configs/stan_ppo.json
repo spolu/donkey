@@ -15,7 +15,7 @@
   "recurring_cell": "none",
 
   "rollout_size": 128,
-  "worker_count": 32,
+  "worker_count": 16,
   "mini_batch_count": 64,
 
   "learning_rate": 0.0001,
@@ -33,7 +33,7 @@
   "grad_norm_max": 1.0,
 
   "simulation_headless": true,
-  "simulation_time_scale": 1.0,
-  "simulation_step_interval": 0.05,
-  "simulation_capture_frame_rate": 50
+  "simulation_time_scale": 4.0,
+  "simulation_step_interval": 0.09,
+  "simulation_capture_frame_rate": 200
 }
