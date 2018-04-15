@@ -154,7 +154,7 @@ public class Car : MonoBehaviour, ICar {
 				wc.motorTorque = 0.0f;
 			}
 
-			wc.brakeTorque = 2000f * brake;
+			wc.brakeTorque = 500f * brake;
 		}
 
 		acceleration = rb.velocity - prevVelocity / Time.fixedDeltaTime;
