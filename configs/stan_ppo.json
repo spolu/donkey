@@ -14,8 +14,8 @@
   "hidden_size": 256,
   "recurring_cell": "none",
 
-  "rollout_size": 64,
-  "worker_count": 16,
+  "rollout_size": 128,
+  "worker_count": 32,
   "mini_batch_count": 32,
 
   "learning_rate": 0.0001,
