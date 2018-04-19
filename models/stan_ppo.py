@@ -198,9 +198,11 @@ class Model:
             else:
                 self.policy.load_state_dict(
                     torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
+                    # torch.load(self.load_dir + "/policy.pt", map_location=lambda storage, loc: storage), #some how it only work this way for me
                 )
                 self.optimizer.load_state_dict(
                     torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
+                    # torch.load(self.load_dir + "/optimizer.pt", map_location=lambda storage, loc: storage), #some how it only work this way for me
                 )
 
         self.final_rewards = torch.zeros([self.worker_count, 1])
