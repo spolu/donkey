@@ -23,6 +23,7 @@ class Runner:
 
     def run(self, img_arr):
         img_arr = img_arr.transpose(2, 0, 1) #transposing the images channels 
+        img_arr = img_arr / 127.5 - 1
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         observation = torch.from_numpy(img_arr).float()
 
