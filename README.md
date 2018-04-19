@@ -30,8 +30,7 @@
 
 ### Playing a trained model
 
-- Run `python runner.py configs/stan_ppo.json --simulation_headless=false
-  --load_dir=/keybase/team/dr1ve/experiments/exp_20180321_0721/`.
+- Run `python runner.py configs/stan_ppo.json --simulation_headless=false --load_dir=/keybase/team/dr1ve/experiments/exp_20180321_0721/`.
 
 ### Editing Simulator in Unity 
 
