@@ -22,6 +22,7 @@ class Runner:
         self.policy.eval()
 
     def run(self, img_arr):
+        img_arr = img_arr.transpose(2, 0, 1) #transposing the images channels 
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         observation = torch.from_numpy(img_arr).float()
 
@@ -40,7 +41,7 @@ class Runner:
         slices = torch.split(x, 2, 1)
         actions = slices[0].data.numpy()
 
-        return actions[0], actions[1]
+        return actions[0][0], actions[0][1]
 
     def shutdown(self):
         pass
