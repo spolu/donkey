@@ -9,6 +9,8 @@ import torch.autograd as autograd
 
 from torch.distributions import Normal
 
+CAMERA_STACK_SIZE = 3
+
 class Runner:
     def __init__(self, config, policy, load_dir):
         self.load_dir = load_dir
@@ -20,12 +22,15 @@ class Runner:
             torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
         )
         self.policy.eval()
+        self.camera_stack = None
 
-    def run(self, img_arr):
-        img_arr = img_arr.transpose(2, 0, 1) #transposing the images channels 
-        img_arr = img_arr / 127.5 - 1
-        img_arr = img_arr.reshape((1,) + img_arr.shape)
-        observation = torch.from_numpy(img_arr).float()
+    def run(self, img_stack):
+        # Transpose the images channels.
+        img_stack = img_stack.transpose(2, 0, 1)
+        img_stack = img_stack.reshape((1,) + img_stack.shape)
+        img_stack = img_stack / 127.5 - 1
+
+        observation = torch.from_numpy(img_stack).float()
 
         value, x, auxiliary, hiddens = self.policy(
             autograd.Variable(
@@ -42,7 +47,9 @@ class Runner:
         slices = torch.split(x, 2, 1)
         actions = slices[0].data.numpy()
 
-        return actions[0][0], actions[0][1]
+        print("ACTIONS {:.2f} / {:.2f}".format(actions[0][0], actions[0][1]))
+
+        return actions[0][0], min(0.60, actions[0][1])
 
     def shutdown(self):
         pass

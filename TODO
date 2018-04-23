@@ -1,6 +1,15 @@
 # team milestones
 
-- [x] follow track in reality from RL in simluation
+- [ ] (i) follow track in reality from RL in simluation
+
+# milestone (i)
+
+- [ ] with variable texture / lights (contrast)
+- [ ] remove center line
+- [ ] train with variable width?
+- [ ] add track with tight turn
+- [ ] add ~200ms (or 1 step) delay between agent output and action
+- [ ] try trainin smaller networks
 
 # stan
 
@@ -11,9 +20,10 @@
 - [x] move to 3 laps
 - [x] try capped speed reward
 - [x] try discrete action space
+- [x] try augmenting the stack frame
 - [~] experiment with residual networks
+
 - [ ] try orstein-hullenbeck exploration with normal logprobs
-- [ ] try augmenting the stack frame
 - [ ] try reshaping the reward to go negative instead of stopping on road exit
 
 - [x] randomized track

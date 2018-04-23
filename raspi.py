@@ -14,6 +14,7 @@ from utils import Config
 
 #import parts
 from raspi.parts.camera import PiCamera
+from raspi.parts.cv import ImgStack
 from raspi.parts.transform import Lambda
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.runner import Runner
@@ -40,6 +41,7 @@ THROTTLE_FORWARD_PWM = 400
 THROTTLE_STOPPED_PWM = 360
 THROTTLE_REVERSE_PWM = 320
 #THROTTLE_REVERSE_PWM = 310
+
 def drive(args):
     cfg = Config(args.config_path)
 
@@ -53,15 +55,21 @@ def drive(args):
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
-    if args.load_dir is None:
-        ctr = LocalWebController()
-        V.add(ctr,
-              inputs=['cam/image_array'],
-              outputs=['angle', 'throttle'],
-              threaded=True)
-    else:
-        ctr = Runner(cfg, policy, args.load_dir)
-        V.add(ctr,
+    # stack = ImgStack()
+    # V.add(stack,
+    #       inputs=['cam/image_array'],
+    #       outputs=['cam/image_stack'],
+    #       threaded=False)
+
+    ctr = LocalWebController()
+    V.add(ctr,
+          inputs=['cam/image_array'],
+          outputs=['angle', 'throttle'],
+          threaded=True)
+
+    if args.load_dir is not None:
+        runner = Runner(cfg, policy, args.load_dir)
+        V.add(runner,
               inputs=['cam/image_array'],
               outputs=['angle', 'throttle'],
               threaded=False)
@@ -81,7 +89,7 @@ def drive(args):
     V.add(throttle, inputs=['throttle'])
 
     if args.load_dir is None:
-        print("You can now go to http://d2.local:8887 to drive.")
+        print("You can now go to http://d2.dr1ve:8887 to drive.")
 
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
