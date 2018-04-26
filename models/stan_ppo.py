@@ -242,23 +242,23 @@ class Model:
                 action.data.cpu().numpy(),
             )
 
-            if self.action_type == 'discrete':
-                print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
-                    value.data[0][0],
-                    action.data[0][0],
-                    done[0],
-                    reward[0],
-                    observation[0].progress,
-                ))
-            else:
-                print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-                    value.data[0][0],
-                    action.data[0][0],
-                    action.data[0][1],
-                    done[0],
-                    reward[0],
-                    observation[0].progress,
-                ))
+            # if self.action_type == 'discrete':
+            #     print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
+            #         value.data[0][0],
+            #         action.data[0][0],
+            #         done[0],
+            #         reward[0],
+            #         observation[0].progress,
+            #     ))
+            # else:
+            #     print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+            #         value.data[0][0],
+            #         action.data[0][0],
+            #         action.data[0][1],
+            #         done[0],
+            #         reward[0],
+            #         observation[0].progress,
+            #     ))
 
             auxiliary = self.policy.auxiliary(observation)
             observation = self.policy.input(observation)

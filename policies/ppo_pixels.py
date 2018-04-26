@@ -20,11 +20,17 @@ class Policy(nn.Module):
         self.config = config
 
         self.cv1 = nn.Conv2d(donkey.CAMERA_STACK_SIZE, 24, 5, stride=2)
-        self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
-        self.cv3 = nn.Conv2d(32, 64, 5, stride=2)
+        self.bn1 = nn.BatchNorm2d(24)
+
+        self.cv2 = nn.Conv2d(24, 32, 5, stride=1)
+        self.cv3 = nn.Conv2d(32, 64, 5, stride=1)
         self.cv4 = nn.Conv2d(64, 64, 3, stride=2)
-        self.cv5 = nn.Conv2d(64, 64, 3, stride=1)
-        self.fc1 = nn.Linear(1152, self.hidden_size)
+        self.cv5 = nn.Conv2d(64, 64, 3, stride=2)
+
+        self.cv6 = nn.Conv2d(64, 1, 1, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(1)
+
+        self.fc1 = nn.Linear(234, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -83,12 +89,15 @@ class Policy(nn.Module):
 
     def forward(self, inputs, hiddens, masks):
         x = F.elu(self.cv1(inputs))
+        x = self.bn1(x)
         x = F.elu(self.cv2(x))
         x = F.elu(self.cv3(x))
         x = F.elu(self.cv4(x))
         x = F.elu(self.cv5(x))
+        x = F.elu(self.cv6(x))
+        x = self.bn2(x)
 
-        x = x.view(-1, 1152)
+        x = x.view(-1, 234)
 
         x = F.elu(self.fc1(x))
 
