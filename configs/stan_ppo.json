@@ -34,6 +34,6 @@
 
   "simulation_headless": true,
   "simulation_time_scale": 4.0,
-  "simulation_step_interval": 0.09,
+  "simulation_step_interval": 0.19,
   "simulation_capture_frame_rate": 200
 }
