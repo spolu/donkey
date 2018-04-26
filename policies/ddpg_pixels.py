@@ -24,7 +24,7 @@ class OrnsteinUhlenbeckNoise:
 
     def sample(self):
         dx = self.theta * (self.mu - self.X)
-        dx = dx + self.sigma * torch.rand(self.dim)
+        dx = dx + self.sigma * torch.randn(self.dim)
         self.X = self.X + dx
         return self.X
 
@@ -32,14 +32,17 @@ class ActorPolicy(nn.Module):
     def __init__(self, config):
         super(ActorPolicy, self).__init__()
         self.hidden_size = config.get('hidden_size')
+        self.worker_count = config.get('worker_count')
         self.config = config
 
+        mu = torch.ones(self.worker_count, 2)
+        mu[0] *= 0.0 # steering
+        mu[1] *= 0.3 # throttle_brake
+        mu = mu.transpose(0, 1)
+
         self.noise = OrnsteinUhlenbeckNoise(
-            donkey.CONTINUOUS_CONTROL_SIZE,
-            mu=torch.Tensor([
-                0.0, # steering
-                0.3, # throttle_brake
-            ]),
+            (self.worker_count, donkey.CONTINUOUS_CONTROL_SIZE),
+            mu=mu,
             theta=0.3,
             sigma=0.2,
         )
