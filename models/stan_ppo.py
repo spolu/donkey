@@ -157,7 +157,7 @@ class PPOStorage:
                 advantage_targets
 
 class Model:
-    def __init__(self, config, policy, save_dir=None, load_dir=None):
+    def __init__(self, config, save_dir=None, load_dir=None):
         self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
@@ -172,7 +172,8 @@ class Model:
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
 
-        self.policy = policy
+        module = __import__('policies.' + cfg.get('policy'))
+        self.policy = getattr(module, cfg.get('policy')).Policy(config)
 
         self.save_dir = save_dir
         self.load_dir = load_dir

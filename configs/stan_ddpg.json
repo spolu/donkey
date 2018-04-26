@@ -1,0 +1,31 @@
+{
+  "track_name": "newworld",
+  "track_randomized": true,
+  "reward_type": "speed",
+  "action_type": "continuous",
+  "speed_limit": 1.0,
+
+  "model": "stan_ddpg",
+  "policy": "ddpg_pixels",
+  "cuda": true,
+  "seed": 1,
+
+  "hidden_size": 256,
+
+  "rollout_size": 128,
+  "worker_count": 32,
+  "mini_batch_count": 32,
+
+  "actor_learning_rate": 0.00005,
+  "critic_learning_rate": 0.0005,
+  "gamma": 0.99,
+  "tau": 0.001,
+  "epoch_count": 2,
+
+  "grad_norm_max": 0.5,
+
+  "simulation_headless": true,
+  "simulation_time_scale": 4.0,
+  "simulation_step_interval": 0.19,
+  "simulation_capture_frame_rate": 200
+}

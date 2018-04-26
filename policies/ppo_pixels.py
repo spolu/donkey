@@ -54,11 +54,18 @@ class Policy(nn.Module):
         nn.init.xavier_normal(self.cv3.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.cv4.weight.data, nn.init.calculate_gain('relu'))
         nn.init.xavier_normal(self.cv5.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal(self.cv6.weight.data, nn.init.calculate_gain('relu'))
         self.cv1.bias.data.fill_(0)
         self.cv2.bias.data.fill_(0)
         self.cv3.bias.data.fill_(0)
         self.cv4.bias.data.fill_(0)
         self.cv5.bias.data.fill_(0)
+        self.cv6.bias.data.fill_(0)
+
+        self.bn1.weight.data.fill(1)
+        self.bn2.weight.data.fill(1)
+        self.bn1.bias.data.zero_()
+        self.bn2.bias.data.zero_()
 
         nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
