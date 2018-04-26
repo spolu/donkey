@@ -40,6 +40,10 @@ public class SimulationController : MonoBehaviour
 
 	private float carStartY = 0.6f;
 
+	private float steeringReq = 0.0f;
+	private float throttleReq = 0.0f;
+	private float brakeReq = 0.0f;
+
 	void Awake()
 	{
 		string[] args = System.Environment.GetCommandLineArgs ();
@@ -236,14 +240,17 @@ public class SimulationController : MonoBehaviour
 	void OnStep(SocketIOEvent ev)
 	{
 		Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
-						
-		float steeringReq = float.Parse(ev.data.GetField("steering").str);
-		float throttleReq = float.Parse(ev.data.GetField("throttle").str);
-		float brakeReq = float.Parse(ev.data.GetField("brake").str);
 
+		// Appply the control from the previous step to simulate
+		// the delay incurred in reality by the forward pass.
 		car.RequestSteering (steeringReq);
 		car.RequestThrottle (throttleReq);
 		car.RequestBrake (brakeReq);
+
+		// Store the control values to only apply them at the next step.
+		steeringReq = float.Parse(ev.data.GetField("steering").str);
+		throttleReq = float.Parse(ev.data.GetField("throttle").str);
+		brakeReq = float.Parse(ev.data.GetField("brake").str);
 
 		Resume ();
 	}
