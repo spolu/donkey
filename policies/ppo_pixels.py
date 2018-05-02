@@ -62,8 +62,8 @@ class Policy(nn.Module):
         self.cv5.bias.data.fill_(0)
         self.cv6.bias.data.fill_(0)
 
-        self.bn1.weight.data.fill(1)
-        self.bn2.weight.data.fill(1)
+        self.bn1.weight.data.fill_(1)
+        self.bn2.weight.data.fill_(1)
         self.bn1.bias.data.zero_()
         self.bn2.bias.data.zero_()
 
