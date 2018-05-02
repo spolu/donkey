@@ -37,13 +37,13 @@ class ActorPolicy(nn.Module):
 
         mu = torch.ones(self.worker_count, 2)
         mu[0] *= 0.0 # steering
-        mu[1] *= 0.3 # throttle_brake
+        mu[1] *= 0.0 # throttle_brake
         mu = mu.transpose(0, 1)
 
         self.noise = OrnsteinUhlenbeckNoise(
             (self.worker_count, donkey.CONTINUOUS_CONTROL_SIZE),
             mu=mu,
-            theta=0.3,
+            theta=0.5,
             sigma=0.2,
         )
 
