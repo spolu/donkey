@@ -67,11 +67,8 @@ def run(args):
     if cfg.get('cuda'):
         torch.cuda.manual_seed(cfg.get('seed'))
 
-    module = __import__('policies.' + cfg.get('policy'))
-    policy = getattr(module, cfg.get('policy')).Policy(cfg)
-
     module = __import__('models.' + cfg.get('model'))
-    model = getattr(module, cfg.get('model')).Model(cfg, policy, None, args.load_dir)
+    model = getattr(module, cfg.get('model')).Model(cfg, None, args.load_dir)
 
     episode = 0
     model.initialize()

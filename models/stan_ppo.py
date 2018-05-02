@@ -172,8 +172,8 @@ class Model:
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
 
-        module = __import__('policies.' + cfg.get('policy'))
-        self.policy = getattr(module, cfg.get('policy')).Policy(config)
+        module = __import__('policies.' + config.get('policy'))
+        self.policy = getattr(module, config.get('policy')).Policy(config)
 
         self.save_dir = save_dir
         self.load_dir = load_dir
@@ -186,7 +186,7 @@ class Model:
         )
         self.auxiliary_loss = nn.MSELoss()
 
-        self.rollouts = PPOStorage(config, policy)
+        self.rollouts = PPOStorage(config, self.policy)
 
         if self.load_dir:
             if self.cuda:
