@@ -89,16 +89,16 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-        print(
-            ("EPISODE {} " + \
-             "avg/min/max L {:.4f} {:.4f} {:.4f}").
-            format(
-                self.episode,
-                loss_meter.avg,
-                loss_meter.min,
-                loss_meter.max,
+            print(
+                ("EPISODE {} " + \
+                 "avg/min/max L {:.4f} {:.4f} {:.4f}").
+                format(
+                    self.episode,
+                    loss_meter.avg,
+                    loss_meter.min,
+                    loss_meter.max,
+                )
             )
-        )
 
     def train(self):
         self.episode = 0
