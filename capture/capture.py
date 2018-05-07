@@ -1,6 +1,9 @@
 import json
 import os
+import numpy as np
+import cv2
 
+import torch
 import torch.utils.data as data
 
 """
@@ -28,11 +31,12 @@ class Capture(data.Dataset):
             with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "rb") as f:
                 camera = f.read()
 
-            self.data.append({
-                'track_angles': data['track_angles'],
-                'track_position': data['track_position'],
-                'camera': camera,
-            })
+            self.__additem__(
+                camera,
+                data['track_angles'],
+                data['track_position'],
+                save=False,
+            )
 
             index += 1
 
@@ -47,19 +51,34 @@ class Capture(data.Dataset):
         with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "wb+") as f:
             f.write(self.data[index]['camera'])
 
-    def __additem__(self, camera, track_angles, track_position):
+    def __additem__(self, camera, track_angles, track_position, save=True):
         index = len(self.data)
+
+        target = torch.tensor(
+            track_angles + [track_position],
+            dtype=torch.float,
+        )
+        input = torch.tensor(cv2.imdecode(
+            np.fromstring(camera, np.uint8),
+            cv2.IMREAD_COLOR,
+        ), dtype=torch.float)
+        input = input / 127.5 - 1
+        input = input.transpose(0, 2)
+
         self.data.append({
             'camera': camera,
             'track_angles': track_angles,
             'track_position': track_position,
+            'input': input,
+            'target': target,
         })
-        self.__saveitem__(index)
+        if save:
+            self.__saveitem__(index)
 
     def __getitem__(self, index):
         assert index < len(self.data)
         item = self.data[index]
-        return item['camera'], item['track_angles'], item['track_position']
+        return item['input'], item['target']
 
     def __len__(self):
         return len(self.data)
