@@ -12,17 +12,17 @@
 
   "hidden_size": 256,
 
-  "rollout_size": 64,
+  "rollout_size": 16,
   "worker_count": 32,
-  "mini_batch_count": 32,
+  "mini_batch_count": 8,
 
-  "actor_learning_rate": 0.0005,
-  "critic_learning_rate": 0.005,
+  "actor_learning_rate": 0.0001,
+  "critic_learning_rate": 0.001,
   "gamma": 0.99,
-  "tau": 0.001,
-  "epoch_count": 1,
+  "tau": 0.01,
+  "epoch_count": 2,
 
-  "grad_norm_max": 0.5,
+  "grad_norm_max": 0.0,
 
   "simulation_headless": true,
   "simulation_time_scale": 4.0,
