@@ -7,8 +7,7 @@ import os
 from flask import Flask
 from eventlet.green import threading
 from utils import Config
-
-import donkey
+from simulation import Donkey
 
 sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
@@ -25,7 +24,7 @@ def transition():
         'progress': observations.progress,
         'time': observations.time,
         'linear_speed': observations.track_linear_speed,
-        'camera': observations.camera[0].tolist(),
+        'camera': observations.camera_stack[0].tolist(),
     }
 
 def run_server():
@@ -70,7 +69,7 @@ def reset(sid, data):
 if __name__ == "__main__":
     cfg = Config('configs/human.json')
 
-    d = donkey.Donkey(cfg)
+    d = Donkey(cfg)
     observations = d.reset()
 
     run_server()

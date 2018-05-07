@@ -1,5 +1,4 @@
 import simulation
-import track
 import base64
 import collections
 import cv2
@@ -8,6 +7,7 @@ import random
 import math
 
 from eventlet.green import threading
+from simulation import Track
 
 MAX_SPEED = 10.0
 
@@ -27,17 +27,18 @@ CAMERA_HEIGHT = 160
 CONTINUOUS_CONTROL_SIZE = 2
 DISCRETE_CONTROL_SIZE = 9
 
-ANGLES_WINDOW = 4
+ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
-    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera'
+    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera_stack, camera_raw'
 )
 
 class Donkey:
     def __init__(self, config):
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
+        self.track_off_reset = config.get('track_off_reset')
         self.reward_type = config.get('reward_type')
         self.action_type = config.get('action_type')
         self.speed_limit = config.get('speed_limit')
@@ -49,7 +50,7 @@ class Donkey:
 
         self.started = False
 
-        self.track = track.Track(self.track_name)
+        self.track = Track(self.track_name)
         if self.track_randomized:
             self.track.randomize()
 
@@ -76,8 +77,9 @@ class Donkey:
         """
         Returns a named tuple with physical measurements as well as camera.
         """
+        camera_raw = base64.b64decode(telemetry['camera'])
         camera = cv2.imdecode(
-            np.fromstring(base64.b64decode(telemetry['camera']), np.uint8),
+            np.fromstring(camera_raw, np.uint8),
             cv2.IMREAD_GRAYSCALE,
         ).astype(np.float)
 
@@ -132,6 +134,7 @@ class Donkey:
             velocity,
             acceleration,
             np.copy(self.camera_stack),
+            camera_raw,
         )
 
     def reward_from_telemetry(self, telemetry):
@@ -197,8 +200,9 @@ class Donkey:
 
         # If we're off track, stop.
         track_position = self.track.position(position)
-        if np.linalg.norm(track_position) > OFF_TRACK_DISTANCE:
-            return True
+        if self.track_off_reset:
+            if np.linalg.norm(track_position) > OFF_TRACK_DISTANCE:
+                return True
 
         # If we stall (STALL_SPEED) for more than MAX_STALL_TIME then stop.
         track_linear_speed = self.track.linear_speed(position, velocity)

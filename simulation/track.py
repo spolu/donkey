@@ -1,4 +1,5 @@
 import random
+import os
 
 import numpy as np
 from enum import Enum
@@ -23,7 +24,10 @@ def rot_y(theta):
 class Track:
     def __init__(self, name):
         self.name = name
-        self.script = Script('coordinates/' + name + '.script')
+        self.script = Script(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'coordinates/' + name + '.script',
+        ))
 
         self.points = self.script.points()
 

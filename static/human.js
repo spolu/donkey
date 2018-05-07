@@ -64,27 +64,6 @@ socket.on('transition', (message) => {
     }
   }
   ctx.putImageData(imgData,0,0);
-
-  if (message['gradients']) {
-    var c = document.getElementById("gradients");
-    var ctx = c.getContext("2d");
-    var imgData = ctx.createImageData(160,120);
-    for (var w = 0; w < 120; w++) {
-      for (var h = 0; h < 160; h++) {
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 0] = Math.floor(
-          (message['gradients'][w][h] + 1) * 127.5
-        )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 1] = Math.floor(
-          (message['gradients'][w][h] + 1) * 127.5
-        )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 2] = Math.floor(
-          (message['gradients'][w][h] + 1) * 127.5
-        )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 3] = 255
-      }
-    }
-    ctx.putImageData(imgData,0,0);
-  }
 })
 
 socket.on('next', (message) => {

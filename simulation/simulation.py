@@ -10,8 +10,6 @@ import socket
 from flask import Flask
 from eventlet.green import threading
 
-import track
-
 """
 Shared underlying socket.io server
 """
