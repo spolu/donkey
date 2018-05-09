@@ -1,6 +1,6 @@
 {
   "seed": 31,
-  "cuda": false,
+  "cuda": true,
 
   "hidden_size": 256,
   "learning_rate": 0.01,

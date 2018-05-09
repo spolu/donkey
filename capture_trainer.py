@@ -36,8 +36,10 @@ class Trainer:
         self.hidden_size = self.config.get('hidden_size')
         self.grad_norm_max = self.config.get('grad_norm_max')
 
-        self.capture = Capture(args.capture_dir)
-        self.model = ResNet(self.config, ANGLES_WINDOW+1)
+        self.device = torch.device('cuda:0' if self.cuda else 'cpu')
+
+        self.capture = Capture(args.capture_dir, self.device)
+        self.model = ResNet(self.config, ANGLES_WINDOW+1).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir
@@ -73,7 +75,6 @@ class Trainer:
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=0,
-            pin_memory=True,
         )
 
     def batch_train(self):
@@ -89,28 +90,29 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-            print(
-                ("EPISODE {} " + \
-                 "avg/min/max L {:.4f} {:.4f} {:.4f}").
-                format(
-                    self.episode,
-                    loss_meter.avg,
-                    loss_meter.min,
-                    loss_meter.max,
-                )
+        print(
+            ("EPISODE {} " + \
+             "avg/min/max L {:.4f} {:.4f} {:.4f}").
+            format(
+                self.episode,
+                loss_meter.avg,
+                loss_meter.min,
+                loss_meter.max,
             )
+        )
 
     def train(self):
         self.episode = 0
 
         while True:
-            running = self.batch_train()
-            print('STAT %d %f' % (
-                episode,
-                running,
-            ))
+            self.batch_train()
             sys.stdout.flush()
             self.episode += 1
+
+            if self.episode % 4 == 0 and self.save_dir:
+                print("Saving models and optimizer: save_dir={}".format(self.save_dir))
+                torch.save(self.model.state_dict(), self.save_dir + "/model.pt")
+                torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
 
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'

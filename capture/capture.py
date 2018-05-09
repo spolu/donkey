@@ -10,9 +10,10 @@ import torch.utils.data as data
 Capture interface
 """
 class Capture(data.Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, device=torch.device('cpu')):
         self.data = []
         self.data_dir = data_dir
+        self.device = device
 
         found = True
         index = 0
@@ -57,11 +58,11 @@ class Capture(data.Dataset):
         target = torch.tensor(
             track_angles + [track_position],
             dtype=torch.float,
-        )
+        ).to(self.device)
         input = torch.tensor(cv2.imdecode(
             np.fromstring(camera, np.uint8),
             cv2.IMREAD_COLOR,
-        ), dtype=torch.float)
+        ), dtype=torch.float).to(self.device)
         input = input / 127.5 - 1
         input = input.transpose(0, 2)
 
