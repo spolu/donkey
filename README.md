@@ -11,7 +11,7 @@
 
 ### Python Environment 
 
-- To activate this environment, use `source activate dr1ven`
+- To activate this environment, use `source activate dr1ve`
 - To deactivate environment, use `source deactivate`
 
 ### Building simulation
@@ -30,7 +30,7 @@
 
 ### Playing a trained model
 
-- Run `python runner.py configs/stan_ppo.json --simulation_headless=false --load_dir=/keybase/team/dr1ve/experiments/exp_20180321_0721/`.
+- Run `python runner.py configs/stan_ppo.json --simulation_headless=false --load_dir=/keybase/team/dr1ve/experiments/exp_20180426_1257/`.
 
 ### Editing Simulator in Unity 
 
