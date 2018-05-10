@@ -18,7 +18,7 @@ from simulation import ANGLES_WINDOW
 
 class Trainer:
     def __init__(self, args):
-        self.config = Config(args.config_path)
+        self.config = Config('configs/capture_trainer.json')
 
         if args.batch_size != None:
             self.config.override('batch_size', args.batch_size)
@@ -103,6 +103,7 @@ class Trainer:
 
     def train(self):
         self.episode = 0
+        self.model.train()
 
         while True:
             self.batch_train()
@@ -118,14 +119,12 @@ if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
 
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('config_path', type=str, help="path to the config file")
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
 
     parser.add_argument('--cuda', type=str2bool, help="config override")
-    parser.add_argument('--batch_size', type=int, help="config override")
 
     args = parser.parse_args()
 
