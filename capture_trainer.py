@@ -38,6 +38,8 @@ class Trainer:
 
         self.device = torch.device('cuda:0' if self.cuda else 'cpu')
 
+        if not args.capture_dir:
+            raise Exception("Required argument: --capture_dir")
         self.capture = Capture(args.capture_dir, self.device)
         self.model = ResNet(self.config, ANGLES_WINDOW+1).to(self.device)
 
