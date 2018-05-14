@@ -99,8 +99,15 @@ def run(cfg):
         ))
 
         # steering, throttle_brake = planner.plan(output[:-1], output[-1])
+        steering = 0.0
+        throttle = 1.0
 
-        _observations, _reward, _done = _d.step([0, 1.0])
+        if output[0][-1] > 0.1:
+            steering = -0.5
+        if output[0][-1] < -0.1:
+            steering = 0.5
+
+        _observations, _reward, _done = _d.step([steering, throttle])
 
         _sio.emit('transition', transition())
         _sio.emit('next')
