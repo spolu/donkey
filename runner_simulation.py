@@ -69,23 +69,25 @@ def run(cfg):
             torch.load(self.load_dir + "/model.pt", map_location='cpu'),
         )
 
+    model.eval()
+
     while True:
-        def step_callback(o, r, d):
-            global observations
-            global reward
-            global done
-            global policy
+        input = torch.tensor(cv2.imdecode(
+            np.fromstring(_observation.camera_raw, np.uint8),
+            cv2.IMREAD_COLOR,
+        ), dtype=torch.float).to(self.device)
 
-            observations = o[0]
-            reward = r
-            done = d
+        input = input / 127.5 - 1
+        input = input.transpose(0, 2)
 
-            _sio.emit('transition', transition())
-            _sio.emit('next')
+        output = model(input)
 
-        reward = model.run(step_callback)
+        # steering, throttle_brake = planner.plan(output[:-1], output[-1])
 
-        print("DONE {}".format(reward))
+        _observations, _reward, _done = _d.step([0, 1.0])
+
+        _sio.emit('transition', transition())
+        _sio.emit('next')
 
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
