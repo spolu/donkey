@@ -76,8 +76,8 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_residual_layer(64, 1)
-        self.rs2 = self._make_residual_layer(128, 1)
+        self.rs1 = self._make_residual_layer(64, 4)
+        self.rs2 = self._make_residual_layer(128, 2)
         self.rs3 = self._make_residual_layer(256, 1)
 
         self.cv2 = nn.Conv2d(
@@ -86,6 +86,7 @@ class ResNet(nn.Module):
         self.bn2 = nn.BatchNorm2d(1)
 
         self.fc1 = nn.Linear(32*42, self.hidden_size)
+        self.dp1 = nn.Dropout(p=0.2)
 
         # Value head.
         self.hd_v = HeadBlock(self.hidden_size, 'linear', self.value_count)
@@ -136,6 +137,7 @@ class ResNet(nn.Module):
         x = F.relu(x, inplace=True)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
+        x = self.dp1(x)
         x = F.relu(x, inplace=True)
 
         return self.hd_v(x)
