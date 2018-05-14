@@ -1,21 +1,24 @@
-import time
+import sys
+import random
+import argparse
+import signal
 import socketio
 import eventlet
 import eventlet.wsgi
-import os
-import argparse
+import os.path
+import torch
 
 from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from capture import Capture
+from capture.models import ResNet
 from simulation import Donkey
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
 
 _d = None
-_capture = None
 
 _observations = None
 _reward = None
@@ -37,7 +40,7 @@ def run_server():
     global _app
     global _sio
 
-    print("Starting shared server: port=9091")
+    print("Starting shared server: port=9090")
     address = ('0.0.0.0', 9091)
     _app = socketio.Middleware(_sio, _app)
     try:
@@ -45,44 +48,51 @@ def run_server():
     except KeyboardInterrupt:
         print("Stopping shared server")
 
-@_sio.on('connect')
-def connect(sid, environ):
-    print("Received connect: sid={}".format(sid))
-    _sio.emit('transition', transition())
-    _sio.emit('next')
+def run(cfg):
+    torch.manual_seed(cfg.get('seed'))
+    random.seed(cfg.get('seed'))
+    if cfg.get('cuda'):
+        torch.cuda.manual_seed(cfg.get('seed'))
 
-@_sio.on('step')
-def step(sid, data):
-    global _observations
-    global _reward
-    global _done
+    device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
+    model = ResNet(self.config, ANGLES_WINDOW+1).to(device)
 
-    steering = data['steering']
-    throttle_brake = 0.0
+    if not args.load_dir:
+        raise Exception("Required argument: --load_dir")
 
-    if data['brake'] > 0.0:
-        throttle_brake = -data['brake']
-    if data['throttle'] > 0.0:
-        throttle_brake = data['throttle']
+    if cfg.get('cuda'):
+        model.load_state_dict(
+            torch.load(self.load_dir + "/model.pt"),
+        )
+    else:
+        model.load_state_dict(
+            torch.load(self.load_dir + "/model.pt", map_location='cpu'),
+        )
 
-    _observations, _reward, _done = _d.step([steering, throttle_brake])
+    while True:
+        def step_callback(o, r, d):
+            global observations
+            global reward
+            global done
+            global policy
 
-    _capture.__additem__(
-        _observations.camera_raw,
-        _observations.track_angles,
-        _observations.track_position,
-    )
+            observations = o[0]
+            reward = r
+            done = d
 
-    _sio.emit('transition', transition())
-    _sio.emit('next')
+            _sio.emit('transition', transition())
+            _sio.emit('next')
 
-@_sio.on('reset')
-def reset(sid, data):
-    _d.reset()
+        reward = model.run(step_callback)
+
+        print("DONE {}".format(reward))
 
 if __name__ == "__main__":
+    os.environ['OMP_NUM_THREADS'] = '1'
+
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
+
+    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
 
     parser.add_argument('--simulation_headless', type=str2bool, help="config override")
     parser.add_argument('--simulation_time_scale', type=float, help="config override")
@@ -91,7 +101,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    cfg = Config('configs/capture_simulation.json')
+    cfg = Config('configs/capture_trainer.json')
 
     if args.simulation_headless != None:
         cfg.override('simulation_headless', args.simulation_headless)
@@ -102,12 +112,10 @@ if __name__ == "__main__":
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
-    assert args.capture_dir is not None
-    _capture = Capture(args.capture_dir)
-
     _d = Donkey(cfg)
     _observations = _d.reset()
 
     t = threading.Thread(target = run_server)
     t.start()
-    t.join()
+
+    run(cfg)
