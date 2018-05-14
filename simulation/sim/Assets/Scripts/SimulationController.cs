@@ -72,7 +72,7 @@ public class SimulationController : MonoBehaviour
 
 	void Start()
 	{
-		Debug.Log ("SimulationController initializing");
+		// Debug.Log ("SimulationController initializing");
 
 		Time.captureFramerate = captureFrameRate;
 
@@ -86,12 +86,12 @@ public class SimulationController : MonoBehaviour
 
 	private void OnEnable()
 	{
-		Debug.Log("SimulationController enabling");
+		// Debug.Log("SimulationController enabling");
 	}
 
 	private void OnDisable()
 	{
-		Debug.Log ("SimulationController disabling");
+		// Debug.Log ("SimulationController disabling");
 
 		car.RequestThrottle (0.0f);
 		car.RequestBrake (1.0f);
@@ -99,7 +99,7 @@ public class SimulationController : MonoBehaviour
 		
 	public void Send(SimMessage m)
 	{
-		Debug.Log ("Direct sending: type=" + m.type);
+		// Debug.Log ("Direct sending: type=" + m.type);
 
 		m.json.AddField ("id", clientID);
 		_socket.Emit (m.type, m.json);
@@ -109,13 +109,13 @@ public class SimulationController : MonoBehaviour
 
 	void Pause()
 	{
-		Debug.Log ("Pause: time=" + Time.time);
+		// Debug.Log ("Pause: time=" + Time.time);
 		lastPause = Time.time;
 		Time.timeScale = 0.0f;
 	}
 	void Resume()
 	{
-		Debug.Log ("Resume: time=" + Time.time);
+		// Debug.Log ("Resume: time=" + Time.time);
 		lastResume = Time.time;
 		Time.timeScale = timeScale;
 	}
@@ -132,8 +132,8 @@ public class SimulationController : MonoBehaviour
 		if (connected) {
 			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry && Time.timeScale != 0.0) {
 				lastTelemetry = Time.time;
-				Debug.Log ("Sending Telemetry: connected=" + connected +
-				" time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
+				// Debug.Log ("Sending Telemetry: connected=" + connected +
+				// " time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
 
 				SimMessage m = new SimMessage ();
 				m.json = new JSONObject (JSONObject.Type.OBJECT);
@@ -213,7 +213,7 @@ public class SimulationController : MonoBehaviour
 
 	void OnReset(SocketIOEvent ev)
 	{		
-		Debug.Log ("Received: type=reset sid=" + _socket.sid);
+		// Debug.Log ("Received: type=reset sid=" + _socket.sid);
 
 		connected = true;
 		lastPause = Time.time + 999.0f;
@@ -239,7 +239,7 @@ public class SimulationController : MonoBehaviour
 
 	void OnStep(SocketIOEvent ev)
 	{
-		Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
+		// Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
 
 		// Appply the control from the previous step to simulate
 		// the delay incurred in reality by the forward pass.
@@ -257,7 +257,7 @@ public class SimulationController : MonoBehaviour
 
 	void OnExit(SocketIOEvent ev)
 	{
-		Debug.Log ("Received: type=exit sid=" + _socket.sid);
+		// Debug.Log ("Received: type=exit sid=" + _socket.sid);
 		Application.Quit ();
 	}
 }

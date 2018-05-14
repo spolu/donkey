@@ -14,6 +14,7 @@ from utils import Config, str2bool
 from capture import Capture
 from capture.models import ResNet
 from simulation import Donkey
+from simulation import ANGLES_WINDOW
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -55,18 +56,18 @@ def run(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(self.config, ANGLES_WINDOW+1).to(device)
+    model = ResNet(cfg, ANGLES_WINDOW+1).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
 
     if cfg.get('cuda'):
         model.load_state_dict(
-            torch.load(self.load_dir + "/model.pt"),
+            torch.load(args.load_dir + "/model.pt"),
         )
     else:
         model.load_state_dict(
-            torch.load(self.load_dir + "/model.pt", map_location='cpu'),
+            torch.load(args.load_dir + "/model.pt", map_location='cpu'),
         )
 
     model.eval()
@@ -75,7 +76,7 @@ def run(cfg):
         input = torch.tensor(cv2.imdecode(
             np.fromstring(_observation.camera_raw, np.uint8),
             cv2.IMREAD_COLOR,
-        ), dtype=torch.float).to(self.device)
+        ), dtype=torch.float).to(device)
 
         input = input / 127.5 - 1
         input = input.transpose(0, 2)
@@ -103,7 +104,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    cfg = Config('configs/capture_trainer.json')
+    cfg = Config('configs/runner_simulation.json')
 
     if args.simulation_headless != None:
         cfg.override('simulation_headless', args.simulation_headless)
