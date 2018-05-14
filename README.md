@@ -82,9 +82,6 @@ UNITY_PASSWORD=
 
 ```
 sudo nvidia-smi -pm 1
-# For K80
-sudo nvidia-smi -ac 2505,875
-sudo nvidia-smi --auto-boost-default=DISABLED
 
 sudo bash
 /usr/bin/X :1 &
@@ -96,7 +93,7 @@ sudo bash
 push-donkey () {
   rsync -arv --exclude '.*' ~/src/donkey spolu-dev@$1:~/src/
 }
-pull-experiment() {
+pull-donkey() {
   rsync -arv spolu-dev@$1:/tmp/$2 /keybase/team/dr1ve/experiments/
 }
 push-seed () {
