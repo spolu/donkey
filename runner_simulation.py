@@ -7,6 +7,8 @@ import eventlet
 import eventlet.wsgi
 import os.path
 import torch
+import numpy as np
+import cv2
 
 from flask import Flask
 from eventlet.green import threading
@@ -24,6 +26,8 @@ _d = None
 _observations = None
 _reward = None
 _done = None
+
+# import pdb; pdb.set_trace()
 
 def transition():
     global _observations
@@ -50,6 +54,10 @@ def run_server():
         print("Stopping shared server")
 
 def run(cfg):
+    global _observations
+    global _reward
+    global _done
+
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
     if cfg.get('cuda'):
@@ -74,14 +82,21 @@ def run(cfg):
 
     while True:
         input = torch.tensor(cv2.imdecode(
-            np.fromstring(_observation.camera_raw, np.uint8),
+            np.fromstring(_observations.camera_raw, np.uint8),
             cv2.IMREAD_COLOR,
         ), dtype=torch.float).to(device)
 
         input = input / 127.5 - 1
-        input = input.transpose(0, 2)
+        input = input.transpose(0, 2).unsqueeze(0)
 
         output = model(input)
+        print("OUTPUT {:.4f} || {:.4f} {:.4f} {:.4f} {:.4f}".format(
+            output[0][-1],
+            output[0][0],
+            output[0][1],
+            output[0][2],
+            output[0][3],
+        ))
 
         # steering, throttle_brake = planner.plan(output[:-1], output[-1])
 
