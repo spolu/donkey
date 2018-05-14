@@ -20,8 +20,6 @@ class Trainer:
     def __init__(self, args):
         self.config = Config('configs/capture_trainer.json')
 
-        if args.batch_size != None:
-            self.config.override('batch_size', args.batch_size)
         if args.cuda != None:
             self.config.override('cuda', args.cuda)
 
@@ -112,7 +110,7 @@ class Trainer:
             sys.stdout.flush()
             self.episode += 1
 
-            if self.episode % 4 == 0 and self.save_dir:
+            if self.episode % 20 == 0 and self.save_dir:
                 print("Saving models and optimizer: save_dir={}".format(self.save_dir))
                 torch.save(self.model.state_dict(), self.save_dir + "/model.pt")
                 torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")

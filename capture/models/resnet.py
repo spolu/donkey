@@ -76,9 +76,9 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_residual_layer(64, 1)
-        self.rs2 = self._make_residual_layer(128, 1)
-        self.rs3 = self._make_residual_layer(256, 1)
+        self.rs1 = self._make_residual_layer(64, 4)
+        self.rs2 = self._make_residual_layer(128, 2)
+        self.rs3 = self._make_residual_layer(256, 2)
 
         self.cv2 = nn.Conv2d(
             256, 1, kernel_size=1, stride=1, padding=1, bias=False,
