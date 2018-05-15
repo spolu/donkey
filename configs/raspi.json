@@ -1,10 +1,6 @@
 {
-  "policy": "actor_critic_pixels",
+  "capture_model": "resnet",
   "cuda": false,
 
-  "action_type": "continuous",
-
-  "recurring_cell": "none",
-  "fixed_action_std": false,
   "hidden_size": 256
 }

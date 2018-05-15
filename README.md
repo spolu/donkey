@@ -64,10 +64,10 @@ pip install eventlet python-socketio flask opencv-python
 sudo apt-get update
 sudo apt-get install libgtk2.0-0 libnss3 xserver-xorg libgconf-2-4 gnuplot htop libarchive13 make
 
-wget http://beta.unity3d.com/download/3c89f8d277f5/UnitySetup-2017.3.0f1
-chmod +x UnitySetup-2017.3.0f1
+wget https://beta.unity3d.com/download/170f0691b973/UnitySetup-2018.1.0f2
+chmod +x UnitySetup-2018.1.0f2
 mkdir -p ~/opt/unity3d
-./UnitySetup-2017.3.0f1 --unattended --install-location=~/opt/unity3d
+./UnitySetup-2018.1.0f2 --unattended --install-location=~/opt/unity3d
 
 ```
 
@@ -82,9 +82,6 @@ UNITY_PASSWORD=
 
 ```
 sudo nvidia-smi -pm 1
-# For K80
-sudo nvidia-smi -ac 2505,875
-sudo nvidia-smi --auto-boost-default=DISABLED
 
 sudo bash
 /usr/bin/X :1 &
@@ -96,7 +93,7 @@ sudo bash
 push-donkey () {
   rsync -arv --exclude '.*' ~/src/donkey spolu-dev@$1:~/src/
 }
-pull-experiment() {
+pull-donkey() {
   rsync -arv spolu-dev@$1:/tmp/$2 /keybase/team/dr1ve/experiments/
 }
 push-seed () {
@@ -105,6 +102,14 @@ push-seed () {
 }
 ```
 
+## o7
+
+python capture_simulation.py --capture_dir=/tmp/capture_train_20180515/
+http://localhost:9091/static/index.html
+
+python capture_trainer.py --capture_dir=/tmp/capture_train_20180515 --save_dir=/tmp/capture_model_20180515/
+
+python runner_simulation.py --load_dir=/tmp/capture_model_20180515/
 
 ### Resources
 

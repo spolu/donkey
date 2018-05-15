@@ -1,9 +1,17 @@
 {
   "track_name": "newworld",
   "track_randomized": false,
-  "track_off_reset": true,
+  "track_off_reset": false,
   "action_type": "continuous",
-  "speed_limit": 0.0,
+  "speed_limit": 1.0,
+
+  "seed": 31,
+  "cuda": false,
+
+  "hidden_size": 256,
+  "learning_rate": 0.01,
+  "batch_size": 64,
+  "grad_norm_max": 1.0,
 
   "reward_type": "time",
 
