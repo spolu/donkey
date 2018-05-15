@@ -74,7 +74,7 @@ class Capture(data.Dataset):
             'camera': camera,
             'track_progress': track_progress,
             'track_position': track_position,
-            'input': input_from_camera(camera),
+            'input': input_from_camera(camera, self.device),
             'target': target,
         })
         if save:

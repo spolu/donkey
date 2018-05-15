@@ -13,13 +13,11 @@ class ResidualBlock(nn.Module):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(ResidualBlock, self).__init__()
         self.cv1_rs = nn.Conv2d(
-            inplanes, planes, kernel_size=3, stride=stride, padding=1,
-            bias=False,
+            inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False,
         )
         self.bn1_rs = nn.BatchNorm2d(planes)
         self.cv2_rs = nn.Conv2d(
-            planes, planes, kernel_size=3, stride=1, padding=1,
-            bias=False,
+            planes, planes, kernel_size=3, stride=1, padding=1, bias=False,
         )
         self.bn2_rs = nn.BatchNorm2d(planes)
         self.downsample = downsample
@@ -70,23 +68,19 @@ class ResNet(nn.Module):
         self.value_count = value_count
 
         self.cv1 = nn.Conv2d(
-            3, 64, kernel_size=7, stride=2, padding=3,
-            bias=False,
+            3, 64, kernel_size=7, stride=2, padding=3, bias=False,
         )
         self.bn1 = nn.BatchNorm2d(64)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.relu = nn.ReLU()
+        self.maxp = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_residual_layer(64, 1)
-        self.rs2 = self._make_residual_layer(128, 1)
-        self.rs3 = self._make_residual_layer(256, 1)
+        self.rs1 = self._make_residual_layer(64, 2, stride=1)
+        self.rs2 = self._make_residual_layer(128, 2, stride=2)
+        self.rs3 = self._make_residual_layer(256, 2, stride=2)
 
-        self.cv2 = nn.Conv2d(
-            256, 1, kernel_size=1, stride=1, padding=1, bias=False,
-        )
-        self.bn2 = nn.BatchNorm2d(1)
+        self.avgp = nn.AvgPool2d(8, stride=1)
 
-        self.fc1 = nn.Linear(32*42, self.hidden_size)
-        # self.dp1 = nn.Dropout(p=0.2)
+        self.fc1 = nn.Linear(768, self.hidden_size)
 
         # Value head.
         self.hd_v = HeadBlock(self.hidden_size, 'linear', self.value_count)
@@ -125,19 +119,20 @@ class ResNet(nn.Module):
     def forward(self, inputs):
         x = self.cv1(inputs)
         x = self.bn1(x)
-        x = F.relu(x, inplace=True)
-        x = self.maxpool(x)
+        x = self.relu(x)
+        x = self.maxp(x)
 
         x = self.rs1(x)
         x = self.rs2(x)
         x = self.rs3(x)
 
-        x = self.cv2(x)
-        x = self.bn2(x)
-        x = F.relu(x, inplace=True)
+        import pdb; pdb.set_trace()
+
+        x = self.avgp(x)
+
         x = x.view(x.size(0), -1)
+
         x = self.fc1(x)
-        # x = self.dp1(x)
-        x = F.relu(x, inplace=True)
+        x = self.relu(x)
 
         return self.hd_v(x)

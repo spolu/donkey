@@ -81,7 +81,9 @@ def run(cfg):
     model.eval()
 
     while True:
-        output = model(capture.input_from_camera(_observations.camera_raw))
+        output = model(capture.input_from_camera(
+            _observations.camera_raw, device,
+        ))
 
         print("OUTPUT {:.4f} {:.4f}".format(
             output[0][0],
