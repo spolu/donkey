@@ -11,6 +11,7 @@ import numpy as np
 import cv2
 
 import capture
+from capture.models import ResNet
 
 from flask import Flask
 from eventlet.green import threading
@@ -64,7 +65,7 @@ def run(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = capture.models.ResNet(cfg, ANGLES_WINDOW+1).to(device)
+    model = ResNet(cfg, ANGLES_WINDOW+1).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
