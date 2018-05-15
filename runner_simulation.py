@@ -65,7 +65,7 @@ def run(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(cfg, ANGLES_WINDOW+1).to(device)
+    model = ResNet(cfg, 2).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -81,24 +81,36 @@ def run(cfg):
 
     model.eval()
 
+    progress_stack = []
+    progress = 0.0
+    steering = 0.0
+
     while True:
         output = model(capture.input_from_camera(
             _observations.camera_raw, device,
-        ))
+        ).unsqueeze(0))
 
-        print("OUTPUT {:.4f} {:.4f}".format(
+        # progress_stack = progress_stack + [output[0][0]]
+
+        # if len(progress_stack) > 5:
+        #     progress_stack = progress_stack[1:]
+
+        print("OUTPUT     {:.4f} {:.4f}".format(
             output[0][0],
             output[0][1],
         ))
+        print("SIMULATION {:.4f} {:.4f}".format(
+            _observations.progress,
+            _observations.track_position,
+        ))
 
         # steering, throttle_brake = planner.plan(output[:-1], output[-1])
-        steering = 0.0
         throttle = 1.0
 
-        if output[0][-1] > 0.1:
-            steering = -0.5
-        if output[0][-1] < -0.1:
-            steering = 0.5
+        if output[0][1] > 0.05:
+            steering += -0.1
+        if output[0][1] < -0.05:
+            steering += 0.1
 
         _observations, _reward, _done = _d.step([steering, throttle])
 
