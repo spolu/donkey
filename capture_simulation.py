@@ -71,6 +71,7 @@ def step(sid, data):
         _observations.camera_raw,
         _observations.progress,
         _observations.track_position,
+        _observations.track_angles[0],
     )
 
     _sio.emit('transition', transition())

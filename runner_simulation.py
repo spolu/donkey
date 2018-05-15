@@ -65,7 +65,7 @@ def run(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(cfg, 2).to(device)
+    model = ResNet(cfg, 3).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -95,13 +95,15 @@ def run(cfg):
         # if len(progress_stack) > 5:
         #     progress_stack = progress_stack[1:]
 
-        print("OUTPUT     {:.4f} {:.4f}".format(
+        print("OUTPUT     {:.4f} {:.4f} {:.4f}".format(
             output[0][0],
             output[0][1],
+            output[0][2],
         ))
-        print("SIMULATION {:.4f} {:.4f}".format(
+        print("SIMULATION {:.4f} {:.4f} {:.4f}".format(
             _observations.progress,
             _observations.track_position,
+            _observations.track_angles[0],
         ))
 
         # steering, throttle_brake = planner.plan(output[:-1], output[-1])

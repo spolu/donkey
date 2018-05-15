@@ -38,7 +38,7 @@ class Trainer:
         if not args.capture_dir:
             raise Exception("Required argument: --capture_dir")
         self.capture = Capture(args.capture_dir, self.device)
-        self.model = ResNet(self.config, 2).to(self.device)
+        self.model = ResNet(self.config, 3).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir
@@ -90,7 +90,7 @@ class Trainer:
             self.optimizer.step()
 
         print(
-            "EPISODE {} avg/min/max L {:.4f} {:.4f} {:.4f}".format(
+            "EPISODE {} avg/min/max L {:.6f} {:.6f} {:.6f}".format(
                 self.episode,
                 loss_meter.avg,
                 loss_meter.min,

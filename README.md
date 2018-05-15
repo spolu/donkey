@@ -102,6 +102,14 @@ push-seed () {
 }
 ```
 
+## o7
+
+python capture_simulation.py --capture_dir=/tmp/capture_train_20180515/
+http://localhost:9091/static/index.html
+
+python capture_trainer.py --capture_dir=/tmp/capture_train_20180515 --save_dir=/tmp/capture_model_20180515/
+
+python runner_simulation.py --load_dir=/tmp/capture_model_20180515/
 
 ### Resources
 

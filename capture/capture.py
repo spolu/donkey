@@ -46,6 +46,7 @@ class Capture(data.Dataset):
                 camera,
                 data['track_progress'],
                 data['track_position'],
+                data['track_angle'],
                 save=False,
             )
 
@@ -58,15 +59,16 @@ class Capture(data.Dataset):
             json.dump({
                 'track_progress': self.data[index]['track_progress'],
                 'track_position': self.data[index]['track_position'],
+                'track_angle': self.data[index]['track_angle'],
             }, f)
         with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "wb+") as f:
             f.write(self.data[index]['camera'])
 
-    def __additem__(self, camera, track_progress, track_position, save=True):
+    def __additem__(self, camera, track_progress, track_position, track_angle, save=True):
         index = len(self.data)
 
         target = torch.tensor(
-            [track_progress] + [track_position],
+            [track_progress] + [track_position] + [track_angle],
             dtype=torch.float,
         ).to(self.device)
 
@@ -74,6 +76,7 @@ class Capture(data.Dataset):
             'camera': camera,
             'track_progress': track_progress,
             'track_position': track_position,
+            'track_angle': track_angle,
             'input': input_from_camera(camera, self.device),
             'target': target,
         })
