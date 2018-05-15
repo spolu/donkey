@@ -12,7 +12,6 @@ import torch.optim as optim
 from utils import Config, str2bool, Meter
 from capture import Capture
 from capture.models import ResNet
-from simulation import ANGLES_WINDOW
 
 # import pdb; pdb.set_trace()
 
@@ -36,7 +35,7 @@ class Tester:
         if not args.capture_dir:
             raise Exception("Required argument: --capture_dir")
         self.capture = Capture(args.capture_dir, self.device)
-        self.model = ResNet(self.config, ANGLES_WINDOW+1).to(self.device)
+        self.model = ResNet(self.config, 2).to(self.device)
 
         if not args.load_dir:
             raise Exception("Required argument: --load_dir")
@@ -67,34 +66,24 @@ class Tester:
 
         for i, (cameras, values) in enumerate(self.test_loader):
             outputs = self.model(cameras)
-
             loss = self.loss(outputs, values)
 
             print(
                 ("LOSS {:.4f}\n" + \
-                 "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f}  {:.2f}\n" + \
-                 "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f}  {:.2f}").format(
+                 "  {:.2f} {:.2f}\n" + \
+                 "  {:.2f} {:.2f}").format(
                     loss.item(),
                     values[0][0].item(),
                     values[0][1].item(),
-                    values[0][2].item(),
-                    values[0][3].item(),
-                    values[0][4].item(),
-                    values[0][5].item(),
                     outputs[0][0].item(),
                     outputs[0][1].item(),
-                    outputs[0][2].item(),
-                    outputs[0][3].item(),
-                    outputs[0][4].item(),
-                    outputs[0][5].item(),
                 )
             )
 
             loss_meter.update(loss.item())
 
         print(
-            ("TEST " + \
-             "avg/min/max L {:.4f} {:.4f} {:.4f}").
+            ("TEST avg/min/max L {:.4f} {:.4f} {:.4f}").
             format(
                 loss_meter.avg,
                 loss_meter.min,

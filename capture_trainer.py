@@ -12,7 +12,6 @@ import torch.optim as optim
 from utils import Config, str2bool, Meter
 from capture import Capture
 from capture.models import ResNet
-from simulation import ANGLES_WINDOW
 
 # import pdb; pdb.set_trace()
 
@@ -39,7 +38,7 @@ class Trainer:
         if not args.capture_dir:
             raise Exception("Required argument: --capture_dir")
         self.capture = Capture(args.capture_dir, self.device)
-        self.model = ResNet(self.config, ANGLES_WINDOW+1).to(self.device)
+        self.model = ResNet(self.config, 2).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir

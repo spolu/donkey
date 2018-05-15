@@ -69,7 +69,7 @@ def step(sid, data):
 
     _capture.__additem__(
         _observations.camera_raw,
-        _observations.track_angles,
+        _observations.progress,
         _observations.track_position,
     )
 

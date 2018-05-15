@@ -90,12 +90,10 @@ def run(cfg):
         input = input.transpose(0, 2).unsqueeze(0)
 
         output = model(input)
-        print("OUTPUT {:.4f} || {:.4f} {:.4f} {:.4f} {:.4f}".format(
-            output[0][-1],
+
+        print("OUTPUT {:.4f} {:.4f}".format(
             output[0][0],
             output[0][1],
-            output[0][2],
-            output[0][3],
         ))
 
         # steering, throttle_brake = planner.plan(output[:-1], output[-1])

@@ -6,6 +6,8 @@ import cv2
 import torch
 import torch.utils.data as data
 
+input_from_
+
 """
 Capture interface
 """
@@ -34,7 +36,7 @@ class Capture(data.Dataset):
 
             self.__additem__(
                 camera,
-                data['track_angles'],
+                data['track_progress'],
                 data['track_position'],
                 save=False,
             )
@@ -46,17 +48,17 @@ class Capture(data.Dataset):
 
         with open(os.path.join(self.data_dir, str(index) + '.json'), "w+") as f:
             json.dump({
-                'track_angles': self.data[index]['track_angles'],
+                'track_progress': self.data[index]['track_progress'],
                 'track_position': self.data[index]['track_position'],
             }, f)
         with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "wb+") as f:
             f.write(self.data[index]['camera'])
 
-    def __additem__(self, camera, track_angles, track_position, save=True):
+    def __additem__(self, camera, track_progress, track_position, save=True):
         index = len(self.data)
 
         target = torch.tensor(
-            track_angles + [track_position],
+            [track_progress] + [track_position],
             dtype=torch.float,
         ).to(self.device)
         input = torch.tensor(cv2.imdecode(
@@ -68,7 +70,7 @@ class Capture(data.Dataset):
 
         self.data.append({
             'camera': camera,
-            'track_angles': track_angles,
+            'track_progress': track_progress,
             'track_position': track_position,
             'input': input,
             'target': target,
