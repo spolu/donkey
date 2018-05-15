@@ -38,7 +38,7 @@ public class SimulationController : MonoBehaviour
 	private float fpsValue = 0.0f;
 	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
-	private float carStartY = 0.6f;
+	private float carStartY = 0.8f;
 
 	private float steeringReq = 0.0f;
 	private float throttleReq = 0.0f;
