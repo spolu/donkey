@@ -7,9 +7,9 @@ public class Car : MonoBehaviour, ICar {
 	public WheelCollider[] wheelColliders;
 	public Transform[] wheelMeshes;
 
-	public float maxTorque = 50f;
+	public float maxTorque = 100f;
 	public float maxSpeed = 10f;
-	public float maxSteer = 16.0f;
+	public float maxSteer = 20.0f;
 
 	public Transform centrOfMass;
 

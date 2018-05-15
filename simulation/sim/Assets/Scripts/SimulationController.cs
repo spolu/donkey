@@ -72,7 +72,7 @@ public class SimulationController : MonoBehaviour
 
 	void Start()
 	{
-		// Debug.Log ("SimulationController initializing");
+		Debug.Log ("SimulationController initializing");
 
 		Time.captureFramerate = captureFrameRate;
 
@@ -86,12 +86,12 @@ public class SimulationController : MonoBehaviour
 
 	private void OnEnable()
 	{
-		// Debug.Log("SimulationController enabling");
+		Debug.Log("SimulationController enabling");
 	}
 
 	private void OnDisable()
 	{
-		// Debug.Log ("SimulationController disabling");
+		Debug.Log ("SimulationController disabling");
 
 		car.RequestThrottle (0.0f);
 		car.RequestBrake (1.0f);
@@ -133,7 +133,7 @@ public class SimulationController : MonoBehaviour
 			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry && Time.timeScale != 0.0) {
 				lastTelemetry = Time.time;
 				// Debug.Log ("Sending Telemetry: connected=" + connected +
-				// " time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
+				//    " time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
 
 				SimMessage m = new SimMessage ();
 				m.json = new JSONObject (JSONObject.Type.OBJECT);
@@ -198,7 +198,7 @@ public class SimulationController : MonoBehaviour
 			return;
 		}
 			
-		Debug.Log ("Received: type=open sid=" + _socket.sid);
+		// Debug.Log ("Received: type=open sid=" + _socket.sid);
 
 		SimMessage m = new SimMessage ();
 		m.json = new JSONObject (JSONObject.Type.OBJECT);
@@ -258,6 +258,7 @@ public class SimulationController : MonoBehaviour
 	void OnExit(SocketIOEvent ev)
 	{
 		// Debug.Log ("Received: type=exit sid=" + _socket.sid);
+
 		Application.Quit ();
 	}
 }
