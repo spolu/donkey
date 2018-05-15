@@ -126,8 +126,6 @@ class ResNet(nn.Module):
         x = self.rs2(x)
         x = self.rs3(x)
 
-        import pdb; pdb.set_trace()
-
         x = self.avgp(x)
 
         x = x.view(x.size(0), -1)
