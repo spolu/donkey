@@ -10,11 +10,11 @@ import torch
 import numpy as np
 import cv2
 
+import capture
+
 from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
-from capture import Capture
-from capture.models import ResNet
 from simulation import Donkey
 from simulation import ANGLES_WINDOW
 
@@ -64,7 +64,7 @@ def run(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(cfg, ANGLES_WINDOW+1).to(device)
+    model = capture.models.ResNet(cfg, ANGLES_WINDOW+1).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -81,15 +81,7 @@ def run(cfg):
     model.eval()
 
     while True:
-        input = torch.tensor(cv2.imdecode(
-            np.fromstring(_observations.camera_raw, np.uint8),
-            cv2.IMREAD_COLOR,
-        ), dtype=torch.float).to(device)
-
-        input = input / 127.5 - 1
-        input = input.transpose(0, 2).unsqueeze(0)
-
-        output = model(input)
+        output = model(capture.input_from_camera(_observations.camera_raw))
 
         print("OUTPUT {:.4f} {:.4f}".format(
             output[0][0],

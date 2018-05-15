@@ -6,7 +6,15 @@ import cv2
 import torch
 import torch.utils.data as data
 
-input_from_
+def input_from_camera(camera, device):
+    tensor = torch.tensor(cv2.imdecode(
+        np.fromstring(camera, np.uint8),
+        cv2.IMREAD_COLOR,
+    ), dtype=torch.float).to(device)
+    tensor = tensor / 127.5 - 1
+    tensor = tensor.transpose(0, 2)
+
+    return tensor
 
 """
 Capture interface
@@ -61,18 +69,12 @@ class Capture(data.Dataset):
             [track_progress] + [track_position],
             dtype=torch.float,
         ).to(self.device)
-        input = torch.tensor(cv2.imdecode(
-            np.fromstring(camera, np.uint8),
-            cv2.IMREAD_COLOR,
-        ), dtype=torch.float).to(self.device)
-        input = input / 127.5 - 1
-        input = input.transpose(0, 2)
 
         self.data.append({
             'camera': camera,
             'track_progress': track_progress,
             'track_position': track_position,
-            'input': input,
+            'input': input_from_camera(camera),
             'target': target,
         })
         if save:
