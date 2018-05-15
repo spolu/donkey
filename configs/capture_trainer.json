@@ -3,7 +3,7 @@
   "cuda": true,
 
   "hidden_size": 256,
-  "learning_rate": 0.01,
+  "learning_rate": 0.001,
   "batch_size": 64,
   "grad_norm_max": 1.0
 }

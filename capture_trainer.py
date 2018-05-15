@@ -90,9 +90,7 @@ class Trainer:
             self.optimizer.step()
 
         print(
-            ("EPISODE {} " + \
-             "avg/min/max L {:.4f} {:.4f} {:.4f}").
-            format(
+            "EPISODE {} avg/min/max L {:.4f} {:.4f} {:.4f}".format(
                 self.episode,
                 loss_meter.avg,
                 loss_meter.min,
