@@ -8,7 +8,7 @@ public class Car : MonoBehaviour, ICar {
 	public Transform[] wheelMeshes;
     
 	public float maxBrakeTorque = 100f;
-	public float maxMotorTorque = 300f;
+	public float maxMotorTorque = 400f;
 	public float maxSpeed = 3f;
 	public float maxSteer = 33.0f;
 
@@ -146,7 +146,7 @@ public class Car : MonoBehaviour, ICar {
 		//four wheel drive at the moment
 		foreach(WheelCollider wc in wheelColliders)
 		{
-			if(rb.velocity.magnitude < maxSpeed)
+			if (rb.velocity.magnitude < maxSpeed)
 			{
 				wc.motorTorque = throttle;
 			}
@@ -156,6 +156,7 @@ public class Car : MonoBehaviour, ICar {
 			}
 
 			wc.brakeTorque = maxBrakeTorque * brake;
+			wc.wheelDampingRate = 5f;
 		}
 
 		acceleration = rb.velocity - prevVelocity / Time.fixedDeltaTime;
