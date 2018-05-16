@@ -3,13 +3,14 @@ using System.Collections;
 
 
 public class Car : MonoBehaviour, ICar {
-
+    
 	public WheelCollider[] wheelColliders;
 	public Transform[] wheelMeshes;
-
-	public float maxTorque = 100f;
-	public float maxSpeed = 10f;
-	public float maxSteer = 20.0f;
+    
+	public float maxBrakeTorque = 100f;
+	public float maxMotorTorque = 300f;
+	public float maxSpeed = 3f;
+	public float maxSteer = 33.0f;
 
 	public Transform centrOfMass;
 
@@ -134,7 +135,7 @@ public class Car : MonoBehaviour, ICar {
 		lastSteer = requestSteering;
 		lastAccel = requestTorque;
 
-		float throttle = requestTorque * maxTorque;
+		float throttle = requestTorque * maxMotorTorque;
 		float steerAngle = requestSteering * maxSteer;
         float brake = requestBrake;
 
@@ -154,7 +155,7 @@ public class Car : MonoBehaviour, ICar {
 				wc.motorTorque = 0.0f;
 			}
 
-			wc.brakeTorque = 500f * brake;
+			wc.brakeTorque = maxBrakeTorque * brake;
 		}
 
 		acceleration = rb.velocity - prevVelocity / Time.fixedDeltaTime;
