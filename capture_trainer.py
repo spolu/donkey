@@ -35,9 +35,13 @@ class Trainer:
 
         self.device = torch.device('cuda:0' if self.cuda else 'cpu')
 
-        if not args.capture_dir:
-            raise Exception("Required argument: --capture_dir")
-        self.capture = Capture(args.capture_dir, self.device)
+        if not args.capture_train_dir:
+            raise Exception("Required argument: --capture_train_dir")
+        self.train_capture = Capture(args.capture_train_dir, self.device)
+        if not args.capture_test_dir:
+            raise Exception("Required argument: --capture_test_dir")
+        self.test_capture = Capture(args.capture_test_dir, self.device)
+
         self.model = ResNet(self.config, 3).to(self.device)
 
         self.save_dir = args.save_dir
@@ -70,13 +74,21 @@ class Trainer:
         self.batch_count = 0
 
         self.train_loader = torch.utils.data.DataLoader(
-            self.capture,
+            self.train_capture,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=0,
         )
 
+        self.test_loader = torch.utils.data.DataLoader(
+            self.test_capture,
+            batch_size=1,
+            shuffle=False,
+            num_workers=0,
+        )
+
     def batch_train(self):
+        self.model.train()
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.train_loader):
@@ -90,7 +102,8 @@ class Trainer:
             self.optimizer.step()
 
         print(
-            "EPISODE {} avg/min/max L {:.6f} {:.6f} {:.6f}".format(
+            ("EPISODE {} avg/min/max L {:.6f} {:.6f} {:.6f}").
+            format(
                 self.episode,
                 loss_meter.avg,
                 loss_meter.min,
@@ -98,19 +111,54 @@ class Trainer:
             )
         )
 
+        return loss_metter.avg
+
+    def batch_test(self):
+        self.model.eval()
+        loss_meter = Meter()
+
+        for i, (cameras, values) in enumerate(self.test_loader):
+            outputs = self.model(cameras)
+            loss = self.loss(outputs, values)
+
+        print(
+            ("TEST {} avg/min/max L {:.6f} {:.6f} {:.6f}").
+            format(
+                self.episode,
+                loss_meter.avg,
+                loss_meter.min,
+                loss_meter.max,
+            )
+        )
+
+
     def train(self):
         self.episode = 0
-        self.model.train()
+        self.last_test_loss = sys.float_info.max
 
         while True:
             self.batch_train()
-            sys.stdout.flush()
-            self.episode += 1
 
-            if self.episode % 20 == 0 and self.save_dir:
-                print("Saving models and optimizer: save_dir={}".format(self.save_dir))
-                torch.save(self.model.state_dict(), self.save_dir + "/model.pt")
-                torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
+            if self.episode % 10 == 0:
+                loss = self.batch_test()
+                if loss < self.last_test_loss:
+                    self.last_test_loss = loss
+                    if self.save_dir:
+                        print(
+                            "Saving models and optimizer: save_dir={}".
+                            format(self.save_dir)
+                        )
+                        torch.save(
+                            self.model.state_dict(),
+                            self.save_dir + "/model.pt",
+                        )
+                        torch.save(
+                            self.optimizer.state_dict(),
+                            self.save_dir + "/optimizer.pt",
+                        )
+
+            self.episode += 1
+            sys.stdout.flush()
 
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -119,7 +167,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
-    parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
+    parser.add_argument('--capture_train_dir', type=str, help="path to train captured data")
+    parser.add_argument('--capture_test_dir', type=str, help="path to test captured data")
 
     parser.add_argument('--cuda', type=str2bool, help="config override")
 
