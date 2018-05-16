@@ -10,8 +10,21 @@ class Planner:
         throttle_brake = 0.5
 
         if track_position > 0 and track_angle > 0:
-            steering = -1.0
+            # Immediate correction.
+            immediate = 5 * max(track_angle.item(), track_position.item())
+            # Cap.
+            cap = min(1.0, immediate)
+
+            steering = -cap
+
         if track_position < 0 and track_angle < 0:
-            steering = 1.0
+            # Immediate correction.
+            immediate = 5 * max(-track_angle.item(), -track_position.item())
+            # Cap.
+            cap = min(1.0, immediate)
+
+            steering = cap
+
+        print("COMMAND: {}".format(steering))
 
         return steering, throttle_brake
