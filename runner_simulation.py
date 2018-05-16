@@ -12,6 +12,8 @@ import cv2
 
 import capture
 from capture.models import ResNet
+import planner
+from planner import Planner
 
 from flask import Flask
 from eventlet.green import threading
@@ -81,19 +83,12 @@ def run(cfg):
 
     model.eval()
 
-    progress_stack = []
-    progress = 0.0
-    steering = 0.0
+    planner = Planner()
 
     while True:
         output = model(capture.input_from_camera(
             _observations.camera_raw, device,
         ).unsqueeze(0))
-
-        # progress_stack = progress_stack + [output[0][0]]
-
-        # if len(progress_stack) > 5:
-        #     progress_stack = progress_stack[1:]
 
         print("OUTPUT     {:.4f} {:.4f} {:.4f}".format(
             output[0][0],
@@ -106,15 +101,12 @@ def run(cfg):
             _observations.track_angles[0],
         ))
 
-        # steering, throttle_brake = planner.plan(output[:-1], output[-1])
-        throttle = 1.0
-
-        if output[0][1] > 0.05:
-            steering += -0.1
-        if output[0][1] < -0.05:
-            steering += 0.1
-
-        _observations, _reward, _done = _d.step([steering, throttle])
+        steering, throttle_brake = planner.plan(
+            output[0][0],
+            output[0][1],
+            output[0][2],
+        )
+        _observations, _reward, _done = _d.step([steering, throttle_brake])
 
         _sio.emit('transition', transition())
         _sio.emit('next')
