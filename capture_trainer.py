@@ -110,8 +110,7 @@ class Trainer:
                 loss_meter.max,
             )
         )
-
-        return loss_metter.avg
+        return loss_meter.avg
 
     def batch_test(self):
         self.model.eval()
@@ -119,7 +118,9 @@ class Trainer:
 
         for i, (cameras, values) in enumerate(self.test_loader):
             outputs = self.model(cameras)
+
             loss = self.loss(outputs, values)
+            loss_meter.update(loss.item())
 
         print(
             ("TEST {} avg/min/max L {:.6f} {:.6f} {:.6f}").
@@ -130,19 +131,19 @@ class Trainer:
                 loss_meter.max,
             )
         )
-
+        return loss_meter.avg
 
     def train(self):
         self.episode = 0
-        self.last_test_loss = sys.float_info.max
+        self.best_test_loss = sys.float_info.max
 
         while True:
             self.batch_train()
 
             if self.episode % 10 == 0:
                 loss = self.batch_test()
-                if loss < self.last_test_loss:
-                    self.last_test_loss = loss
+                if loss < self.best_test_loss:
+                    self.best_test_loss = loss
                     if self.save_dir:
                         print(
                             "Saving models and optimizer: save_dir={}".
