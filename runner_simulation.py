@@ -83,7 +83,7 @@ def run(cfg):
 
     model.eval()
 
-    planner = Planner()
+    planner = Planner(cfg)
 
     while True:
         output = model(capture.input_from_camera(
@@ -102,9 +102,9 @@ def run(cfg):
         ))
 
         steering, throttle_brake = planner.plan(
-            output[0][0],
-            output[0][1],
-            output[0][2],
+            output[0][0].item(),
+            output[0][1].item(),
+            output[0][2].item(),
         )
         _observations, _reward, _done = _d.step([steering, throttle_brake])
 

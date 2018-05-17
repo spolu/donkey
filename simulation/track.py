@@ -1,5 +1,6 @@
 import random
 import os
+import math
 
 import numpy as np
 from enum import Enum
@@ -201,6 +202,37 @@ class Track:
             serialized += ','.join(map(str, p)) + ';'
         return serialized
 
+    def invert_position(self, track_progress, track_position):
+        assert track_progress >=0
+        assert track_progress <=1
+
+        if track_progress == 0:
+            track_progress += 0.000001
+        if track_progress == 1:
+            track_progress -= 0.000001
+
+        l = track_progress * (len(self.points) + 1)
+        p = self.points[int(math.floor(l))]
+
+        i = int(math.ceil(l))
+        if i == int(math.floor(l)):
+            i += 1
+        if i == len(self.points):
+            i = 0
+        n = self.points[i]
+
+        k = l - math.floor(l)
+        u = (n-p) / np.linalg.norm(n-p)
+
+        print(">>>>>>>>>>>>>>> TRACK_POINT: {}".format(int(math.floor(l))))
+        print(">>>>>>>>>>>>>>> TRACK_K: {}".format(k))
+
+        v = np.copy(u)
+        v[0] = u[2]
+        v[2] = -u[0]
+
+        return (p + k*u + track_position * v)
+
 class ScriptElemState(Enum):
     STRAIGHT = 1
     CURVE = 2
@@ -265,4 +297,12 @@ class Script:
                 s = s + span
 
         return points
+
+if __name__ == "__main__":
+    track = Track("newworld")
+    print(track.invert_position(0.01, 1.0))
+    print(track.invert_position(0.05, 1.0))
+    print(track.invert_position(0.1, 1.0))
+    print(track.invert_position(0.2, 1.0))
+    print(track.invert_position(0.3, 1.0))
 
