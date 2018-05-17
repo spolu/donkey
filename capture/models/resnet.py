@@ -74,13 +74,14 @@ class ResNet(nn.Module):
         self.relu = nn.ReLU()
         self.maxp = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.rs1 = self._make_residual_layer(64, 2, stride=1)
-        self.rs2 = self._make_residual_layer(128, 2, stride=2)
-        self.rs3 = self._make_residual_layer(256, 2, stride=2)
+        self.rs11 = self._make_residual_layer(64, 1, stride=1)
+        self.rs12 = self._make_residual_layer(64, 1, stride=2)
+        self.rs21 = self._make_residual_layer(128, 1, stride=1)
+        self.rs22 = self._make_residual_layer(128, 1, stride=2)
 
         self.avgp = nn.AvgPool2d(8, stride=1)
 
-        self.fc1 = nn.Linear(768, self.hidden_size)
+        self.fc1 = nn.Linear(3*128, self.hidden_size)
 
         # Value head.
         self.hd_v = HeadBlock(self.hidden_size, 'linear', self.value_count)
@@ -122,9 +123,11 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxp(x)
 
-        x = self.rs1(x)
-        x = self.rs2(x)
-        x = self.rs3(x)
+        x = self.rs11(x)
+        x = self.rs12(x)
+        x = self.rs21(x)
+        x = self.rs22(x)
+        # x = self.rs3(x)
 
         x = self.avgp(x)
 
