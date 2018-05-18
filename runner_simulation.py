@@ -19,7 +19,7 @@ from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from simulation import Donkey
-from simulation import ANGLES_WINDOW
+from simulation import Track
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -29,6 +29,12 @@ _d = None
 _observations = None
 _reward = None
 _done = None
+_track = None
+_model = {
+    'progress': 0.0,
+    'track_position': 0.0,
+    'track_angle': 0.0,
+}
 
 # import pdb; pdb.set_trace()
 
@@ -38,10 +44,25 @@ def transition():
     return {
         'done': _done,
         'reward': _reward,
-        'progress': _observations.progress,
-        'time': _observations.time,
-        'linear_speed': _observations.track_linear_speed,
-        'camera': _observations.camera_stack[0].tolist(),
+        'observation': {
+            'progress': _observations.progress,
+            'track_position': _observations.track_position,
+            'time': _observations.time,
+            'track_linear_speed': _observations.track_linear_speed,
+            'camera': _observations.camera_stack[0].tolist(),
+            'position': _track.invert_position(
+                _observations.progress, _observations.track_position,
+            ).tolist(),
+        },
+        'model': {
+            'progress': _model['progress'],
+            'track_position': _model['track_position'],
+            'track_angle': _model['track_angle'],
+            'position': _track.invert_position(
+                _model['progress'],
+                _model['track_position'],
+            ).tolist(),
+        }
     }
 
 def run_server():
@@ -60,6 +81,7 @@ def run(cfg):
     global _observations
     global _reward
     global _done
+    global _model
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -90,10 +112,20 @@ def run(cfg):
             _observations.camera_raw, device,
         ).unsqueeze(0))
 
+        progress = output[0][0].item()
+        track_position = output[0][1].item()
+        track_angle = output[0][2].item()
+
+        _model = {
+            'progress': progress,
+            'track_position': track_position,
+            'track_angle': track_angle,
+        }
+
         print("OUTPUT     {:.4f} {:.4f} {:.4f}".format(
-            output[0][0],
-            output[0][1],
-            output[0][2],
+            progress,
+            track_position,
+            track_angle,
         ))
         print("SIMULATION {:.4f} {:.4f} {:.4f}".format(
             _observations.progress,
@@ -102,10 +134,9 @@ def run(cfg):
         ))
 
         steering, throttle_brake = planner.plan(
-            output[0][0].item(),
-            output[0][1].item(),
-            output[0][2].item(),
+            progress, track_position, track_angle,
         )
+
         _observations, _reward, _done = _d.step([steering, throttle_brake])
 
         _sio.emit('transition', transition())
@@ -138,6 +169,7 @@ if __name__ == "__main__":
 
     _d = Donkey(cfg)
     _observations = _d.reset()
+    _track = Track(cfg.get('track_name'))
 
     t = threading.Thread(target = run_server)
     t.start()

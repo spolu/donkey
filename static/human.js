@@ -42,28 +42,47 @@ document.addEventListener('keyup', (evt) => {
 
 socket.on('transition', (message) => {
   document.getElementById('reward').innerText = message['reward']
-  document.getElementById('progress').innerText = message['progress']
-  document.getElementById('time').innerText = message['time']
-  document.getElementById('linear_speed').innerText = message['linear_speed']
+  document.getElementById('time').innerText = message['observation']['time']
+  document.getElementById('linear_speed').innerText = message['observation']['track_linear_speed']
 
   var c = document.getElementById("camera");
-  var ctx = c.getContext("2d");
-  var imgData = ctx.createImageData(160,120);
+  var ctxCamera = c.getContext("2d");
+  var imgData = ctxCamera.createImageData(160,120);
   for (var w = 0; w < 120; w++) {
     for (var h = 0; h < 160; h++) {
       imgData.data[((w * (160 * 4)) + (h * 4)) + 0] = Math.floor(
-        (message['camera'][w][h] + 1) * 127.5
+        (message['observation']['camera'][w][h] + 1) * 127.5
       )
       imgData.data[((w * (160 * 4)) + (h * 4)) + 1] = Math.floor(
-        (message['camera'][w][h] + 1) * 127.5
+        (message['observation']['camera'][w][h] + 1) * 127.5
       )
       imgData.data[((w * (160 * 4)) + (h * 4)) + 2] = Math.floor(
-        (message['camera'][w][h] + 1) * 127.5
+        (message['observation']['camera'][w][h] + 1) * 127.5
       )
       imgData.data[((w * (160 * 4)) + (h * 4)) + 3] = 255
     }
   }
-  ctx.putImageData(imgData,0,0);
+  ctxCamera.putImageData(imgData,0,0);
+
+  var t = document.getElementById("track");
+  var ctxTrack = t.getContext("2d");
+
+  ctxTrack.fillStyle="#000000";
+  ctxTrack.fillRect(
+    Math.trunc(3 * message['observation']['position'][0]) + 300,
+    Math.trunc(3 * message['observation']['position'][2]) + 300,
+    1,1
+  );
+
+  ctxTrack.fillStyle="#FF0000";
+  ctxTrack.fillRect(
+    Math.trunc(3 * message['model']['position'][0]) + 300,
+    Math.trunc(3 * message['model']['position'][2]) + 300,
+    1,1
+  );
+
+  console.log(message['model']['position'])
+
 })
 
 socket.on('next', (message) => {

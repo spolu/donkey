@@ -33,11 +33,11 @@ class Track:
         self.points = self.script.points()
 
         # interpolate to first point
-        self.points.append([
+        self.points.append(np.array([
             0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
             0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
             0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
-        ])
+        ]))
 
         # recompute length
         self.length = 0.0
@@ -202,16 +202,18 @@ class Track:
             serialized += ','.join(map(str, p)) + ';'
         return serialized
 
-    def invert_position(self, track_progress, track_position):
-        assert track_progress >=0
-        assert track_progress <=1
+    def invert_position(self, progress, track_position):
+        if progress < 0:
+            progress = 0
+        if progress > 1:
+            progress = 1
 
-        if track_progress == 0:
-            track_progress += 0.000001
-        if track_progress == 1:
-            track_progress -= 0.000001
+        if progress == 0:
+            progress += 0.000001
+        if progress == 1:
+            progress -= 0.000001
 
-        l = track_progress * (len(self.points) + 1)
+        l = progress * len(self.points)
         p = self.points[int(math.floor(l))]
 
         i = int(math.ceil(l))
@@ -222,16 +224,18 @@ class Track:
         n = self.points[i]
 
         k = l - math.floor(l)
-        u = (n-p) / np.linalg.norm(n-p)
 
         print(">>>>>>>>>>>>>>> TRACK_POINT: {}".format(int(math.floor(l))))
         print(">>>>>>>>>>>>>>> TRACK_K: {}".format(k))
 
+        u = (n-p) / np.linalg.norm(n-p)
         v = np.copy(u)
         v[0] = u[2]
         v[2] = -u[0]
 
-        return (p + k*u + track_position * v)
+        position = ((1-k)*p + k*n + track_position * v)
+
+        return position
 
 class ScriptElemState(Enum):
     STRAIGHT = 1

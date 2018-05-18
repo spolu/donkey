@@ -12,36 +12,31 @@ class Planner:
         self.track = Track(self.track_name)
         self.last_position = None
 
-        self.last_track_progress = [0.0] * MAVG_LEN
+        self.last_progress = [0.0] * MAVG_LEN
         self.last_track_position = [0.0] * MAVG_LEN
         self.last_track_angle = [0.0] * MAVG_LEN
 
         self.last_position = np.array([0.0, 0.0, 0.0])
 
-    def plan(self, track_progress, track_position, track_angle):
-        self.last_track_progress = self.last_track_progress[1:] + [track_progress]
+    def plan(self, progress, track_position, track_angle):
+        self.last_progress = self.last_progress[1:] + [progress]
         self.last_track_position = self.last_track_position[1:] + [track_position]
         self.last_track_angle = self.last_track_angle[1:] + [track_angle]
 
-        # track_progress = np.mean(self.last_track_progress)
+        # progress = np.mean(self.last_progress)
         # track_position = np.mean(self.last_track_position)
         # track_angle = np.mean(self.last_track_angle)
 
         steering = 0.0
         throttle_brake = 0.5
 
-        if track_progress < 0:
-            track_progress = 0
-        if track_progress > 1:
-            track_progress = 1
-
-        position = self.track.invert_position(track_progress, track_position)
+        position = self.track.invert_position(progress, track_position)
         unity = self.track.unity(position)
 
         future_angle = self.track.angle(position, unity, 4) + track_angle
 
+        print(">>>>>>>>>>>>>>> PROGRESS: {}".format(progress))
         print(">>>>>>>>>>>>>>> TRACK_POSITION: {}".format(track_position))
-        print(">>>>>>>>>>>>>>> TRACK_PROGRESS: {}".format(track_progress))
         print(">>>>>>>>>>>>>>> TRACK_ANGLE: {}".format(track_angle))
         print(">>>>>>>>>>>>>>> POSITION: {}".format(position))
         print(">>>>>>>>>>>>>>> UNITY: {}".format(unity))

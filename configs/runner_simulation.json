@@ -8,10 +8,7 @@
   "seed": 31,
   "cuda": false,
 
-  "hidden_size": 256,
-  "learning_rate": 0.01,
-  "batch_size": 64,
-  "grad_norm_max": 1.0,
+  "hidden_size": 128,
 
   "reward_type": "time",
 
