@@ -31,7 +31,7 @@ ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
-    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera_stack, camera_raw'
+    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, angular_velocity, camera_stack, camera_raw'
 )
 
 class Donkey:
@@ -112,6 +112,11 @@ class Donkey:
             telemetry['acceleration']['y'],
             telemetry['acceleration']['z'],
         ])
+        angular_velocity = np.array([
+            telemetry['angular_velocity']['x'],
+            telemetry['angular_velocity']['y'],
+            telemetry['angular_velocity']['z'],
+        ])
 
         track_angles = []
         for i in range(ANGLES_WINDOW):
@@ -133,6 +138,7 @@ class Donkey:
             position,
             velocity,
             acceleration,
+            angular_velocity,
             np.copy(self.camera_stack),
             camera_raw,
         )
