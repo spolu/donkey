@@ -8,23 +8,31 @@ from flask import Flask
 from eventlet.green import threading
 from utils import Config
 from simulation import Donkey
+from simulation import Track
 
 sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
 
 d = None
-observations = None
-reward = None
-done = None
+_observations = None
+_reward = None
+_done = None
+_track = None
 
 def transition():
     return {
-        'done': done,
-        'reward': reward,
-        'progress': observations.progress,
-        'time': observations.time,
-        'linear_speed': observations.track_linear_speed,
-        'camera': observations.camera_stack[0].tolist(),
+        'done': _done,
+        'reward': _reward,
+        'observation': {
+            'progress': _observations.progress,
+            'track_position': _observations.track_position,
+            'time': _observations.time,
+            'track_linear_speed': _observations.track_linear_speed,
+            'camera': _observations.camera_stack[0].tolist(),
+            'position': _track.invert_position(
+                _observations.progress, _observations.track_position,
+            ).tolist(),
+        },
     }
 
 def run_server():
@@ -45,9 +53,9 @@ def connect(sid, environ):
 
 @sio.on('step')
 def step(sid, data):
-    global observations
-    global reward
-    global done
+    global _observations
+    global _reward
+    global _done
 
     steering = data['steering']
     throttle_brake = 0.0
@@ -57,7 +65,7 @@ def step(sid, data):
     if data['throttle'] > 0.0:
         throttle_brake = data['throttle']
 
-    observations, reward, done = d.step([steering, throttle_brake])
+    _observations, _reward, _done = d.step([steering, throttle_brake])
 
     sio.emit('transition', transition())
     sio.emit('next')
@@ -70,7 +78,8 @@ if __name__ == "__main__":
     cfg = Config('configs/human.json')
 
     d = Donkey(cfg)
-    observations = d.reset()
+    _observations = d.reset()
+    _track = Track(cfg.get('track_name'))
 
     run_server()
 
