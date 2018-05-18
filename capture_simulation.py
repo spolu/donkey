@@ -10,6 +10,7 @@ from eventlet.green import threading
 from utils import Config, str2bool
 from capture import Capture
 from simulation import Donkey
+from simulation import Track
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -20,6 +21,7 @@ _capture = None
 _observations = None
 _reward = None
 _done = None
+_track = None
 
 def transition():
     global _observations
@@ -27,10 +29,16 @@ def transition():
     return {
         'done': _done,
         'reward': _reward,
-        'progress': _observations.progress,
-        'time': _observations.time,
-        'linear_speed': _observations.track_linear_speed,
-        'camera': _observations.camera_stack[0].tolist(),
+        'observation': {
+            'progress': _observations.progress,
+            'track_position': _observations.track_position,
+            'time': _observations.time,
+            'track_linear_speed': _observations.track_linear_speed,
+            'camera': _observations.camera_stack[0].tolist(),
+            'position': _track.invert_position(
+                _observations.progress, _observations.track_position,
+            ).tolist(),
+        },
     }
 
 def run_server():
@@ -108,6 +116,7 @@ if __name__ == "__main__":
 
     _d = Donkey(cfg)
     _observations = _d.reset()
+    _track = Track(cfg.get('track_name'))
 
     t = threading.Thread(target = run_server)
     t.start()

@@ -74,15 +74,14 @@ socket.on('transition', (message) => {
     1,1
   );
 
-  ctxTrack.fillStyle="#FF0000";
-  ctxTrack.fillRect(
-    Math.trunc(3 * message['model']['position'][0]) + 300,
-    Math.trunc(3 * message['model']['position'][2]) + 300,
-    1,1
-  );
-
-  console.log(message['model']['position'])
-
+  if (message['model']) {
+    ctxTrack.fillStyle="#FF0000";
+    ctxTrack.fillRect(
+      Math.trunc(3 * message['model']['position'][0]) + 300,
+      Math.trunc(3 * message['model']['position'][2]) + 300,
+      1,1
+    );
+  }
 })
 
 socket.on('next', (message) => {
