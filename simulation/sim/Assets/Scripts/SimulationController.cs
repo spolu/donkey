@@ -173,6 +173,12 @@ public class SimulationController : MonoBehaviour
 				acceleration.AddField ("z", car.GetAccelleration ().z);
 				m.json.AddField ("acceleration", acceleration);
 
+				JSONObject angularVelocity = new JSONObject(JSONObject.Type.OBJECT);
+				angularVelocity.AddField("x", car.GetAngularVelocity().x);
+				angularVelocity.AddField("y", car.GetAngularVelocity().y);
+				angularVelocity.AddField("z", car.GetAngularVelocity().z);
+				m.json.AddField("angular_velocity", angularVelocity);
+
 				Send (m);
 				Pause ();
 			}

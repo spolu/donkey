@@ -19,6 +19,7 @@ public interface ICar
 	Vector3 GetPosition();
 	Vector3 GetVelocity();
 	Vector3 GetAccelleration();
+	Vector3 GetAngularVelocity();
 
 	// Set position
 	void Set(Vector3 pos, Quaternion rot);

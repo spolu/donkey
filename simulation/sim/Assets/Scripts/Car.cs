@@ -103,6 +103,11 @@ public class Car : MonoBehaviour, ICar {
 		return acceleration;
 	}
 
+	public Vector3 GetAngularVelocity()
+    {
+        return rb.angularVelocity;
+    }
+
 	public float GetOrient ()
 	{
 		Vector3 dir = transform.forward;
