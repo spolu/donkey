@@ -117,7 +117,7 @@ class Donkey:
         for i in range(ANGLES_WINDOW):
             track_angles.append(self.track.angle(position, velocity, i) / math.pi)
 
-        track_position = self.track.position(position) / OFF_TRACK_DISTANCE
+        track_position = self.track.position(position)
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
         self.last_track_linear_speed = track_linear_speed
 
