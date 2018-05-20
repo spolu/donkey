@@ -75,11 +75,18 @@ def step(sid, data):
 
     _observations, _reward, _done = _d.step([steering, throttle_brake])
 
-    _capture.__additem__(
+    _capture.add_item(
         _observations.camera_raw,
-        _observations.progress,
-        _observations.track_position,
-        _observations.track_angles[0],
+        {
+            'angular_velocity': _observations.angular_velocity.tolist(),
+            'reference_progress': _observations.progress,
+            'reference_track_position': _observations.track_position,
+            'reference_track_angle': _observations.track_angles[0],
+            # For now copy reference to actual values.
+            'progress': _observations.progress,
+            'track_position': _observations.track_position,
+            'track_angle': _observations.track_angles[0],
+        },
     )
 
     _sio.emit('transition', transition())

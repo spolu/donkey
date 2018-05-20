@@ -6,6 +6,16 @@ import cv2
 import torch
 import torch.utils.data as data
 
+_stored_params = [
+    'angular_velocity',
+    'reference_progress',
+    'reference_track_position',
+    'reference_track_angle',
+    'progress',
+    'track_position',
+    'track_angle',
+]
+
 def input_from_camera(camera, device):
     tensor = torch.tensor(cv2.imdecode(
         np.fromstring(camera, np.uint8),
@@ -42,51 +52,61 @@ class Capture(data.Dataset):
             with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "rb") as f:
                 camera = f.read()
 
-            self.__additem__(
+            self.add_item(
                 camera,
-                data['progress'],
-                data['track_position'],
-                data['track_angle'],
+                data,
                 save=False,
             )
 
             index += 1
 
-    def __saveitem__(self, index):
+    def save_item(self, index):
         assert self.data[index] is not None
 
         with open(os.path.join(self.data_dir, str(index) + '.json'), "w+") as f:
-            json.dump({
-                'progress': self.data[index]['progress'],
-                'track_position': self.data[index]['track_position'],
-                'track_angle': self.data[index]['track_angle'],
-            }, f)
+            d = {}
+            for p in _stored_params:
+                if p in self.data[index]:
+                    d[p] = self.data[index][p]
+            json.dump(d, f)
         with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "wb+") as f:
             f.write(self.data[index]['camera'])
 
-    def __additem__(self, camera, progress, track_position, track_angle, save=True):
+    def add_item(self, camera, data, save=True):
         index = len(self.data)
-
-        target = torch.tensor(
-            [progress] + [track_position] + [track_angle],
-            dtype=torch.float,
-        ).to(self.device)
 
         self.data.append({
             'camera': camera,
-            'progress': progress,
-            'track_position': track_position,
-            'track_angle': track_angle,
             'input': input_from_camera(camera, self.device),
-            'target': target,
         })
-        if save:
-            self.__saveitem__(index)
+        self.update_item(index, data, save=save)
 
-    def __getitem__(self, index):
+    def update_item(self, index, data, save=True):
         assert index < len(self.data)
+
+        d = self.data[index]
+        for p in _stored_params:
+            if p in data:
+                d[p] = data[p]
+
+        if d['progress'] and d['track_position'] and d['track_angle']:
+            target = torch.tensor(
+                [d['progress']] + [d['track_position']] + [d['track_angle']],
+                dtype=torch.float,
+            ).to(self.device)
+        else:
+            target = None
+        if save:
+            self.save_item(index)
+
+    def get_item(self, index):
+        assert index < len(self.data)
+
         item = self.data[index]
         return item['input'], item['target']
+
+    def __getitem__(self, index):
+        self.get_item(index)
 
     def __len__(self):
         return len(self.data)
