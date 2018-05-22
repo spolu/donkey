@@ -19,6 +19,7 @@ from raspi.parts.transform import Lambda
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.runner import Runner
 from raspi.parts.web_controller.web import LocalWebController
+from raspi.parts.imu import Mpu6050
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -47,13 +48,16 @@ def drive(args):
 
     cfg.override('cuda', False)
 
-    module = __import__('policies.' + cfg.get('policy'))
-    policy = getattr(module, cfg.get('policy')).Policy(cfg)
-
+    # module = __import__('policies.' + cfg.get('policy'))
+    # policy = getattr(module, cfg.get('policy')).Policy(cfg)
+    
     #Initialize car
     V = raspi.vehicle.Vehicle()
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
+
+    imu = Mpu6050()
+    V.add(imu, outputs=['imu/gyr_z'], threaded=True)
 
     # stack = ImgStack()
     # V.add(stack,
