@@ -225,9 +225,9 @@ class Track:
 
         k = l - math.floor(l)
 
-        print(">>>>>>>>>>>>>>> TRACK_POINT: {}".format(int(math.floor(l))))
-        print(">>>>>>>>>>>>>>> TRACK_K: {}".format(k))
-        print(">>>>>>>>>>>>>>> TRACK_POSITION: {}".format(track_position))
+        # print(">>>>>>>>>>>>>>> TRACK_POINT: {}".format(int(math.floor(l))))
+        # print(">>>>>>>>>>>>>>> TRACK_K: {}".format(k))
+        # print(">>>>>>>>>>>>>>> TRACK_POSITION: {}".format(track_position))
 
         u = (n-p) / np.linalg.norm(n-p)
         v = np.copy(u)

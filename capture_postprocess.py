@@ -3,15 +3,19 @@ import os
 import argparse
 import eventlet
 import eventlet.wsgi
+import math
 
 import capture
 
+import numpy as np
 from flask import Flask
 from flask import jsonify
 from eventlet.green import threading
 
 from capture import Capture
 from simulation import Track
+
+# import pdb; pdb.set_trace()
 
 TRACK_POINTS = 400
 
@@ -29,9 +33,46 @@ def run_server():
     except KeyboardInterrupt:
         print("Stopping shared server")
 
-@_app.route('/capture/<speed>', methods=['GET'])
-def capture(speed):
-    pass
+@_app.route('/capture/<track>/<speed>', methods=['GET'])
+def capture(track, speed):
+    t = Track(track)
+    speed = float(speed)
+
+    time = [_capture.get_item(i)['time'] for i in range(_capture.__len__())]
+    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(_capture.__len__())]
+
+    angle = [math.pi]
+    for i in range(1, len(time)):
+        angle.append(angle[i-1] + angular_velocity[i][1] * (time[i] - time[i-1]))
+
+    positions = [
+        t.invert_position(
+            _capture.get_item(0)['reference_progress'],
+            _capture.get_item(0)['reference_track_position'],
+        )
+    ]
+    for i in range(1, len(time)):
+        positions.append(
+            positions[i-1] + [
+                -np.sin(angle[i-1]) * speed * (time[i] - time[i-1]),
+                0,
+                -np.cos(angle[i-1]) * speed * (time[i] - time[i-1]),
+            ],
+        )
+    for i in range(len(positions)):
+        positions[i] = positions[i].tolist()
+
+    return jsonify(positions)
+
+@_app.route('/reference/<track>', methods=['GET'])
+def reference(track):
+    t = Track(track)
+    return jsonify([
+        t.invert_position(
+            _capture.get_item(i)['reference_progress'],
+            _capture.get_item(i)['reference_track_position'],
+        ).tolist() for i in range(_capture.__len__())
+    ])
 
 @_app.route('/track/<track>', methods=['GET'])
 def track(track):

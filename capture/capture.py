@@ -45,10 +45,12 @@ class Capture(data.Dataset):
                 found = False
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.jpeg')):
                 found = False
+
             if not found and not first:
                 continue
             if not found and first:
-                found = False
+                found = True
+                index += 1
                 continue
 
             first = False
@@ -109,12 +111,11 @@ class Capture(data.Dataset):
 
     def get_item(self, index):
         assert index < len(self.data)
-
-        item = self.data[index]
-        return item['input'], item['target']
+        return self.data[index]
 
     def __getitem__(self, index):
-        self.get_item(index)
+        item = self.get_item(index)
+        return item['input'], item['target']
 
     def __len__(self):
         return len(self.data)
