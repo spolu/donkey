@@ -78,6 +78,7 @@ def step(sid, data):
     _capture.add_item(
         _observations.camera_raw,
         {
+            'time': _observations.time,
             'angular_velocity': _observations.angular_velocity.tolist(),
             'reference_progress': _observations.progress,
             'reference_track_position': _observations.track_position,

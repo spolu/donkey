@@ -3,7 +3,7 @@
   "track_randomized": false,
   "track_off_reset": false,
   "action_type": "continuous",
-  "speed_limit": 1.0,
+  "speed_limit": 0.5,
 
   "reward_type": "time",
 

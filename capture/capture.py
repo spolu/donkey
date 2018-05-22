@@ -7,6 +7,7 @@ import torch
 import torch.utils.data as data
 
 _stored_params = [
+    'time',
     'angular_velocity',
     'reference_progress',
     'reference_track_position',
@@ -35,15 +36,22 @@ class Capture(data.Dataset):
         self.data_dir = data_dir
         self.device = device
 
+        first = True
         found = True
         index = 0
+
         while found:
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.json')):
                 found = False
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.jpeg')):
                 found = False
-            if not found:
+            if not found and not first:
                 continue
+            if not found and first:
+                found = False
+                continue
+
+            first = False
 
             data = None
             camera = None
