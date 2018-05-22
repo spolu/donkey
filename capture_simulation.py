@@ -80,6 +80,7 @@ def step(sid, data):
         {
             'time': _observations.time,
             'angular_velocity': _observations.angular_velocity.tolist(),
+            'acceleration': _observations.acceleration.tolist(),
             'reference_progress': _observations.progress,
             'reference_track_position': _observations.track_position,
             'reference_track_angle': _observations.track_angles[0],

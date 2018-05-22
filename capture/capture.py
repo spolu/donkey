@@ -9,6 +9,7 @@ import torch.utils.data as data
 _stored_params = [
     'time',
     'angular_velocity',
+    'acceleration',
     'reference_progress',
     'reference_track_position',
     'reference_track_angle',
