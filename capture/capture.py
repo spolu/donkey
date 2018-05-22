@@ -32,7 +32,7 @@ def input_from_camera(camera, device):
 Capture interface
 """
 class Capture(data.Dataset):
-    def __init__(self, data_dir, device=torch.device('cpu')):
+    def __init__(self, data_dir, load=True, device=torch.device('cpu')):
         self.data = []
         self.data_dir = data_dir
         self.device = device
@@ -41,7 +41,7 @@ class Capture(data.Dataset):
         found = True
         index = 0
 
-        while found:
+        while found and load:
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.json')):
                 found = False
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.jpeg')):

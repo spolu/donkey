@@ -14,7 +14,7 @@ $.get("/track/newworld", function(data) {
   }
 })
 
-$.get("/capture/newworld/5.5", function(data) {
+$.get("/capture/newworld", function(data) {
   var t = document.getElementById("track");
   var ctxTrack = t.getContext("2d");
 
