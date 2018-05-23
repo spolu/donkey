@@ -105,6 +105,9 @@ class Capture(data.Dataset):
         self.update_item(index, data, save=save)
 
     def update_item(self, index, data, save=True):
+        print('length data' + str(len(self.data)))
+        print('index' + str(index))
+
         assert index < len(self.data)
 
         d = self.data[index]

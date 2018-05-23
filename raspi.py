@@ -20,6 +20,7 @@ from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.runner import Runner
 from raspi.parts.web_controller.web import LocalWebController
 from raspi.parts.imu import Mpu6050
+from raspi.parts.capture_raspi import CaptureRaspi
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -78,6 +79,12 @@ def drive(args):
               outputs=['angle', 'throttle'],
               threaded=False)
 
+    if args.capture_dir is not None:
+        capture = CaptureRaspi(args.capture_dir)
+        V.add(capture,
+              inputs=['cam/image_array','imu/gyr_z'],
+              threaded=False)
+
     steering_controller = PCA9685(STEERING_CHANNEL)
     steering = PWMSteering(controller=steering_controller,
                                     left_pulse=STEERING_LEFT_PWM,
@@ -103,6 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('config_path', type=str, help="path to the config file")
 
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
+    parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()
 
