@@ -16,15 +16,18 @@ _stored_params = [
     'reference_progress',
     'reference_track_position',
     'reference_track_angle',
-    'computed_progress',
-    'computed_track_position',
-    'computed_track_angle',
+    'integrated_progress',
+    'integrated_track_position',
+    'integrated_track_angle',
+    'corrected_progress',
+    'corrected_track_position',
+    'corrected_track_angle',
 ]
 
-_computed_params = [
-    'computed_progress',
-    'computed_track_position',
-    'computed_track_angle',
+_target_params = [
+    'corrected_progress',
+    'corrected_track_position',
+    'corrected_track_angle',
 ]
 
 def input_from_camera(camera, device):
@@ -110,13 +113,13 @@ class Capture(data.Dataset):
                 d[p] = data[p]
 
         target_ready = True
-        for p in _computed_params:
+        for p in _target_params:
             if p not in d:
                 target_ready = False
 
         if target_ready:
             t = []
-            for p in _computed_params:
+            for p in _target_params:
                 t += [d[p]]
             d['target'] = torch.tensor(t, dtype=torch.float).to(self.device)
 

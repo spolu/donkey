@@ -14,6 +14,8 @@ from eventlet.green import threading
 from utils import Config, str2bool
 from capture import Capture
 
+ANNOTATION_FREQUENCY = 1000
+
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
 
@@ -21,6 +23,7 @@ _simulation = None
 _capture = None
 _track = None
 _observation = None
+
 
 def run_server():
     global _app
@@ -72,17 +75,22 @@ def process_telemetry(telemetry):
     track_angle = _track.angle(position, velocity)
     track_linear_speed = _track.linear_speed(position, velocity)
 
-    _capture.add_item(
-        camera_raw,
-        {
-            'time': time,
-            'angular_velocity': angular_velocity.tolist(),
-            'acceleration': acceleration.tolist(),
-            'reference_progress': progress,
-            'reference_track_position': track_position,
-            'reference_track_angle': track_angle,
-        },
-    )
+    data = {
+        'time': time,
+        'angular_velocity': angular_velocity.tolist(),
+        'acceleration': acceleration.tolist(),
+        'reference_progress': progress,
+        'reference_track_position': track_position,
+        'reference_track_angle': track_angle,
+    }
+
+    # Annotate every ANNOTATION_FREQUENCY the capture with the reference value
+    # while in simulation.
+    if _capture.__len__() % ANNOTATION_FREQUENCY == 0:
+        data['annotated_progress'] = progress
+        data['annotated_track_position'] = track_position
+
+    _capture.add_item(camera_raw, data)
 
     _observation = {
         'progress': progress,

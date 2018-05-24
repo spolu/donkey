@@ -38,6 +38,20 @@ window.onload = function() {
     }
   })
 
+  $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
+    var t = document.getElementById("track");
+    var ctxTrack = t.getContext("2d");
+
+    for (var p in data) {
+      ctxTrack.fillStyle="#999999";
+      ctxTrack.fillRect(
+        Math.trunc(3 * data[p][0]) + 350,
+        Math.trunc(3 * data[p][2]) + 400,
+        1,1
+      );
+    }
+  })
+
   $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
     var t = document.getElementById("track");
     var ctxTrack = t.getContext("2d");
@@ -45,9 +59,9 @@ window.onload = function() {
     for (var p in data) {
       ctxTrack.fillStyle="#FF0000";
       ctxTrack.fillRect(
-        Math.trunc(3 * data[p][0]) + 350,
-        Math.trunc(3 * data[p][2]) + 400,
-        1,1
+        Math.trunc(3 * data[p][0]) + 350 - 2,
+        Math.trunc(3 * data[p][2]) + 400 - 2,
+        4,4
       );
     }
   })
