@@ -32,7 +32,6 @@ class Mpu6050:
         self.accel, self.gyro, self.temp = self.sensor.get_all_data()
 
     def run_threaded(self):
-        print('gyro_z: ' + str(self.gyro['z']))
         # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
         return self.gyro['z']
 
