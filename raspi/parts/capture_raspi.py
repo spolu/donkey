@@ -8,7 +8,7 @@ from capture import Capture
 
 class CaptureRaspi:
     def __init__(self, data_dir, inputs = None, types = None):
-        self.capture = Capture(data_dir)
+        self.capture = Capture(data_dir,load=False)
         self.start_time = time.time()
 
     def run(self, img_stack = None, gyro_z = None):
@@ -17,12 +17,9 @@ class CaptureRaspi:
         Accepts values, pairs them with their inputs keys and saves them
         to disk.
         '''
-        print('run capture raspi step')
-        print(img_stack)
-        print(gyro_z)
         t = time.time()
-        camera = im = Image.fromarray(img_stack)
-        
+        camera = cv2.imencode(".jpg", img_stack)[1].tostring()
+
         self.capture.add_item(
             camera,
             {
