@@ -20,7 +20,7 @@ from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.runner import Runner
 from raspi.parts.web_controller.web import LocalWebController
 from raspi.parts.imu import Mpu6050
-from raspi.parts.capture_raspi import CaptureRaspi
+from raspi.parts.capture import Capturer
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -45,12 +45,6 @@ THROTTLE_REVERSE_PWM = 320
 #THROTTLE_REVERSE_PWM = 310
 
 def drive(args):
-    cfg = Config(args.config_path)
-
-    cfg.override('cuda', False)
-
-    # module = __import__('policies.' + cfg.get('policy'))
-    # policy = getattr(module, cfg.get('policy')).Policy(cfg)
     
     #Initialize car
     V = raspi.vehicle.Vehicle()
@@ -58,7 +52,7 @@ def drive(args):
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     imu = Mpu6050()
-    V.add(imu, outputs=['imu/acl_x', 'imu/acl_y', 'imu/gyr_z'], threaded=True)
+    V.add(imu, outputs=['imu/acl', 'imu/gyr'], threaded=True)
 
     stack = ImgStack()
     V.add(stack,
@@ -72,17 +66,10 @@ def drive(args):
           outputs=['angle', 'throttle'],
           threaded=True)
 
-    if args.load_dir is not None:
-        runner = Runner(cfg, policy, args.load_dir)
-        V.add(runner,
-              inputs=['cam/image_array'],
-              outputs=['angle', 'throttle'],
-              threaded=False)
-
     if args.capture_dir is not None:
-        capture = CaptureRaspi(args.capture_dir)
-        V.add(capture,
-              inputs=['cam/image_array','imu/acl_x', 'imu/acl_y','imu/gyr_z'],
+        capturer = Capturer(args.capture_dir)
+        V.add(capturer,
+              inputs=['cam/image_array','imu/acl', 'imu/gyr'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
@@ -99,17 +86,11 @@ def drive(args):
     V.add(steering, inputs=['angle'])
     V.add(throttle, inputs=['throttle'])
 
-    if args.load_dir is None:
-        print("You can now go to http://d2.dr1ve:8887 to drive.")
-
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('config_path', type=str, help="path to the config file")
-
-    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()

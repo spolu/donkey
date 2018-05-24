@@ -127,7 +127,6 @@ if __name__ == "__main__":
 
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.
-    assert 'annotated_progress' in _capture.get_item(0)
 
     last = 0
     for i in range(_capture.__len__()):
