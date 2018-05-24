@@ -181,19 +181,19 @@ def postprocess():
         _capture.update_item(i, d, save=False)
 
     # Initialize first corrected value
-    _capture.update_item(0, {
-        'corrected_progress': _capture.get_item(0)['integrated_progress'],
-        'corrected_track_position': _capture.get_item(0)['integrated_track_position'],
-        'corrected_track_angle': _capture.get_item(0)['integrated_track_angle'],
-    }, save=False)
+    # _capture.update_item(0, {
+    #     'corrected_progress': _capture.get_item(0)['integrated_progress'],
+    #     'corrected_track_position': _capture.get_item(0)['integrated_track_position'],
+    #     'corrected_track_angle': _capture.get_item(0)['integrated_track_angle'],
+    # }, save=False)
 
     # Course correct segment by segmet and update the _capture.
-    print("Starting course correction...")
-    for s in range(len(_segments)):
-        print("Processing segment {}/{} [{},{}]".format(
-            s, len(_segments), _segments[s][0], _segments[s][1],
-        ))
-        course_correct(s)
+    # print("Starting course correction...")
+    # for s in range(len(_segments)):
+    #     print("Processing segment {}/{} [{},{}]".format(
+    #         s, len(_segments), _segments[s][0], _segments[s][1],
+    #     ))
+    #     course_correct(s)
 
     # Saving capture.
     print("Saving capture...")
@@ -215,6 +215,7 @@ if __name__ == "__main__":
 
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.
+    # assert 'annotated_progress' in _capture.get_item(0)
 
     last = 0
     for i in range(_capture.__len__()):
