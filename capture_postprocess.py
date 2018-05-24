@@ -24,10 +24,15 @@ Noise = collections.namedtuple(
     'index type value'
 )
 
-def integrate(noise):
-    time = [_capture.get_item(i)['time'] for i in range(_capture.__len__())]
-    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(_capture.__len__())]
-    acceleration = [_capture.get_item(i)['acceleration'] for i in range(_capture.__len__())]
+def integrate(noise,
+              start,
+              end,
+              start_angle=math.pi,
+              start_position=np.array([0,0,0]),
+              start_velocity=np.array([0,0,0])):
+    time = [_capture.get_item(i)['time'] for i in range(end)]
+    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(end)]
+    acceleration = [_capture.get_item(i)['acceleration'] for i in range(end)]
 
     if noise != None:
         if noise.type == 'acceleration':
@@ -35,17 +40,17 @@ def integrate(noise):
         if noise.type == 'angular_velocity':
             angular_velocity[noise.index] += noise.value
 
-    angles = [math.pi]
+    angles = [start_angle]
     for i in range(1, len(time)):
         angles.append(angles[i-1] + angular_velocity[i][1] * (time[i] - time[i-1]))
 
-    velocities = [np.array([0.0, 0.0, 0.0])]
+    velocities = [start_velocity]
     for i in range(1, len(time)):
         # print("ACCELERATIOn {}".format(acceleration[i]))
         # print("TIME {}".format((time[i] - time[i-1])))
         velocities.append(velocities[i-1] + np.array(acceleration[i]) * (time[i] - time[i-1]))
 
-    positions = [np.array([0,0,0])]
+    positions = [start_position]
     # for i in range(1, len(time)):
     #     positions.append(
     #         positions[i-1] + [
@@ -72,13 +77,13 @@ def sample_noises(segment):
     pass
 
 def course_correct(segment):
-    pass
+    angles, velocities, positions = integrate(None, 0, _capture.__len__())
 
 def postprocess():
     # Integrate the path and update the _capture.
-    print("DIRECT INTEGRATION")
+    print("Starting direct integration...")
 
-    angles, velocities, positions = integrate(None)
+    angles, velocities, positions = integrate(None, 0, _capture.__len__())
     for i in range(len(positions)):
         progress = _track.progress(positions[i]) / _track.length
         track_position = _track.position(positions[i])
@@ -91,14 +96,21 @@ def postprocess():
             'integrated_track_position': track_position,
             'integrated_track_angle': track_angle,
         }
-        _capture.update_item(i, d, save=True)
+        _capture.update_item(i, d, save=False)
 
     # Course correct segment by segmet and update the _capture.
-    # print("DIRECT INTEGRATION")
-    # for i in range(len(_segments)):
-    #     print("COURSE CORRECTING SEGMENT {}/{} [{},{}]".format(
-    #         i, len(_segments), _segments[i][0], _segments[i][1],
-    #     ))
+    print("Starting course correction...")
+    for s in range(len(_segments)):
+        print("Processing segment {}/{} [{},{}]".format(
+            s, len(_segments), _segments[s][0], _segments[s][1],
+        ))
+        course_correct(s)
+
+
+    # Saving capture.
+    print("Saving capture...")
+    for i in range(_capture.__len__()):
+        _capture.update_item(i, {}, save=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
