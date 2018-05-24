@@ -66,6 +66,20 @@ window.onload = function() {
     }
   })
 
+  $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
+    var t = document.getElementById("track");
+    var ctxTrack = t.getContext("2d");
+
+    for (var p in data) {
+      ctxTrack.fillStyle="#0000FF";
+      ctxTrack.fillRect(
+        Math.trunc(3 * data[p][0]) + 350,
+        Math.trunc(3 * data[p][2]) + 400,
+        1,1
+      );
+    }
+  })
+
   $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
     var t = document.getElementById("track");
     var ctxTrack = t.getContext("2d");
