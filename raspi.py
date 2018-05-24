@@ -58,7 +58,7 @@ def drive(args):
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     imu = Mpu6050()
-    V.add(imu, outputs=['imu/gyr_z'], threaded=True)
+    V.add(imu, outputs=['imu/acl_x', 'imu/acl_y', 'imu/gyr_z'], threaded=True)
 
     stack = ImgStack()
     V.add(stack,
@@ -82,7 +82,7 @@ def drive(args):
     if args.capture_dir is not None:
         capture = CaptureRaspi(args.capture_dir)
         V.add(capture,
-              inputs=['cam/image_array','imu/gyr_z'],
+              inputs=['cam/image_array','imu/acl_x', 'imu/acl_y','imu/gyr_z'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)

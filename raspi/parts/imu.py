@@ -33,12 +33,12 @@ class Mpu6050:
 
     def run_threaded(self):
         # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.gyro['z']
+        return self.accel['x'], self.accel['y'], self.gyro['z']
 
     def run(self):
         self.poll()
         # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.gyro['z']
+        return self.accel['x'], self.accel['y'], self.gyro['z']
 
     def shutdown(self):
         self.on = False
