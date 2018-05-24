@@ -40,9 +40,7 @@ public class SimulationController : MonoBehaviour
 
 	private float carStartY = 0.8f;
 
-	private float steeringReq = 0.0f;
-	private float throttleReq = 0.0f;
-	private float brakeReq = 0.0f;
+    private Vector3 prevVelocity = Vector3.zero;
 
 	void Awake()
 	{
@@ -130,8 +128,11 @@ public class SimulationController : MonoBehaviour
 		// Debug.Log ("UDPATE time=" + Time.time + " position=" + car.GetPosition ().z);
 
 		if (connected) {
-			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry && Time.timeScale != 0.0) {
+			if (Time.time >= lastResume + stepInterval && Time.time > lastTelemetry) {
+				Vector3 acc = (car.GetVelocity() - prevVelocity) / (Time.time - lastTelemetry);
+				prevVelocity = car.GetVelocity();
 				lastTelemetry = Time.time;
+
 				// Debug.Log ("Sending Telemetry: connected=" + connected +
 				//    " time=" + Time.time + " last_resume=" + lastResume + " last_pause=" + lastPause);
 
@@ -166,11 +167,11 @@ public class SimulationController : MonoBehaviour
 				velocity.AddField ("y", car.GetVelocity ().y);
 				velocity.AddField ("z", car.GetVelocity ().z);
 				m.json.AddField ("velocity", velocity);
-
+                
 				JSONObject acceleration = new JSONObject (JSONObject.Type.OBJECT);
-				acceleration.AddField ("x", car.GetAccelleration ().x);
-				acceleration.AddField ("y", car.GetAccelleration ().y);
-				acceleration.AddField ("z", car.GetAccelleration ().z);
+				acceleration.AddField ("x", acc.x);
+				acceleration.AddField ("y", acc.y);
+				acceleration.AddField ("z", acc.z);
 				m.json.AddField ("acceleration", acceleration);
 
 				JSONObject angularVelocity = new JSONObject(JSONObject.Type.OBJECT);
@@ -180,7 +181,7 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField("angular_velocity", angularVelocity);
 
 				Send (m);
-				Pause ();
+				// Pause ();
 			}
 		}
 
@@ -247,18 +248,11 @@ public class SimulationController : MonoBehaviour
 	{
 		// Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
 
-		// Appply the control from the previous step to simulate
-		// the delay incurred in reality by the forward pass.
-		car.RequestSteering (steeringReq);
-		car.RequestThrottle (throttleReq);
-		car.RequestBrake (brakeReq);
-
-		// Store the control values to only apply them at the next step.
-		steeringReq = float.Parse(ev.data.GetField("steering").str);
-		throttleReq = float.Parse(ev.data.GetField("throttle").str);
-		brakeReq = float.Parse(ev.data.GetField("brake").str);
-
-		Resume ();
+		car.RequestSteering (float.Parse(ev.data.GetField("steering").str));
+		car.RequestThrottle (float.Parse(ev.data.GetField("throttle").str));
+		car.RequestBrake (float.Parse(ev.data.GetField("brake").str));
+        
+		// Resume ();
 	}
 
 	void OnExit(SocketIOEvent ev)

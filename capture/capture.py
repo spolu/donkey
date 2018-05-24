@@ -10,12 +10,21 @@ _stored_params = [
     'time',
     'angular_velocity',
     'acceleration',
+    'annotated_progress',
+    'annotated_track_position',
+    'annotated_track_angle',
     'reference_progress',
     'reference_track_position',
     'reference_track_angle',
-    'progress',
-    'track_position',
-    'track_angle',
+    'computed_progress',
+    'computed_track_position',
+    'computed_track_angle',
+]
+
+_computed_params = [
+    'computed_progress',
+    'computed_track_position',
+    'computed_track_angle',
 ]
 
 def input_from_camera(camera, device):
@@ -100,13 +109,17 @@ class Capture(data.Dataset):
             if p in data:
                 d[p] = data[p]
 
-        if d['progress'] and d['track_position'] and d['track_angle']:
-            target = torch.tensor(
-                [d['progress']] + [d['track_position']] + [d['track_angle']],
-                dtype=torch.float,
-            ).to(self.device)
-        else:
-            target = None
+        target_ready = True
+        for p in _computed_params:
+            if p not in d:
+                target_ready = False
+
+        if target_ready:
+            t = []
+            for p in _computed_params:
+                t += [d[p]]
+            d['target'] = torch.tensor(t, dtype=torch.float).to(self.device)
+
         if save:
             self.save_item(index)
 

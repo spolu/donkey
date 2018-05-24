@@ -1,45 +1,26 @@
 import time
 import socketio
+import numpy as np
+import base64
 import eventlet
 import eventlet.wsgi
 import os
 import argparse
+import cv2
+import simulation
 
 from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from capture import Capture
-from simulation import Donkey
-from simulation import Track
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
 
-_d = None
+_simulation = None
 _capture = None
-
-_observations = None
-_reward = None
-_done = None
 _track = None
-
-def transition():
-    global _observations
-
-    return {
-        'done': _done,
-        'reward': _reward,
-        'observation': {
-            'progress': _observations.progress,
-            'track_position': _observations.track_position,
-            'time': _observations.time,
-            'track_linear_speed': _observations.track_linear_speed,
-            'camera': _observations.camera_stack[0].tolist(),
-            'position': _track.invert_position(
-                _observations.progress, _observations.track_position,
-            ).tolist(),
-        },
-    }
+_observation = None
 
 def run_server():
     global _app
@@ -53,45 +34,99 @@ def run_server():
     except KeyboardInterrupt:
         print("Stopping shared server")
 
+def process_telemetry(telemetry):
+    global _observation
+    global _capture
+
+    camera_raw = base64.b64decode(telemetry['camera'])
+    camera = cv2.imdecode(
+        np.fromstring(camera_raw, np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    ).astype(np.float)
+    camera = camera / 127.5 - 1
+
+    position = np.array([
+        telemetry['position']['x'],
+        telemetry['position']['y'],
+        telemetry['position']['z'],
+    ])
+    velocity = np.array([
+        telemetry['velocity']['x'],
+        telemetry['velocity']['y'],
+        telemetry['velocity']['z'],
+    ])
+    acceleration = np.array([
+        telemetry['acceleration']['x'],
+        telemetry['acceleration']['y'],
+        telemetry['acceleration']['z'],
+    ])
+    angular_velocity = np.array([
+        telemetry['angular_velocity']['x'],
+        telemetry['angular_velocity']['y'],
+        telemetry['angular_velocity']['z'],
+    ])
+
+    time = telemetry['time']
+    progress = _track.progress(position) / _track.length
+    track_position = _track.position(position)
+    track_angle = _track.angle(position, velocity)
+    track_linear_speed = _track.linear_speed(position, velocity)
+
+    _capture.add_item(
+        camera_raw,
+        {
+            'time': time,
+            'angular_velocity': angular_velocity.tolist(),
+            'acceleration': acceleration.tolist(),
+            'reference_progress': progress,
+            'reference_track_position': track_position,
+            'reference_track_angle': track_angle,
+        },
+    )
+
+    _observation = {
+        'progress': progress,
+        'track_position': track_position,
+        'time': time,
+        'track_linear_speed': track_linear_speed,
+        'camera': camera.tolist(),
+        'position': _track.invert_position(progress, track_position).tolist(),
+    }
+
+def transition():
+    global _observation
+
+    return {
+        'observation': {
+            'progress': _observation['progress'],
+            'track_position': _observation['track_position'],
+            'time': _observation['time'],
+            'track_linear_speed': _observation['track_linear_speed'],
+            'camera': _observation['camera'],
+            'position': _observation['position'],
+        },
+    }
+
 @_sio.on('connect')
 def connect(sid, environ):
     print("Received connect: sid={}".format(sid))
-    _sio.emit('transition', transition())
+    if _observation is not None:
+        _sio.emit('transition', transition())
     _sio.emit('next')
 
 @_sio.on('step')
 def step(sid, data):
-    global _observations
-    global _reward
-    global _done
+    global _observation
 
     steering = data['steering']
-    throttle_brake = 0.0
+    throttle = data['throttle']
+    brake = data['brake']
 
-    if data['brake'] > 0.0:
-        throttle_brake = -data['brake']
-    if data['throttle'] > 0.0:
-        throttle_brake = data['throttle']
+    command = simulation.Command(steering, throttle, brake)
+    _simulation.step(command)
 
-    _observations, _reward, _done = _d.step([steering, throttle_brake])
-
-    _capture.add_item(
-        _observations.camera_raw,
-        {
-            'time': _observations.time,
-            'angular_velocity': _observations.angular_velocity.tolist(),
-            'acceleration': _observations.acceleration.tolist(),
-            'reference_progress': _observations.progress,
-            'reference_track_position': _observations.track_position,
-            'reference_track_angle': _observations.track_angles[0],
-            # For now copy reference to actual values.
-            'progress': _observations.progress,
-            'track_position': _observations.track_position,
-            'track_angle': _observations.track_angles[0],
-        },
-    )
-
-    _sio.emit('transition', transition())
+    if _observation is not None:
+        _sio.emit('transition', transition())
     _sio.emit('next')
 
 @_sio.on('reset')
@@ -121,11 +156,18 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     assert args.capture_dir is not None
-    _capture = Capture(args.capture_dir)
+    _capture = Capture(args.capture_dir, load=False)
 
-    _d = Donkey(cfg)
-    _observations = _d.reset()
-    _track = Track(cfg.get('track_name'))
+    _simulation = simulation.Simulation(
+        True,
+        cfg.get('simulation_headless'),
+        cfg.get('simulation_time_scale'),
+        cfg.get('simulation_step_interval'),
+        cfg.get('simulation_capture_frame_rate'),
+        process_telemetry,
+    )
+    _track = simulation.Track(cfg.get('track_name'))
+    _simulation.start(_track)
 
     t = threading.Thread(target = run_server)
     t.start()

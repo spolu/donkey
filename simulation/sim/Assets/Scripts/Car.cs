@@ -164,7 +164,8 @@ public class Car : MonoBehaviour, ICar {
 			wc.wheelDampingRate = 5f;
 		}
 
-		acceleration = rb.velocity - prevVelocity / Time.fixedDeltaTime;
+		acceleration = (rb.velocity - prevVelocity) / Time.fixedDeltaTime;
+		prevVelocity = rb.velocity;
 	}
 
 	void FlipUpright()

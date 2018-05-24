@@ -41,7 +41,6 @@ document.addEventListener('keyup', (evt) => {
 });
 
 socket.on('transition', (message) => {
-  document.getElementById('reward').innerText = message['reward']
   document.getElementById('time').innerText = message['observation']['time']
   document.getElementById('linear_speed').innerText = message['observation']['track_linear_speed']
 

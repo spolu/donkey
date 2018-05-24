@@ -62,6 +62,9 @@ def telemetry(sid, data):
     client['telemetry'] = data
     client['condition'].notify()
     client['condition'].release()
+    if client['callback'] is not None:
+        client['callback'](client['telemetry'])
+
 
 @sio.on('hello')
 def hello(sid, data):
@@ -123,7 +126,7 @@ Command = collections.namedtuple(
 )
 
 class Simulation:
-    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate):
+    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate, callback):
         global lock
         global clients
         self.launch = launch
@@ -142,6 +145,7 @@ class Simulation:
                 'id': len(clients),
                 'condition': threading.Condition(),
                 'sid': "",
+                'callback': callback,
             }
             clients.append(self.client)
 
