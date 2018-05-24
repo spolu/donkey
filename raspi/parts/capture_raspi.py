@@ -2,6 +2,7 @@ import time
 import base64
 import cv2
 import numpy as np
+from PIL import Image
 
 from capture import Capture
 
@@ -20,7 +21,7 @@ class CaptureRaspi:
         print(img_stack)
         print(gyro_z)
         t = time.time()
-        camera = img_stack
+        camera = im = Image.fromarray(img_stack)
         
         self.capture.add_item(
             camera,

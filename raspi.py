@@ -60,11 +60,11 @@ def drive(args):
     imu = Mpu6050()
     V.add(imu, outputs=['imu/gyr_z'], threaded=True)
 
-    # stack = ImgStack()
-    # V.add(stack,
-    #       inputs=['cam/image_array'],
-    #       outputs=['cam/image_stack'],
-    #       threaded=False)
+    stack = ImgStack()
+    V.add(stack,
+          inputs=['cam/image_array'],
+          outputs=['cam/image_stack'],
+          threaded=False)
 
     ctr = LocalWebController()
     V.add(ctr,
