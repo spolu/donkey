@@ -22,6 +22,8 @@ _stored_params = [
     'corrected_progress',
     'corrected_track_position',
     'corrected_track_angle',
+    'throttle',
+    'steering',
 ]
 
 _target_params = [

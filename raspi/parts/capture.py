@@ -11,7 +11,7 @@ class Capturer:
         self.capture = Capture(data_dir,load=False)
         self.start_time = time.time()
 
-    def run(self, img_stack = None, accel = None, gyro = None):
+    def run(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None):
         '''
         API function needed to use as a Donkey part.
         Accepts values, pairs them with their inputs keys and saves them
@@ -46,6 +46,8 @@ class Capturer:
             'time': t,
             'angular_velocity': angular_velocity.tolist(),
             'acceleration': acceleration.tolist(),
+            'throttle': throttle,
+            'steering': angle,
             },
         )
 

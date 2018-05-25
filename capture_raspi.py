@@ -34,7 +34,7 @@ CAMERA_FRAMERATE = DRIVE_LOOP_HZ
 STEERING_CHANNEL = 0
 #STEERING_LEFT_PWM = 440
 STEERING_LEFT_PWM = 425
-STEERING_RIGHT_PWM = 330
+STEERING_RIGHT_PWM = 342
 
 # THROTTLE
 THROTTLE_CHANNEL = 1
@@ -69,7 +69,7 @@ def drive(args):
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr'],
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'angle', 'throttle'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
