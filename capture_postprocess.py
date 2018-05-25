@@ -48,8 +48,6 @@ def integrate(noises,
 
     velocities = [start_velocity]
     for i in range(1, len(time)):
-        # print("ACCELERATIOn {}".format(acceleration[i]))
-        # print("TIME {}".format((time[i] - time[i-1])))
         velocities.append(velocities[i-1] + np.array(acceleration[i]) * (time[i] - time[i-1]))
 
     speeds = []
@@ -193,15 +191,6 @@ def postprocess():
     # Integrate the path and update the _capture.
     print("Starting direct integration...")
 
-    # for s in range(len(_segments)):
-    #     final_loss = loss_position(s, _capture.get_item(_segments[s][1])['corrected_track_position'])
-    #     initial_loss = loss(
-    #         s,
-    #         _capture.get_item(_segments[segment][1])['corrected_progress'],
-    #         _capture.get_item(_segments[segment][1])['corrected_track_position'],
-    #     )
-    #     print("INITIAL LOSS {:.4f}".format(initial_loss))
-
     angles, velocities, positions = integrate([], 0, _capture.__len__())
     for i in range(len(positions)):
         progress = _track.progress(positions[i]) / _track.length
@@ -219,13 +208,6 @@ def postprocess():
             'corrected_track_angle': track_angle,
         }
         _capture.update_item(i, d, save=False)
-
-    # Initialize first corrected value
-    _capture.update_item(0, {
-        'corrected_progress': _capture.get_item(0)['integrated_progress'],
-        'corrected_track_position': _capture.get_item(0)['integrated_track_position'],
-        'corrected_track_angle': _capture.get_item(0)['integrated_track_angle'],
-    }, save=False)
 
     # Course correct segment by segmet and update the _capture.
     print("Starting course correction...")
@@ -263,7 +245,7 @@ if __name__ == "__main__":
 
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.
-    # assert 'annotated_progress' in _capture.get_item(0)
+    assert 'annotated_progress' in _capture.get_item(0)
 
     last = 0
     for i in range(_capture.__len__()):
