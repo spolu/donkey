@@ -248,36 +248,10 @@ def postprocess():
     for i in range(_capture.__len__()):
         _capture.update_item(i, {}, save=True)
 
-def plot_inputs(start, end):
-
-    time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(start, end)]
-    acceleration = [_capture.get_item(i)['acceleration'] for i in range(start, end)]
-    throttle = [_capture.get_item(i)['throttle'] for i in range(start, end)]
-    steering = [_capture.get_item(i)['steering'] for i in range(start, end)]
-
-    plt.figure('acceleration')
-    plt.plot(time, acceleration, 'k')
-    plt.show()
-
-    plt.figure('angular_velocity')
-    plt.plot(time, angular_velocity, 'k')
-    plt.show()
-
-    plt.figure('throttle')
-    plt.plot(time, throttle, 'k')
-    plt.show()
-
-    plt.figure('steering')
-    plt.plot(time, steering, 'k')
-    plt.show()
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
-    parser.add_argument('-p', '--plot', action='store_true')
 
     args = parser.parse_args()
 
@@ -298,8 +272,5 @@ if __name__ == "__main__":
                 continue
             _segments.append([last, i])
             last = i
-
-    if args.plot:
-        plot_inputs(0,_capture.__len__())
 
     postprocess()
