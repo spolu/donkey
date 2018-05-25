@@ -20,6 +20,7 @@ NOISE_SPEED_SCALE = 10.0
 LOSS_LIMIT = 0.005
 
 _capture = None
+_track = None
 _segments = []
 
 _start_angle = math.pi
