@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from utils import Config, str2bool, Meter
-from capture import Capture, CaptureSequenceSet
+from capture import Capture, CaptureSet
 from capture.models import DNSLAM
 
 # import pdb; pdb.set_trace()
@@ -37,10 +37,10 @@ class Trainer:
 
         if not args.capture_set_train_dir:
             raise Exception("Required argument: --capture_set_train_dir")
-        self.train_capture_set = CaptureSequenceSet(args.capture_set_train_dir, self.device)
+        self.train_capture_set = CaptureSet(args.capture_set_train_dir, self.device)
         if not args.capture_set_test_dir:
             raise Exception("Required argument: --capture_set_test_dir")
-        self.test_capture_set = CaptureSequenceSet(args.capture_set_test_dir, self.device)
+        self.test_capture_set = CaptureSet(args.capture_set_test_dir, self.device)
 
         self.model = DNSLAM(self.config, 3).to(self.device)
 
@@ -72,20 +72,6 @@ class Trainer:
 
         self.batch_count = 0
 
-        self.train_loader = torch.utils.data.DataLoader(
-            self.train_capture_set,
-            batch_size=1,
-            shuffle=True,
-            num_workers=0,
-        )
-
-        self.test_loader = torch.utils.data.DataLoader(
-            self.test_capture_set,
-            batch_size=1,
-            shuffle=False,
-            num_workers=0,
-        )
-
     def loss(self, capture, progresses, positions, angles, speeds):
         loss = 0
 
@@ -96,7 +82,7 @@ class Trainer:
             # reference positions
             item = capture.get_item(i)
             if item['reference_track_position']:
-                loss += F.mse_loss(positions[i], torch.zeros(0) + item['reference_track_positions'])
+                loss += F.mse_loss(positions[i], torch.zeros(0) + item['reference_track_position'])
             if item['reference_progress']:
                 loss += F.mse_loss(progress[i], torch.zeros(0) + item['reference_progress'])
 
@@ -123,15 +109,14 @@ class Trainer:
             delta = angles[i]-angles[i-1]
             loss += F.relu(torch.abs(delta) - ANGLE_DELTA_CAP)
 
-
-
     def batch_train(self):
         self.model.train()
         loss_meter = Meter()
 
-        for i, capture in enumerate(self.train_loader):
+        for i in range(self.train_capture_set.size()):
+            capture = self.train_capture_set.get_capture(i)
             hidden = torch.zeros(1, self.hidden_size)
-            sequence = capture.sequence().transpose(0, 1)
+            sequence = capture.sequence()
 
             progresses = []
             positions = []
@@ -139,7 +124,7 @@ class Trainer:
             speeds = []
 
             for i in range(sequence.size(0)):
-                progress, position, angle, speed, hidden = self.model(sequence[i], hidden)
+                progress, position, angle, speed, hidden = self.model(sequence[i].unsqueeze(0), hidden)
 
                 progresses.append(progress[0])
                 positions.append(position[0])
@@ -168,7 +153,8 @@ class Trainer:
         self.model.eval()
         loss_meter = Meter()
 
-        for i, capture in enumerate(self.train_loader):
+        for i in range(self.test_capture_set.size()):
+            capture = self.test_capture_set.get_capture(i)
             hidden = torch.zeros(1, self.hidden_size)
             sequence = sequence.transpose(0, 1)
 
@@ -227,6 +213,7 @@ class Trainer:
             self.episode += 1
             sys.stdout.flush()
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")

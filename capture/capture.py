@@ -52,7 +52,7 @@ class Capture(data.Dataset):
         self.data_dir = data_dir
         self.device = device
 
-        self.sequence = None
+        self.sequence_cache = None
 
         first = True
         found = True
@@ -139,15 +139,15 @@ class Capture(data.Dataset):
         return len(self.data)
 
     def sequence(self):
-        if self.sequence is None:
+        if self.sequence_cache is None:
             sequence = []
             for i in range(self.size()):
                 item = self.get_item(i)
                 sequence.append(item['input'])
 
-            self.sequence = torch.stack(sequence).to(self.device)
+            self.sequence_cache = torch.stack(sequence).to(self.device)
 
-        return self.sequence
+        return self.sequence_cache
 
     # data.Dataset interface.
 
@@ -159,8 +159,7 @@ class Capture(data.Dataset):
         return self.size()
 
 """
-A CaptureSet is a set of captures. It complies to the data.Dataset interface
-returning a capture.
+A CaptureSet is a set of captures.
 """
 class CaptureSet(data.Dataset):
     def __init__(self, data_dir, device=torch.device('cpu')):
@@ -180,11 +179,3 @@ class CaptureSet(data.Dataset):
     def get_capture(self, index):
         assert index < len(self.captures)
         return self.captures[index]
-
-    # data.Dataset interface.
-
-    def __getitem__(self, index):
-        return self.get_capture(index)
-
-    def __len__(self):
-        return self.size()

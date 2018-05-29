@@ -4,6 +4,7 @@ import argparse
 import eventlet
 import eventlet.wsgi
 import math
+import urllib
 
 import capture
 
@@ -101,7 +102,7 @@ def corrected(track, capture):
 
 @_app.route('/track/<track>/capture/<capture>/reference', methods=['GET'])
 def reference(track, capture):
-    capture = fetch_capture(capture)
+    capture = fetch_capture(urllib.parse.unquote(capture))
 
     if capture.__len__() == 0:
         abort(400)

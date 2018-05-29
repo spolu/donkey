@@ -165,6 +165,9 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     assert args.capture_dir is not None
+    if not os.path.exists(args.capture_dir):
+        os.makedirs(args.capture_dir)
+
     _capture = Capture(args.capture_dir, load=False)
 
     _simulation = simulation.Simulation(

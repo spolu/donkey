@@ -162,8 +162,6 @@ class Trainer:
             sys.stdout.flush()
 
 if __name__ == "__main__":
-    os.environ['OMP_NUM_THREADS'] = '1'
-
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
