@@ -15,6 +15,7 @@ from utils import Config, str2bool
 from capture import Capture
 
 ANNOTATION_FREQUENCY = 1000
+OFF_TRACK_DISTANCE = 6.0
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -71,7 +72,7 @@ def process_telemetry(telemetry):
 
     time = telemetry['time']
     progress = _track.progress(position) / _track.length
-    track_position = _track.position(position)
+    track_position = _track.position(position) / OFF_TRACK_DISTANCE
     track_angle = _track.angle(position, velocity)
     track_linear_speed = _track.linear_speed(position, velocity)
 
