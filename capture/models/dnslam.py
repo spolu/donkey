@@ -9,28 +9,23 @@ import torch.autograd as autograd
 
 from torch.distributions import Normal, Categorical
 
-class ResidualBlock(nn.Module):
+class ResidualBlockNoBatch(nn.Module):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(ResidualBlock, self).__init__()
+        super(ResidualBlockNoBatch, self).__init__()
         self.cv1_rs = nn.Conv2d(
             inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False,
         )
-        self.bn1_rs = nn.BatchNorm2d(planes)
         self.cv2_rs = nn.Conv2d(
             planes, planes, kernel_size=3, stride=1, padding=1, bias=False,
         )
-        self.bn2_rs = nn.BatchNorm2d(planes)
         self.downsample = downsample
 
     def forward(self, x):
         residual = x
 
         out = self.cv1_rs(x)
-        out = self.bn1_rs(out)
         out = F.relu(out, inplace=True)
-
         out = self.cv2_rs(out)
-        out = self.bn2_rs(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -40,41 +35,23 @@ class ResidualBlock(nn.Module):
 
         return out
 
-class HeadBlock(nn.Module):
-    def __init__(self, hidden_size, nonlinearity, output_size, stride=1):
-        super(HeadBlock, self).__init__()
-        self.fc1_hd = nn.Linear(hidden_size, hidden_size)
-        self.fc2_hd = nn.Linear(hidden_size, output_size)
-
-        nn.init.xavier_normal_(self.fc1_hd.weight.data, nn.init.calculate_gain('relu'))
-        nn.init.xavier_normal_(self.fc2_hd.weight.data, nn.init.calculate_gain(nonlinearity))
-        self.fc1_hd.bias.data.fill_(0)
-        self.fc2_hd.bias.data.fill_(0)
-
-    def forward(self, x):
-        out = self.fc1_hd(x)
-        out = F.relu(out, inplace=True)
-        out = self.fc2_hd(out)
-
-        return out
-
-
-class ResNet(nn.Module):
-    def __init__(self, config, stack_count, value_count):
-        super(ResNet, self).__init__()
+class DNSLAM(nn.Module):
+    def __init__(self, config, stack_count):
+        super(DNSLAM, self).__init__()
         self.hidden_size = config.get('hidden_size')
         self.config = config
         self.inplanes = 64
 
         self.stack_count = stack_count
-        self.value_count = value_count
+
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
 
         self.cv1 = nn.Conv2d(
             self.stack_count, 64,
             kernel_size=7, stride=2, padding=3, bias=False,
         )
-        self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU()
         self.maxp = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.rs11 = self._make_residual_layer(64, 1, stride=1)
@@ -85,12 +62,31 @@ class ResNet(nn.Module):
         self.avgp = nn.AvgPool2d(8, stride=1)
 
         self.fc1 = nn.Linear(3*128, self.hidden_size)
+        self.rnn = nn.GRUCell(self.hidden_size, self.hidden_size)
+        self.dropout = nn.Dropout(p=0.3)
 
-        # Value head.
-        self.hd_v = HeadBlock(self.hidden_size, 'linear', self.value_count)
+        self.fc_progress = nn.Linear(self.hidden_size, 1)
+        self.fc_position = nn.Linear(self.hidden_size, 1)
+        self.fc_angle = nn.Linear(self.hidden_size, 1)
+        self.fc_speed = nn.Linear(self.hidden_size, 1)
 
+        # Initialization
         nn.init.xavier_normal_(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
+
+        nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('sigmoid'))
+        self.fc_progress.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('sigmoid'))
+        self.fc_position.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_angle.weight.data, nn.init.calculate_gain('tanh'))
+        self.fc_angle.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_speed.weight.data, nn.init.calculate_gain('sigmoid'))
+        self.fc_speed.bias.data.fill_(0)
+
+        nn.init.xavier_normal_(self.rnn.weight_ih.data)
+        nn.init.xavier_normal_(self.rnn.weight_hh.data)
+        self.rnn.bias_ih.data.fill_(0)
+        self.rnn.bias_hh.data.fill_(0)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -113,16 +109,15 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(planes),
             )
         layers = []
-        layers.append(ResidualBlock(self.inplanes, planes, stride, downsample))
+        layers.append(ResidualBlockNoBatch(self.inplanes, planes, stride, downsample))
         self.inplanes = planes
         for i in range(1, blocks):
-            layers.append(ResidualBlock(self.inplanes, planes))
+            layers.append(ResidualBlockNoBatch(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
-    def forward(self, inputs):
+    def forward(self, inputs, hiddens):
         x = self.cv1(inputs)
-        x = self.bn1(x)
         x = self.relu(x)
         x = self.maxp(x)
 
@@ -130,13 +125,20 @@ class ResNet(nn.Module):
         x = self.rs12(x)
         x = self.rs21(x)
         x = self.rs22(x)
-        # x = self.rs3(x)
 
         x = self.avgp(x)
-
         x = x.view(x.size(0), -1)
 
         x = self.fc1(x)
         x = self.relu(x)
 
-        return self.hd_v(x)
+        x = h = self.rnn(x, hiddens)
+        x = self.relu(x)
+        x = self.dropout(x)
+
+        progress = self.sigmoid(self.fc_progress(x))
+        position = self.sigmoid(self.fc_position(x))
+        angle = self.tanh(self.fc_angle(x))
+        speed = self.sigmoid(self.fc_speed(x))
+
+        return progress, position, angle, speed, h
