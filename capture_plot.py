@@ -24,6 +24,7 @@ def plot_inputs(start, end):
     acceleration = [_capture.get_item(i)['acceleration'] for i in range(start, end)]
     throttle = [_capture.get_item(i)['throttle'] for i in range(start, end)]
     steering = [_capture.get_item(i)['steering'] for i in range(start, end)]
+    annotated_positions = [_capture.get_item(i)['annotated_position'] for i in range(start, end)]
 
     plt.figure('acceleration')
     plt.plot(time, acceleration, 'k')
@@ -40,6 +41,11 @@ def plot_inputs(start, end):
     plt.figure('steering')
     plt.plot(time, steering, 'k')
     plt.show()
+
+    plt.figure('annotated position')
+    plt.plot(time, annotated_positions, 'k')
+    plt.show()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
