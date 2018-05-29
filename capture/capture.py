@@ -12,6 +12,7 @@ _stored_params = [
     'acceleration',
     'annotated_progress',
     'annotated_track_position',
+    'annotated_position',
     'annotated_track_angle',
     'reference_progress',
     'reference_track_position',

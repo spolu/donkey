@@ -63,13 +63,13 @@ def drive(args):
     ctr = LocalWebController()
     V.add(ctr,
           inputs=['cam/image_array'],
-          outputs=['angle', 'throttle'],
+          outputs=['angle', 'throttle', 'phone/position'],
           threaded=True)
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'angle', 'throttle'],
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'angle', 'throttle','phone/position'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)

@@ -100,7 +100,7 @@ class RemoteWebServer():
         self.control_url = remote_url
         self.time = 0.
         self.angle = 0.
-        self.throttle = 0.
+
         #use one session for all requests
         self.session = requests.Session()
 
@@ -167,11 +167,13 @@ class LocalWebController(tornado.web.Application):
 
         self.angle = 0.0
         self.throttle = 0.0
+        self.position = { 'x' : 0., 'y' : 0., 'z' : 0. }
 
         handlers = [
             (r"/", tornado.web.RedirectHandler, dict(url="/drive")),
             (r"/drive", DriveAPI),
             (r"/video",VideoAPI),
+            (r"/odometry",OdometryAPI),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": self.static_file_path}),
             ]
 
@@ -191,12 +193,12 @@ class LocalWebController(tornado.web.Application):
     def run_threaded(self, img_arr=None):
         self.img_arr = img_arr
         # return 1.0, 1.0
-        return self.angle, self.throttle
+        return self.angle, self.throttle, self.position
 
         
     def run(self, img_arr=None):
         self.img_arr = img_arr
-        return self.angle, self.throttle
+        return self.angle, self.throttle, self.position
 
 
 class DriveAPI(tornado.web.RequestHandler):
@@ -245,3 +247,16 @@ class VideoAPI(tornado.web.RequestHandler):
                 yield tornado.gen.Task(self.flush)
             else:
                 yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
+
+
+class OdometryAPI(tornado.web.RequestHandler):    
+    
+    def post(self):
+        '''
+        Receive post requests as user changes the angle
+        and throttle of the vehicle on a the index webpage
+        '''
+        data = tornado.escape.json_decode(self.request.body)
+        position = data['position']
+        self.application.position = data['position']
+
