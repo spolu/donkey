@@ -10,17 +10,17 @@ _stored_params = [
     'time',
     'angular_velocity',
     'acceleration',
-    'annotated_progress',
+    'annotated_track_progress',
     'annotated_track_position',
     'annotated_position',
     'annotated_track_angle',
-    'reference_progress',
+    'reference_track_progress',
     'reference_track_position',
     'reference_track_angle',
-    'integrated_progress',
+    'integrated_track_progress',
     'integrated_track_position',
     'integrated_track_angle',
-    'corrected_progress',
+    'corrected_track_progress',
     'corrected_track_position',
     'corrected_track_angle',
     'throttle',
@@ -28,7 +28,7 @@ _stored_params = [
 ]
 
 _target_params = [
-    'corrected_progress',
+    'corrected_track_progress',
     'corrected_track_position',
     'corrected_track_angle',
 ]

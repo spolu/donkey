@@ -11,8 +11,6 @@ Track interface
 
 # import pdb; pdb.set_trace()
 
-SPAN_DIST = 5.0
-
 def rot_y(theta):
     c, s = np.cos(theta), np.sin(theta)
 
@@ -31,6 +29,7 @@ class Track:
         ))
 
         self.points = self.script.points()
+        self.track_width = self.script.width
 
         # interpolate to first point
         self.points.append(np.array([
@@ -40,11 +39,17 @@ class Track:
         ]))
 
         # recompute length
-        self.length = 0.0
+        self.track_length = 0.0
         for i in range(len(self.points)):
-            self.length += np.linalg.norm(
+            self.track_length += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
             )
+
+    def width(self):
+        return self.track_width
+
+    def length(self):
+        return self.track_length
 
     def randomize(self):
         """
@@ -82,9 +87,9 @@ class Track:
         ])
 
         # recompute length
-        self.length = 0.0
+        self.track_length = 0.0
         for i in range(len(self.points)):
-            self.length += np.linalg.norm(
+            self.track_length += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
             )
 
@@ -151,7 +156,7 @@ class Track:
         closests = self.closests(position, offset)
         u = self.points[closests[0]] - position
         v = self.points[closests[1]] - position
-        return (np.cross(u, v) / np.linalg.norm(u-v))[1]
+        return ((np.cross(u, v) / np.linalg.norm(u-v))[1] / self.track_width)
 
     def angle(self, position, velocity, offset=0):
         t = self.unity(position, offset)
@@ -194,7 +199,8 @@ class Track:
         u = position - self.points[closests[0]]
         v = self.points[closests[1]] - self.points[closests[0]]
         p -= np.linalg.norm(v) - np.dot(t, u)
-        return p
+
+        return (p / self.track_length)
 
     def serialize(self):
         serialized = ''
@@ -202,7 +208,7 @@ class Track:
             serialized += ','.join(map(str, p)) + ';'
         return serialized
 
-    def invert_position(self, progress, track_position):
+    def invert(self, progress, position):
         if progress < 0:
             progress = 0
         if progress > 1:
@@ -225,18 +231,12 @@ class Track:
 
         k = l - math.floor(l)
 
-        # print(">>>>>>>>>>>>>>> TRACK_POINT: {}".format(int(math.floor(l))))
-        # print(">>>>>>>>>>>>>>> TRACK_K: {}".format(k))
-        # print(">>>>>>>>>>>>>>> TRACK_POSITION: {}".format(track_position))
-
         u = (n-p) / np.linalg.norm(n-p)
         v = np.copy(u)
         v[0] = u[2]
         v[2] = -u[0]
 
-        position = ((1-k)*p + k*n + track_position * v)
-
-        return position
+        return ((1-k)*p + k*n + position * self.track_width * v)
 
 class ScriptElemState(Enum):
     STRAIGHT = 1
@@ -252,6 +252,8 @@ class ScriptElem:
 class Script:
     def __init__(self, filename):
         self.elems = []
+        self.span = 1.0
+        self.width = 1.0
 
         with open(filename) as f:
             for line in f:
@@ -263,23 +265,28 @@ class Script:
                 # print("{}-{}".format(command, arg))
 
                 e = None
+                if command == "GSP":
+                    self.span = float(arg)
+                if command == "GTW":
+                    self.width = float(arg)
                 if command == "DY":
                     e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
-                elif command == "L":
+                if command == "L":
                     e = ScriptElem(ScriptElemState.CURVE, -1.0, int(arg))
-                elif command == "R":
+                if command == "R":
                     e = ScriptElem(ScriptElemState.CURVE, 1.0, int(arg))
-                elif command == "S":
+                if command == "S":
                     e = ScriptElem(ScriptElemState.STRAIGHT, 0, int(arg))
 
-                self.elems.append(e)
+                if e is not None:
+                    self.elems.append(e)
 
     def points(self):
         dY = 0.0
         angle = 0.0
 
         s = np.array((0, 0, 0))
-        span = np.array((0, 0, SPAN_DIST))
+        span = np.array((0, 0, self.span))
 
         points = []
 
@@ -298,16 +305,16 @@ class Script:
                 span = np.dot(
                     rot_y(np.radians(dY)),
                     span,
-                ) / np.linalg.norm(span) * SPAN_DIST
+                ) / np.linalg.norm(span) * self.span
                 s = s + span
 
         return points
 
 if __name__ == "__main__":
     track = Track("newworld")
-    print(track.invert_position(0.01, 1.0))
-    print(track.invert_position(0.05, 1.0))
-    print(track.invert_position(0.1, 1.0))
-    print(track.invert_position(0.2, 1.0))
-    print(track.invert_position(0.3, 1.0))
+    print(track.invert(0.01, 1.0))
+    print(track.invert(0.05, 1.0))
+    print(track.invert(0.1, 1.0))
+    print(track.invert(0.2, 1.0))
+    print(track.invert(0.3, 1.0))
 

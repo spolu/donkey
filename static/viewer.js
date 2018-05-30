@@ -17,11 +17,6 @@ window.onload = function() {
     window.alert('You must specify a track name as GET parameter "track"');
     return;
   }
-  if (capture === null) {
-    window.alert('You must specify a capture name as GET parameter "capture"');
-    return;
-  }
-
   $.get("/track/" + track + "/path", function(data) {
     var t = document.getElementById("track");
     var ctxTrack = t.getContext("2d");
@@ -38,61 +33,64 @@ window.onload = function() {
     }
   })
 
-  $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
-    var t = document.getElementById("track");
-    var ctxTrack = t.getContext("2d");
+  if (capture !== null) {
 
-    console.log(data)
+    $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
+      var t = document.getElementById("track");
+      var ctxTrack = t.getContext("2d");
 
-    for (var p in data) {
-      ctxTrack.fillStyle="#999999";
-      ctxTrack.fillRect(
-        Math.trunc(3 * data[p][0]) + 350,
-        Math.trunc(3 * data[p][2]) + 400,
-        1,1
-      );
-    }
-  })
+      console.log(data)
 
-  $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
-    var t = document.getElementById("track");
-    var ctxTrack = t.getContext("2d");
+      for (var p in data) {
+        ctxTrack.fillStyle="#999999";
+        ctxTrack.fillRect(
+          Math.trunc(3 * data[p][0]) + 350,
+          Math.trunc(3 * data[p][2]) + 400,
+          1,1
+        );
+      }
+    })
 
-    for (var p in data) {
-      ctxTrack.fillStyle="#FF0000";
-      ctxTrack.fillRect(
-        Math.trunc(3 * data[p][0]) + 350 - 2,
-        Math.trunc(3 * data[p][2]) + 400 - 2,
-        4,4
-      );
-    }
-  })
+    $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
+      var t = document.getElementById("track");
+      var ctxTrack = t.getContext("2d");
 
-  $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
-    var t = document.getElementById("track");
-    var ctxTrack = t.getContext("2d");
+      for (var p in data) {
+        ctxTrack.fillStyle="#FF0000";
+        ctxTrack.fillRect(
+          Math.trunc(3 * data[p][0]) + 350 - 2,
+          Math.trunc(3 * data[p][2]) + 400 - 2,
+          4,4
+        );
+      }
+    })
 
-    for (var p in data) {
-      ctxTrack.fillStyle="#0000FF";
-      ctxTrack.fillRect(
-        Math.trunc(3 * data[p][0]) + 350,
-        Math.trunc(3 * data[p][2]) + 400,
-        1,1
-      );
-    }
-  })
+    $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
+      var t = document.getElementById("track");
+      var ctxTrack = t.getContext("2d");
 
-  $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
-    var t = document.getElementById("track");
-    var ctxTrack = t.getContext("2d");
+      for (var p in data) {
+        ctxTrack.fillStyle="#0000FF";
+        ctxTrack.fillRect(
+          Math.trunc(3 * data[p][0]) + 350,
+          Math.trunc(3 * data[p][2]) + 400,
+          1,1
+        );
+      }
+    })
 
-    for (var p in data) {
-      ctxTrack.fillStyle="#00FF00";
-      ctxTrack.fillRect(
-        Math.trunc(3 * data[p][0]) + 350,
-        Math.trunc(3 * data[p][2]) + 400,
-        1,1
-      );
-    }
-  })
+    $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
+      var t = document.getElementById("track");
+      var ctxTrack = t.getContext("2d");
+
+      for (var p in data) {
+        ctxTrack.fillStyle="#00FF00";
+        ctxTrack.fillRect(
+          Math.trunc(3 * data[p][0]) + 350,
+          Math.trunc(3 * data[p][2]) + 400,
+          1,1
+        );
+      }
+    })
+  }
 };

@@ -15,7 +15,7 @@ from flask import abort
 from eventlet.green import threading
 
 from capture import Capture
-from simulation import Track
+from track import Track
 
 # import pdb; pdb.set_trace()
 
@@ -54,7 +54,7 @@ def annotated(track, capture):
     for i in range(capture.__len__()):
         if 'annotated_progress' in capture.get_item(i) and 'annotated_track_position' in capture.get_item(i):
             annotated.append(
-                t.invert_position(
+                t.invert(
                     capture.get_item(i)['annotated_progress'],
                     capture.get_item(i)['annotated_track_position'] * OFF_TRACK_DISTANCE,
                 ).tolist()
@@ -77,7 +77,7 @@ def integrated(track, capture):
     c = []
     for i in range(capture.__len__()):
         if 'integrated_progress' in capture.get_item(i):
-            c.append(t.invert_position(
+            c.append(t.invert(
                 capture.get_item(i)['integrated_progress'],
                 capture.get_item(i)['integrated_track_position'] * OFF_TRACK_DISTANCE,
             ).tolist())
@@ -97,7 +97,7 @@ def corrected(track, capture):
     t = Track(track)
 
     return jsonify([
-        t.invert_position(
+        t.invert(
             capture.get_item(i)['corrected_progress'],
             capture.get_item(i)['corrected_track_position'] * OFF_TRACK_DISTANCE,
         ).tolist() for i in range(capture.__len__())
@@ -117,7 +117,7 @@ def reference(track, capture):
     t = Track(track)
 
     return jsonify([
-        t.invert_position(
+        t.invert(
             capture.get_item(i)['reference_progress'],
             capture.get_item(i)['reference_track_position'] * OFF_TRACK_DISTANCE,
         ).tolist() for i in range(capture.__len__())
@@ -128,9 +128,9 @@ def track(track):
     t = Track(track)
 
     return jsonify({
-      'center': [t.invert_position(float(p)/TRACK_POINTS, 0).tolist() for p in range(TRACK_POINTS)],
-      'left': [t.invert_position(float(p)/TRACK_POINTS, 5.0).tolist() for p in range(TRACK_POINTS)],
-      'right': [t.invert_position(float(p)/TRACK_POINTS, -5.0).tolist() for p in range(TRACK_POINTS)],
+      'center': [t.invert(float(p)/TRACK_POINTS, 0).tolist() for p in range(TRACK_POINTS)],
+      'left': [t.invert(float(p)/TRACK_POINTS, 1.0).tolist() for p in range(TRACK_POINTS)],
+      'right': [t.invert(float(p)/TRACK_POINTS, -1.0).tolist() for p in range(TRACK_POINTS)],
     })
 
 if __name__ == "__main__":

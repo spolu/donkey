@@ -71,8 +71,8 @@ def process_telemetry(telemetry):
     ])
 
     time = telemetry['time']
-    progress = _track.progress(position) / _track.length
-    track_position = _track.position(position) / OFF_TRACK_DISTANCE
+    track_progress = _track.progress(position)
+    track_position = _track.position(position)
     track_angle = _track.angle(position, velocity)
     track_linear_speed = _track.linear_speed(position, velocity)
 
@@ -99,7 +99,7 @@ def process_telemetry(telemetry):
         'time': time,
         'track_linear_speed': track_linear_speed,
         'camera': camera.tolist(),
-        'position': _track.invert_position(progress, track_position).tolist(),
+        'position': _track.invert(track_progress, track_position).tolist(),
     }
 
 def transition():
