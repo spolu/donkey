@@ -129,8 +129,8 @@ def track(track):
 
     return jsonify({
       'center': [t.invert(float(p)/TRACK_POINTS, 0).tolist() for p in range(TRACK_POINTS)],
-      'left': [t.invert(float(p)/TRACK_POINTS, 1.0).tolist() for p in range(TRACK_POINTS)],
-      'right': [t.invert(float(p)/TRACK_POINTS, -1.0).tolist() for p in range(TRACK_POINTS)],
+      'right': [t.invert(float(p)/TRACK_POINTS, 1.0).tolist() for p in range(TRACK_POINTS)],
+      'left': [t.invert(float(p)/TRACK_POINTS, -1.0).tolist() for p in range(TRACK_POINTS)],
     })
 
 if __name__ == "__main__":
