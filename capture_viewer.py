@@ -21,6 +21,7 @@ from simulation import Track
 
 TRACK_POINTS = 400
 CAPTURE_ROOT_PATH = '/tmp'
+OFF_TRACK_DISTANCE = 6.0
 
 _app = Flask(__name__)
 _cache = {}
@@ -55,7 +56,7 @@ def annotated(track, capture):
             annotated.append(
                 t.invert_position(
                     capture.get_item(i)['annotated_progress'],
-                    capture.get_item(i)['annotated_track_position'],
+                    capture.get_item(i)['annotated_track_position'] * OFF_TRACK_DISTANCE,
                 ).tolist()
             )
 
@@ -73,12 +74,15 @@ def integrated(track, capture):
 
     t = Track(track)
 
-    return jsonify([
-        t.invert_position(
-            capture.get_item(i)['integrated_progress'],
-            capture.get_item(i)['integrated_track_position'],
-        ).tolist() for i in range(capture.__len__())
-    ])
+    c = []
+    for i in range(capture.__len__()):
+        if 'integrated_progress' in capture.get_item(i):
+            c.append(t.invert_position(
+                capture.get_item(i)['integrated_progress'],
+                capture.get_item(i)['integrated_track_position'] * OFF_TRACK_DISTANCE,
+            ).tolist())
+
+    return jsonify(c)
 
 @_app.route('/track/<track>/capture/<capture>/corrected', methods=['GET'])
 def corrected(track, capture):
@@ -95,7 +99,7 @@ def corrected(track, capture):
     return jsonify([
         t.invert_position(
             capture.get_item(i)['corrected_progress'],
-            capture.get_item(i)['corrected_track_position'],
+            capture.get_item(i)['corrected_track_position'] * OFF_TRACK_DISTANCE,
         ).tolist() for i in range(capture.__len__())
     ])
 
@@ -115,7 +119,7 @@ def reference(track, capture):
     return jsonify([
         t.invert_position(
             capture.get_item(i)['reference_progress'],
-            capture.get_item(i)['reference_track_position'],
+            capture.get_item(i)['reference_track_position'] * OFF_TRACK_DISTANCE,
         ).tolist() for i in range(capture.__len__())
     ])
 
