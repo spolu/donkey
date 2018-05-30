@@ -78,8 +78,8 @@ def process_telemetry(telemetry):
 
     data = {
         'time': time,
-        'angular_velocity': angular_velocity.tolist(),
-        'acceleration': acceleration.tolist(),
+        'simulation_angular_velocity': angular_velocity.tolist(),
+        'simulation_acceleration': acceleration.tolist(),
         'reference_progress': progress,
         'reference_track_position': track_position,
         'reference_track_angle': track_angle,

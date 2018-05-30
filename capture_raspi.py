@@ -21,6 +21,7 @@ from raspi.parts.runner import Runner
 from raspi.parts.web_controller.web import LocalWebController
 from raspi.parts.imu import Mpu6050
 from raspi.parts.capture import Capturer
+from raspi.parts.sense import Sense
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -47,12 +48,16 @@ THROTTLE_REVERSE_PWM = 320
 def drive(args):
     
     #Initialize car
+
     V = raspi.vehicle.Vehicle()
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     imu = Mpu6050()
     V.add(imu, outputs=['imu/acl', 'imu/gyr'], threaded=True)
+
+    sense = Sense()
+    V.add(imu, outputs=['sense/orientation'], threaded=True)
 
     stack = ImgStack()
     V.add(stack,
@@ -69,7 +74,7 @@ def drive(args):
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'angle', 'throttle','phone/position'],
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'angle', 'throttle','phone/position','sense/orientation'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
@@ -88,6 +93,7 @@ def drive(args):
 
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")

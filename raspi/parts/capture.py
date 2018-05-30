@@ -11,7 +11,7 @@ class Capturer:
         self.capture = Capture(data_dir,load=False)
         self.start_time = time.time()
 
-    def run(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None, position = None):
+    def run(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None, position = None, sense = None):
         '''
         API function needed to use as a Donkey part.
         Accepts values, pairs them with their inputs keys and saves them
@@ -40,21 +40,28 @@ class Capturer:
         gyro['x'],
         ])
 
-        annotated_position = np.array([
+        phone_position = np.array([
         position['x'],
         position['y'],
         position['z'],
+        ])
+
+        orientation = np.array([
+        sense['r'],
+        sense['p'],
+        sense['y'],
         ])
 
         self.capture.add_item(
             camera,
             {
             'time': t,
-            'angular_velocity': angular_velocity.tolist(),
-            'acceleration': acceleration.tolist(),
-            'throttle': throttle,
-            'steering': angle,
-            'annotated_position': annotated_position.tolist(),
+            'raspi_imu_angular_velocity': angular_velocity.tolist(),
+            'raspi_imu_acceleration': acceleration.tolist(),
+            'raspi_throttle': throttle,
+            'raspi_steering': angle,
+            'raspi_phone_position': phone_position.tolist(),
+            'raspi_sensehat_orientation': orientation.tolist(),
             },
         )
 

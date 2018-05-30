@@ -18,13 +18,20 @@ import matplotlib.pyplot as plt
 _capture = None
 _track = None
 
-def plot_inputs(start, end):
+def plot_inputs(start, end, is_simulation=True):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(start, end)]
-    acceleration = [_capture.get_item(i)['acceleration'] for i in range(start, end)]
-    throttle = [_capture.get_item(i)['throttle'] for i in range(start, end)]
-    steering = [_capture.get_item(i)['steering'] for i in range(start, end)]
-    annotated_positions = [_capture.get_item(i)['annotated_position'] for i in range(start, end)]
+
+    if is_simulation:
+        angular_velocity = [_capture.get_item(i)['simulation_angular_velocity'] for i in range(start, end)]
+        acceleration = [_capture.get_item(i)['simulation_acceleration'] for i in range(start, end)]
+        throttle = [_capture.get_item(i)['simulation_throttle'] for i in range(start, end)]
+        steering = [_capture.get_item(i)['simulation_steering'] for i in range(start, end)]
+    else:
+        angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
+        acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
+        throttle = [_capture.get_item(i)['raspi_throttle'] for i in range(start, end)]
+        steering = [_capture.get_item(i)['raspi_steering'] for i in range(start, end)]
+        annotated_positions = [_capture.get_item(i)['raspi_phone_position'] for i in range(start, end)]
 
     plt.figure('acceleration')
     plt.plot(time, acceleration, 'k')

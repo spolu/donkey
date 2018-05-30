@@ -8,11 +8,15 @@ import torch.utils.data as data
 
 _stored_params = [
     'time',
-    'angular_velocity',
-    'acceleration',
+    'simulation_angular_velocity',
+    'simulation_acceleration',
+    'raspi_imu_angular_velocity',
+    'raspi_imu_acceleration',
+    'raspi_sensehat_angular_velocity',
+    'raspi_sensehat_acceleration',
+    'raspi_phone_position',
     'annotated_track_progress',
     'annotated_track_position',
-    'annotated_position',
     'annotated_track_angle',
     'reference_track_progress',
     'reference_track_position',
@@ -23,8 +27,10 @@ _stored_params = [
     'corrected_track_progress',
     'corrected_track_position',
     'corrected_track_angle',
-    'throttle',
-    'steering',
+    'simulation_throttle',
+    'simulation_steering',
+    'raspi_throttle',
+    'raspi_steering',
 ]
 
 _target_params = [

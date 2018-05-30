@@ -9,8 +9,8 @@ import eventlet.wsgi
 import os
 import collections
 import argparse
-import matplotlib.pyplot as plt
 
+from utils import str2bool
 from capture import Capture
 from simulation import Track
 
@@ -22,6 +22,7 @@ LOSS_LIMIT = 0.005
 _capture = None
 _track = None
 _segments = []
+_is_simulation = True
 
 _start_angle = math.pi
 _start_position = np.array([0, 0, 0])
@@ -39,8 +40,12 @@ def integrate(noises,
               start_position=np.array([0,0,0]),
               start_velocity=np.array([0,0,0])):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    angular_velocity = [_capture.get_item(i)['angular_velocity'] for i in range(start, end)]
-    acceleration = [_capture.get_item(i)['acceleration'] for i in range(start, end)]
+    if _is_simulation:
+        angular_velocity = [_capture.get_item(i)['simulation_angular_velocity'] for i in range(start, end)]
+        acceleration = [_capture.get_item(i)['simulation_acceleration'] for i in range(start, end)]
+    else:
+        angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
+        acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
 
     angles = [start_angle]
     for i in range(1, len(time)):
@@ -234,6 +239,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
+    parser.add_argument('--is_simulation', type=str2bool, help="config override")
 
     args = parser.parse_args()
 
@@ -242,6 +248,9 @@ if __name__ == "__main__":
 
     assert args.track is not None
     _track = Track(args.track)
+
+    if args.is_simulation is not None:
+        _is_simulation = args.is_simulation
 
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.
