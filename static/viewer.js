@@ -42,6 +42,8 @@ window.onload = function() {
     var t = document.getElementById("track");
     var ctxTrack = t.getContext("2d");
 
+    console.log(data)
+
     for (var p in data) {
       ctxTrack.fillStyle="#999999";
       ctxTrack.fillRect(
