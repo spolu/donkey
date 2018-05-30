@@ -154,6 +154,10 @@ class Capture(data.Dataset):
 
         return self.sequence_cache
 
+    def save(self):
+        for i in range(len(self.data)):
+            self.update_item(i, {}, save=True)
+
     # data.Dataset interface.
 
     def __getitem__(self, index):
