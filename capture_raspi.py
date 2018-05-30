@@ -57,7 +57,7 @@ def drive(args):
     V.add(imu, outputs=['imu/acl', 'imu/gyr'], threaded=True)
 
     sense = Sense()
-    V.add(imu, outputs=['sense/orientation'], threaded=True)
+    V.add(sense, outputs=['sense/orientation'], threaded=True)
 
     stack = ImgStack()
     V.add(stack,

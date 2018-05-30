@@ -8,10 +8,13 @@ class Sense:
 
     '''
 
-    def __init__(self, poll_delay=0.0:
+    def __init__(self, poll_delay=0.0):
         self.sense = SenseHat()
         self.sense.set_imu_config(True, True, True)
+        self.sense.show_message("Dr1vin'")
         self.orientation = { 'p:' : 0., 'r' : 0., 'y' : 0. }
+        self.on = True
+        self.poll_delay = poll_delay
 
     def update(self):
         while self.on:
@@ -36,7 +39,7 @@ class Sense:
 
 if __name__ == "__main__":
     iter = 0
-    p = Mpu6050()
+    p = Sense()
     while iter < 100:
         data = p.run()
         print(data)

@@ -12,7 +12,7 @@ import argparse
 
 from utils import str2bool
 from capture import Capture
-from simulation import Track
+from track import Track
 
 NOISE_SAMPLES = 20
 NOISE_ANGLE_SCALE = 0.4

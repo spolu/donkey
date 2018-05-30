@@ -47,9 +47,9 @@ class Capturer:
         ])
 
         orientation = np.array([
-        sense['r'],
-        sense['p'],
-        sense['y'],
+        sense['roll'],
+        sense['yaw'],
+        sense['pitch'],
         ])
 
         self.capture.add_item(
