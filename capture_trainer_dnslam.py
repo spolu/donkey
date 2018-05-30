@@ -73,50 +73,84 @@ class Trainer:
         self.batch_count = 0
 
     def loss(self, capture, r, progresses, positions, angles, speeds):
-        loss = 0
-
-        SPEED_DELTA_CAP = 0.3
+        PROGRESS_DELTA_CAP = 0.01
+        POSITION_DELTA_CAP = 0.01
         ANGLE_DELTA_CAP = 0.4
+        SPEED_DELTA_CAP = 0.1
+
+        loss = 0
 
         for i in r:
             # reference positions
+            annotated_loss = 0
             item = capture.get_item(i)
-            if item['reference_track_position']:
-                loss += F.mse_loss(
+            if 'annotated_track_position' in item:
+                annotated_loss += F.mse_loss(
                     positions[i],
-                    torch.zeros(1).to(self.device) + item['reference_track_position'],
+                    torch.zeros(1).to(self.device) + item['annotated_track_position'],
                 )
-            if item['reference_progress']:
-                loss += F.mse_loss(
+            if 'annotated_progress' in item:
+                annotated_loss += F.mse_loss(
                     progresses[i],
-                    torch.zeros(1).to(self.device) + item['reference_progress'],
+                    torch.zeros(1).to(self.device) + item['annotated_progress'],
                 )
 
             if i == 0:
+                loss += annotated_loss
                 continue
 
-            # speed derivation
+            # speed, angle integration
             delta_time = capture.get_item(i)['time'] - capture.get_item(i-1)['time']
 
             p = progresses[i-1] + delta_time * speeds[i-1] * torch.cos(angles[i-1])
-            loss += F.mse_loss(p, progresses[i])
-
+            integration_loss = F.mse_loss(p, progresses[i])
             p = positions[i-1] + delta_time * speeds[i-1] * torch.sin(angles[i-1])
-            loss += F.mse_loss(p, positions[i])
+            integration_loss += F.mse_loss(p, positions[i])
 
-            # delta speed cap
-            delta = speeds[i]-speeds[i-1]
-            loss += F.relu(torch.abs(delta) - SPEED_DELTA_CAP).squeeze(0)
+            # delta progress cap
+            # delta = progresses[i]-progresses[i-1]
+            # progress_cap_loss = F.relu(torch.abs(delta) - PROGRESS_DELTA_CAP).squeeze(0)
+
+            # delta position cap
+            # delta = positions[i]-positions[i-1]
+            # position_cap_loss = F.relu(torch.abs(delta) - POSITION_DELTA_CAP).squeeze(0)
 
             # delta angle cap
-            delta = angles[i]-angles[i-1]
-            loss += F.relu(torch.abs(delta) - ANGLE_DELTA_CAP).squeeze(0)
+            # delta = angles[i]-angles[i-1]
+            # angle_cap_loss = F.relu(torch.abs(delta) - ANGLE_DELTA_CAP).squeeze(0)
+
+            # delta speed cap
+            # delta = speeds[i]-speeds[i-1]
+            # speed_cap_loss = F.relu(torch.abs(delta) - SPEED_DELTA_CAP).squeeze(0)
+
+            # print(("LOSS " + \
+            #        "reference {:.6f} " + \
+            #        "integration {:.6f} " + \
+            #        "progres_cap {:.6f} " + \
+            #        "position_cap {:.6f} " + \
+            #        "angle_cap {:.6f} " + \
+            #        "speed_cap {:.6f}").format(
+            #            annotated_loss,
+            #            integration_loss,
+            #            progress_cap_loss,
+            #            position_cap_loss,
+            #            angle_cap_loss,
+            #            speed_cap_loss,
+            #        ))
+
+            # loss += (annotated_loss +
+            #          integration_loss +
+            #          progress_cap_loss +
+            #          position_cap_loss +
+            #          angle_cap_loss +
+            #          speed_cap_loss)
+            loss += annotated_loss + integration_loss
 
         return loss
 
+
     def batch_train(self):
         self.model.train()
-        torch.set_grad_enabled(True)
         loss_meter = Meter()
 
         for i in range(self.train_capture_set.size()):
@@ -158,6 +192,17 @@ class Trainer:
                 loss.backward()
                 self.optimizer.step()
 
+            if self.episode % 5 == 0:
+                # Saving capture.
+                print("Saving capture...")
+                for j in range(capture.__len__()):
+                    if j < len(progresses):
+                        capture.update_item(j, {
+                            'integrated_progress': progresses[j].item(),
+                            'integrated_track_position': positions[j].item(),
+                            'integrated_track_angle': angles[j].item(),
+                        }, save=True)
+
         print(
             ("EPISODE {} avg/min/max L {:.6f} {:.6f} {:.6f}").
             format(
@@ -171,43 +216,47 @@ class Trainer:
 
     def batch_test(self):
         self.model.eval()
-        torch.set_grad_enabled(False)
         loss_meter = Meter()
 
-        for i in range(self.test_capture_set.size()):
-            capture = self.test_capture_set.get_capture(i)
-            hidden = torch.zeros(1, self.hidden_size).to(self.device)
-            sequence = capture.sequence()
+        with torch.set_grad_enabled(False):
 
-            progresses = []
-            positions = []
-            angles = []
-            speeds = []
+            for i in range(self.test_capture_set.size()):
+                capture = self.test_capture_set.get_capture(i)
+                hidden = torch.zeros(1, self.hidden_size).to(self.device)
+                sequence = capture.sequence()
 
-            for j in range(int(sequence.size(0)/self.sequence_size)):
-                # hidden = hidden.detach()
-                # if j > 0:
-                #     progresses[self.sequence_size*j-1] = progresses[self.sequence_size*j-1].detach()
-                #     positions[self.sequence_size*j-1] = positions[self.sequence_size*j-1].detach()
-                #     angles[self.sequence_size*j-1] = angles[self.sequence_size*j-1].detach()
-                #     speeds[self.sequence_size*j-1] = speeds[self.sequence_size*j-1].detach()
+                progresses = []
+                positions = []
+                angles = []
+                speeds = []
 
-                for k in range(self.sequence_size):
-                    progress, position, angle, speed, hidden = self.model(
-                        sequence[self.sequence_size*j+k].unsqueeze(0), hidden,
+                for j in range(int(sequence.size(0)/self.sequence_size)):
+                    for k in range(self.sequence_size):
+                        progress, position, angle, speed, hidden = self.model(
+                            sequence[self.sequence_size*j+k].unsqueeze(0), hidden,
+                        )
+
+                        progresses.append(progress[0])
+                        positions.append(position[0])
+                        angles.append(angle[0])
+                        speeds.append(speed[0])
+
+                    loss = self.loss(
+                        capture,
+                        range(self.sequence_size*j, self.sequence_size*(j+1)),
+                        progresses, positions, angles, speeds,
                     )
+                    loss_meter.update(loss.item())
 
-                    progresses.append(progress[0])
-                    positions.append(position[0])
-                    angles.append(angle[0])
-                    speeds.append(speed[0])
-
-                loss = self.loss(
-                    capture,
-                    range(self.sequence_size*j, self.sequence_size*(j+1)),
-                    progresses, positions, angles, speeds,
-                )
-                loss_meter.update(loss.item())
+                # Saving capture.
+                print("Saving capture...")
+                for j in range(capture.__len__()):
+                    if j < len(progresses):
+                        capture.update_item(j, {
+                            'integrated_progress': progresses[j].item(),
+                            'integrated_track_position': positions[j].item(),
+                            'integrated_track_angle': angles[j].item(),
+                        }, save=True)
 
         print(
             ("TEST {} avg/min/max L {:.6f} {:.6f} {:.6f}").

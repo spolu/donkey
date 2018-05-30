@@ -63,7 +63,7 @@ class DNSLAM(nn.Module):
 
         self.fc1 = nn.Linear(3*128, self.hidden_size)
         self.rnn = nn.GRUCell(self.hidden_size, self.hidden_size)
-        self.dropout = nn.Dropout(p=0.3)
+        self.dropout = nn.Dropout(p=0.1)
 
         self.fc_progress = nn.Linear(self.hidden_size, 1)
         self.fc_position = nn.Linear(self.hidden_size, 1)
@@ -76,7 +76,7 @@ class DNSLAM(nn.Module):
 
         nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('sigmoid'))
         self.fc_progress.bias.data.fill_(0)
-        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('sigmoid'))
+        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('tanh'))
         self.fc_position.bias.data.fill_(0)
         nn.init.xavier_normal_(self.fc_angle.weight.data, nn.init.calculate_gain('tanh'))
         self.fc_angle.bias.data.fill_(0)
@@ -137,7 +137,7 @@ class DNSLAM(nn.Module):
         x = self.dropout(x)
 
         progress = self.sigmoid(self.fc_progress(x))
-        position = self.sigmoid(self.fc_position(x))
+        position = self.tanh(self.fc_position(x))
         angle = self.tanh(self.fc_angle(x))
         speed = self.sigmoid(self.fc_speed(x))
 

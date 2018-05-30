@@ -6,5 +6,5 @@
   "learning_rate": 0.001,
   "batch_size": 64,
   "grad_norm_max": 1.0,
-  "sequence_size": 10
+  "sequence_size": 23
 }
