@@ -8,7 +8,7 @@ class Sense:
 
     '''
 
-    def __init__(self, poll_delay=0.0):
+    def __init__(self, poll_delay=0.0166):
         self.sense = SenseHat()
         self.sense.set_imu_config(True, True, True)
         self.sense.show_message("Dr1vin'")

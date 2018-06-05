@@ -10,8 +10,15 @@ class Capturer:
     def __init__(self, data_dir, inputs = None, types = None):
         self.capture = Capture(data_dir,load=False)
         self.start_time = time.time()
+        self.on = True
+        self.poll_delay = 2.0
 
-    def run(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None, position = None, sense = None):
+    def update(self):
+        while self.on:
+            self.capture.save()
+            time.sleep(self.poll_delay)
+
+    def run_threaded(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None, position = None, sense = None):
         '''
         API function needed to use as a Donkey part.
         Accepts values, pairs them with their inputs keys and saves them
@@ -63,7 +70,10 @@ class Capturer:
             'raspi_phone_position': phone_position.tolist(),
             'raspi_sensehat_orientation': orientation.tolist(),
             },
+            save=False,
         )
 
+
     def shutdown(self):
+        self.on = False
         pass

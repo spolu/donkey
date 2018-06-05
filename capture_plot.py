@@ -12,16 +12,17 @@ import argparse
 import matplotlib.pyplot as plt
 
 from capture import Capture
-from simulation import Track
-import matplotlib.pyplot as plt
+from track import Track
+from utils import str2bool
 
 _capture = None
 _track = None
+_is_simulation = True
 
 def plot_inputs(start, end, is_simulation=True):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
 
-    if is_simulation:
+    if _is_simulation:
         angular_velocity = [_capture.get_item(i)['simulation_angular_velocity'] for i in range(start, end)]
         acceleration = [_capture.get_item(i)['simulation_acceleration'] for i in range(start, end)]
         throttle = [_capture.get_item(i)['simulation_throttle'] for i in range(start, end)]
@@ -31,7 +32,8 @@ def plot_inputs(start, end, is_simulation=True):
         acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
         throttle = [_capture.get_item(i)['raspi_throttle'] for i in range(start, end)]
         steering = [_capture.get_item(i)['raspi_steering'] for i in range(start, end)]
-        annotated_positions = [_capture.get_item(i)['raspi_phone_position'] for i in range(start, end)]
+        phone_positions = [_capture.get_item(i)['raspi_phone_position'] for i in range(start, end)]
+        orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
 
     plt.figure('acceleration')
     plt.plot(time, acceleration, 'k')
@@ -49,17 +51,26 @@ def plot_inputs(start, end, is_simulation=True):
     plt.plot(time, steering, 'k')
     plt.show()
 
-    plt.figure('annotated position')
-    plt.plot(time, annotated_positions, 'k')
+    plt.figure('phone position')
+    plt.plot(time, phone_positions, 'k')
     plt.show()
+
+    plt.figure('orientation')
+    plt.plot(time, orientation, 'k')
+    plt.show()
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
+    parser.add_argument('--is_simulation', type=str2bool, help="data is from simulation")
 
     args = parser.parse_args()
+
+    if args.is_simulation is not None:
+        _is_simulation = args.is_simulation
 
     assert args.capture_dir is not None
     _capture = Capture(args.capture_dir, load=True)
