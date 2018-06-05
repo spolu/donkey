@@ -21,7 +21,6 @@ from track import Track
 
 TRACK_POINTS = 400
 CAPTURE_ROOT_PATH = '/tmp'
-OFF_TRACK_DISTANCE = 6.0
 
 _app = Flask(__name__)
 _cache = {}
@@ -49,14 +48,15 @@ def annotated(track, capture):
         abort(400)
 
     t = Track(track)
-    annotated = []
 
+    annotated = []
     for i in range(capture.__len__()):
-        if 'annotated_progress' in capture.get_item(i) and 'annotated_track_position' in capture.get_item(i):
+        if ('annotated_track_progress' in capture.get_item(i) and
+                'annotated_track_position' in capture.get_item(i)):
             annotated.append(
                 t.invert(
-                    capture.get_item(i)['annotated_progress'],
-                    capture.get_item(i)['annotated_track_position'] * OFF_TRACK_DISTANCE,
+                    capture.get_item(i)['annotated_track_progress'],
+                    capture.get_item(i)['annotated_track_position'],
                 ).tolist()
             )
 
@@ -69,17 +69,17 @@ def integrated(track, capture):
     if capture.__len__() == 0:
         abort(400)
 
-    if 'integrated_progress' not in capture.get_item(0):
+    if 'integrated_track_progress' not in capture.get_item(0):
         abort(400)
 
     t = Track(track)
 
     c = []
     for i in range(capture.__len__()):
-        if 'integrated_progress' in capture.get_item(i):
+        if 'integrated_track_progress' in capture.get_item(i):
             c.append(t.invert(
-                capture.get_item(i)['integrated_progress'],
-                capture.get_item(i)['integrated_track_position'] * OFF_TRACK_DISTANCE,
+                capture.get_item(i)['integrated_track_progress'],
+                capture.get_item(i)['integrated_track_position'],
             ).tolist())
 
     return jsonify(c)
@@ -91,15 +91,15 @@ def corrected(track, capture):
     if capture.__len__() == 0:
         abort(400)
 
-    if 'corrected_progress' not in capture.get_item(0):
+    if 'corrected_track_progress' not in capture.get_item(0):
         abort(400)
 
     t = Track(track)
 
     return jsonify([
         t.invert(
-            capture.get_item(i)['corrected_progress'],
-            capture.get_item(i)['corrected_track_position'] * OFF_TRACK_DISTANCE,
+            capture.get_item(i)['corrected_track_progress'],
+            capture.get_item(i)['corrected_track_position'],
         ).tolist() for i in range(capture.__len__())
     ])
 
@@ -111,15 +111,15 @@ def reference(track, capture):
     if capture.__len__() == 0:
         abort(400)
 
-    if 'reference_progress' not in capture.get_item(0):
+    if 'reference_track_progress' not in capture.get_item(0):
         abort(400)
 
     t = Track(track)
 
     return jsonify([
         t.invert(
-            capture.get_item(i)['reference_progress'],
-            capture.get_item(i)['reference_track_position'] * OFF_TRACK_DISTANCE,
+            capture.get_item(i)['reference_track_progress'],
+            capture.get_item(i)['reference_track_position'],
         ).tolist() for i in range(capture.__len__())
     ])
 

@@ -24,9 +24,11 @@ _track = None
 _segments = []
 _is_simulation = True
 
+FIXED_SPEED = 1.5
+
 _start_angle = math.pi
 _start_position = np.array([0, 0, 0])
-_start_velocity = np.array([0, 0, 0])
+_start_speed = FIXED_SPEED
 
 Noise = collections.namedtuple(
     'Noise',
@@ -38,27 +40,22 @@ def integrate(noises,
               end,
               start_angle=math.pi,
               start_position=np.array([0,0,0]),
-              start_velocity=np.array([0,0,0])):
+              start_speed=FIXED_SPEED):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    if _is_simulation:
-        angular_velocity = [_capture.get_item(i)['simulation_angular_velocity'] for i in range(start, end)]
-        acceleration = [_capture.get_item(i)['simulation_acceleration'] for i in range(start, end)]
-    else:
-        angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
-        acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
+    orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
+    angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
+    acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
 
     angles = [start_angle]
     for i in range(1, len(time)):
-        angles.append(angles[i-1] + angular_velocity[i][1] * (time[i] - time[i-1]))
+        # print("ANGULAR_VELOCITY: {}".format(angular_velocity[i][1]))
+        angles.append(angles[i-1] - angular_velocity[i][1] / 57.2958 * (time[i] - time[i-1]))
 
-    velocities = [start_velocity]
+    speeds = [start_speed]
     for i in range(1, len(time)):
-        velocities.append(velocities[i-1] + np.array(acceleration[i]) * (time[i] - time[i-1]))
-
-    speeds = []
-    for i in range(len(velocities)):
-        velocities[i-1][1] = 0.0
-        speeds.append(np.linalg.norm(velocities[i-1]))
+        # print("{}".format(acceleration[i][0]))
+        # speeds.append(speeds[i-1] + acceleration[i][0] * (time[i] - time[i-1]))
+        speeds.append(start_speed)
 
     for n in noises:
         if n.type == 'angle':
@@ -67,7 +64,6 @@ def integrate(noises,
             speeds[n.index] += n.value
 
     positions = [start_position]
-
     for i in range(1, len(time)):
         positions.append(
             positions[i-1] + [
@@ -77,7 +73,7 @@ def integrate(noises,
             ],
         )
 
-    return angles, velocities, positions
+    return angles, speeds, positions
 
 def sample_noises(segment):
     noises = []
@@ -94,23 +90,23 @@ def sample_noises(segment):
         ))
     return noises
 
-def loss(segment, progress, track_position):
-    annotated_progress = _capture.get_item(_segments[segment][1])['annotated_progress']
-    progress_loss = math.fabs(progress - annotated_progress)
+def loss(segment, track_progress, track_position):
+    annotated_track_progress = _capture.get_item(_segments[segment][1])['annotated_track_progress']
+    track_progress_loss = math.fabs(track_progress - annotated_track_progress)
 
     annotated_track_position = _capture.get_item(_segments[segment][1])['annotated_track_position']
     track_position_loss = math.fabs(track_position - annotated_track_position)
 
-    return max(progress_loss, track_position_loss)
+    return max(track_progress_loss, track_position_loss)
 
 def course_correct(segment):
     global _start_angle
     global _start_position
-    global _start_velocity
+    global _start_speed
 
     last_loss = loss(
         segment,
-        _capture.get_item(_segments[segment][1])['corrected_progress'],
+        _capture.get_item(_segments[segment][1])['corrected_track_progress'],
         _capture.get_item(_segments[segment][1])['corrected_track_position'],
     )
     print("INITIAL LOSS: {:.4f}".format(last_loss))
@@ -123,20 +119,20 @@ def course_correct(segment):
 
         for n in sample:
             test = noises + [n]
-            angles, velocities, positions = integrate(
+            angles, speeds, positions = integrate(
                 test,
                 _segments[segment][0],
                 _segments[segment][1] + 1,
                 start_angle=_start_angle,
                 start_position=_start_position,
-                start_velocity=_start_velocity,
+                start_speed=_start_speed,
             )
 
             last = _segments[segment][1] - _segments[segment][0]
-            progress = _track.progress(positions[last]) / _track.length
+            track_progress = _track.progress(positions[last])
             track_position = _track.position(positions[last])
 
-            losses.append(loss(segment, progress, track_position))
+            losses.append(loss(segment, track_progress, track_position))
 
         idx = np.argmin(losses)
         l = losses[idx]
@@ -153,7 +149,7 @@ def course_correct(segment):
 
     # Reintegrate to compute the new start conditions and store the corrected
     # values.
-    angles, velocities, positions = integrate(
+    angles, speeds, positions = integrate(
         noises,
         _segments[segment][0],
         _capture.__len__(),
@@ -161,26 +157,21 @@ def course_correct(segment):
         # _segments[segment][1] + 1,
         start_angle=_start_angle,
         start_position=_start_position,
-        start_velocity=_start_velocity,
+        start_speed=_start_speed,
 
     )
     for i in range(len(positions)):
-        progress = _track.progress(positions[i]) / _track.length
+        track_progress = _track.progress(positions[i])
         track_position = _track.position(positions[i])
-        if np.linalg.norm(velocities[i]) > 0:
-            track_angle =  _track.angle(positions[i], velocities[i])
-        else:
-            track_angle = 0.0
         d = {
-            'corrected_progress': progress,
+            'corrected_track_progress': track_progress,
             'corrected_track_position': track_position,
-            'corrected_track_angle': track_angle,
         }
         _capture.update_item(_segments[segment][0] + i, d, save=False)
 
     final_loss = loss(
         segment,
-        _capture.get_item(_segments[segment][1])['corrected_progress'],
+        _capture.get_item(_segments[segment][1])['corrected_track_progress'],
         _capture.get_item(_segments[segment][1])['corrected_track_position'],
     )
     print("FINAL LOSS {:.4f}".format(final_loss))
@@ -189,31 +180,9 @@ def course_correct(segment):
 
     _start_angle = angles[last]
     _start_position = positions[last]
-    _start_velocity = velocities[last]
-
+    _start_speed = speeds[last]
 
 def postprocess():
-    # Integrate the path and update the _capture.
-    print("Starting direct integration...")
-
-    angles, velocities, positions = integrate([], 0, _capture.__len__())
-    for i in range(len(positions)):
-        progress = _track.progress(positions[i]) / _track.length
-        track_position = _track.position(positions[i])
-        if np.linalg.norm(velocities[i]) > 0:
-            track_angle =  _track.angle(positions[i], velocities[i])
-        else:
-            track_angle = 0.0
-        d = {
-            'integrated_progress': progress,
-            'integrated_track_position': track_position,
-            'integrated_track_angle': track_angle,
-            'corrected_progress': progress,
-            'corrected_track_position': track_position,
-            'corrected_track_angle': track_angle,
-        }
-        _capture.update_item(i, d, save=False)
-
     # Course correct segment by segmet and update the _capture.
     print("Starting course correction...")
     for s in range(len(_segments)):
@@ -225,21 +194,19 @@ def postprocess():
     for s in range(len(_segments)):
         final_loss = loss(
             s,
-            _capture.get_item(_segments[s][1])['corrected_progress'],
+            _capture.get_item(_segments[s][1])['corrected_track_progress'],
             _capture.get_item(_segments[s][1])['corrected_track_position'],
         )
         print("FINAL LOSS {:.4f}".format(final_loss))
 
     # Saving capture.
     print("Saving capture...")
-    for i in range(_capture.__len__()):
-        _capture.update_item(i, {}, save=True)
+    _capture.save()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
-    parser.add_argument('--is_simulation', type=str2bool, help="config override")
 
     args = parser.parse_args()
 
@@ -249,16 +216,14 @@ if __name__ == "__main__":
     assert args.track is not None
     _track = Track(args.track)
 
-    if args.is_simulation is not None:
-        _is_simulation = args.is_simulation
-
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.
-    assert 'annotated_progress' in _capture.get_item(0)
+    assert 'annotated_track_progress' in _capture.get_item(0)
 
     last = 0
     for i in range(_capture.__len__()):
-        if 'annotated_progress' in _capture.get_item(i) and 'annotated_track_position' in _capture.get_item(i):
+        if ('annotated_track_progress' in _capture.get_item(i) and
+                'annotated_track_position' in _capture.get_item(i)):
             if i == 0:
                 continue
             _segments.append([last, i])

@@ -56,6 +56,7 @@ class Capture(data.Dataset):
         self.data = []
         self.data_dir = data_dir
         self.device = device
+        self.offset = 0
 
         self.sequence_cache = None
 
@@ -76,6 +77,8 @@ class Capture(data.Dataset):
                 index += 1
                 continue
 
+            if first:
+                self.offset = index
             first = False
 
             data = None
@@ -96,13 +99,13 @@ class Capture(data.Dataset):
     def save_item(self, index):
         assert self.data[index] is not None
 
-        with open(os.path.join(self.data_dir, str(index) + '.json'), "w+") as f:
+        with open(os.path.join(self.data_dir, str(self.offset + index) + '.json'), "w+") as f:
             d = {}
             for p in _stored_params:
                 if p in self.data[index]:
                     d[p] = self.data[index][p]
             json.dump(d, f)
-        with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "wb+") as f:
+        with open(os.path.join(self.data_dir, str(self.offset + index) + '.jpeg'), "wb+") as f:
             f.write(self.data[index]['camera'])
 
     def add_item(self, camera, data, save=True):

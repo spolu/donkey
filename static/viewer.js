@@ -10,7 +10,7 @@ $.urlParam = function(name){
 
 var SCALE = 80
 var DX = 450;
-var DY = 500;
+var DY = 450;
 
 window.onload = function() {
 
@@ -61,7 +61,7 @@ window.onload = function() {
         ctxTrack.fillStyle="#999999";
         ctxTrack.fillRect(
           Math.trunc(SCALE * data[p][0]) + DX,
-          Math.trunc(SCALE * data[p][2]) + DY,
+          Math.trunc(SCALE * -data[p][2]) + DY,
           1,1
         );
       }
@@ -75,7 +75,7 @@ window.onload = function() {
         ctxTrack.fillStyle="#FF0000";
         ctxTrack.fillRect(
           Math.trunc(SCALE * data[p][0]) + DX - 2,
-          Math.trunc(SCALE * data[p][2]) + DY - 2,
+          Math.trunc(SCALE * -data[p][2]) + DY - 2,
           4,4
         );
       }
@@ -88,9 +88,9 @@ window.onload = function() {
       for (var p in data) {
         ctxTrack.fillStyle="#0000FF";
         ctxTrack.fillRect(
-          Math.trunc(SCALE * data[p][0]) + DX,
-          Math.trunc(SCALE * data[p][2]) + DY,
-          1,1
+          Math.trunc(SCALE * data[p][0]) + DX - 1,
+          Math.trunc(SCALE * -data[p][2]) + DY - 1,
+          2,2
         );
       }
     })
@@ -103,7 +103,7 @@ window.onload = function() {
         ctxTrack.fillStyle="#00FF00";
         ctxTrack.fillRect(
           Math.trunc(SCALE * data[p][0]) + DX,
-          Math.trunc(SCALE * data[p][2]) + DY,
+          Math.trunc(SCALE * -data[p][2]) + DY,
           1,1
         );
       }
