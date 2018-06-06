@@ -17,9 +17,9 @@ from track import Track
 NOISE_SAMPLES = 20
 
 NOISE_ANGLE_SCALE = 0.2
-NOISE_SPEED_SCALE = 1.0
+NOISE_SPEED_SCALE = 0.1
 
-LOSS_LIMIT = 0.01
+LOSS_LIMIT = 0.2
 
 _capture = None
 _track = None
@@ -61,10 +61,11 @@ def integrate(
         speeds.append(start_speed)
 
     for n in noises:
-        if n.type == 'angle':
-            angles[n.index] += n.value
+        if n.index >= start and n.index < end:
+            if n.type == 'angle':
+                angles[n.index-start] += n.value
         if n.type == 'speed':
-            speeds[n.index] += n.value
+            speeds[n.index-start] += n.value
 
     positions = [start_position]
     for i in range(1, len(time)):
@@ -82,15 +83,15 @@ def sample_noises(segment):
     noises = []
     for i in range(NOISE_SAMPLES):
         noises.append(Noise(
-            random.randrange(_segments[segment][0], _segments[segment][1]) - _segments[segment][0],
+            random.randrange(_segments[segment][0], _segments[segment][1]),
             'angle',
             np.random.normal(0, NOISE_ANGLE_SCALE),
         ))
-        noises.append(Noise(
-            random.randrange(_segments[segment][0], _segments[segment][1]) - _segments[segment][0],
-            'speed',
-            np.random.normal(0, NOISE_SPEED_SCALE),
-        ))
+        # noises.append(Noise(
+        #     random.randrange(_segments[segment][0], _segments[segment][1]),
+        #     'speed',
+        #     np.random.normal(0, NOISE_SPEED_SCALE),
+        # ))
     return noises
 
 def loss(segment, track_progress, track_position):
@@ -198,7 +199,7 @@ def postprocess():
     }, save=False)
 
     for s in range(len(_segments)):
-        if s >= _max:
+        if _max is not None and s >= _max:
             break
         print("Processing segment {}/{} [{},{}]".format(
             s, len(_segments), _segments[s][0], _segments[s][1],

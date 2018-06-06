@@ -8,6 +8,7 @@ var DY = 450;
 var track = null;
 var capture = null;
 var max = null
+var min = null
 
 var t = null;
 var ctxTrack = null;
@@ -27,6 +28,9 @@ var integrated_refresh = function() {
     for (var p in data) {
       if (max !== null && p >= max) {
         break;
+      }
+      if (min !== null && p <= min) {
+        continue
       }
       ctxTrack.fillStyle="#999999";
       ctxTrack.fillRect(
@@ -69,6 +73,9 @@ var corrected_refresh = function() {
     for (var p in data) {
       if (max !== null && p >= max) {
         break;
+      }
+      if (min !== null && p <= min) {
+        continue
       }
       ctxTrack.fillStyle="#0000FF";
       ctxTrack.fillRect(
@@ -129,6 +136,9 @@ window.onload = function() {
   capture = $.urlParam('capture');
   if ($.urlParam('max') != null) {
     max = parseInt($.urlParam('max'))
+  }
+  if ($.urlParam('min') != null) {
+    min = parseInt($.urlParam('min'))
   }
 
   if (track === null) {
