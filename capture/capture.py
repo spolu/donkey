@@ -110,6 +110,8 @@ class Capture(data.Dataset):
             with open(os.path.join(self.data_dir, str(self.offset + index) + '.jpeg'), "wb+") as f:
                 f.write(self.data[index]['camera'])
 
+        print("CAPTURE: save_item {}".format(index))
+
     def add_item(self, camera, data, save=True):
         index = len(self.data)
 
@@ -120,6 +122,8 @@ class Capture(data.Dataset):
             })
         else:
             self.data.append({})
+
+        # print("CAPTURE: add_item {}".format(index))
 
         self.update_item(index, data, save=save)
 

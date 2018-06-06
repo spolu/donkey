@@ -21,7 +21,7 @@ _start_angle = math.pi
 _start_position = np.array([0, 0, 0])
 _start_velocity = np.array([0, 0, 0])
 
-FIXED_SPEED = 1.5
+FIXED_SPEED = 1.4
 
 def integrate(start,
               end,
@@ -29,7 +29,7 @@ def integrate(start,
               start_position=np.array([0,0,0]),
               start_speed=FIXED_SPEED):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
+    # orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
     angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
     acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
 

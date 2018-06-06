@@ -10,15 +10,11 @@ class Capturer:
     def __init__(self, data_dir, inputs = None, types = None):
         self.capture = Capture(data_dir,load=False)
         self.start_time = time.time()
-        self.on = True
-        self.poll_delay = 2.0
 
     def update(self):
-        while self.on:
-            self.capture.save()
-            time.sleep(self.poll_delay)
+        pass
 
-    def run_threaded(
+    def run(
             self,
             img_array = None,
             accel = None,
@@ -44,29 +40,29 @@ class Capturer:
         vertical vector is [1], keep the vector orientation direct
         '''
         acceleration = np.array([
-        accel['y'],
-        accel['z'],
-        accel['x'],
+            accel['y'],
+            accel['z'],
+            accel['x'],
         ])
         '''
         vertical vector is [1], keep the vector orientation direct
         '''
         angular_velocity = np.array([
-        gyro['y'],
-        gyro['z'],
-        gyro['x'],
+            gyro['y'],
+            gyro['z'],
+            gyro['x'],
         ])
 
         phone_position = np.array([
-        position['x'],
-        position['y'],
-        position['z'],
+            position['x'],
+            position['y'],
+            position['z'],
         ])
 
         orientation = np.array([
-        sense['roll'],
-        sense['yaw'],
-        sense['pitch'],
+            sense['roll'],
+            sense['yaw'],
+            sense['pitch'],
         ])
 
         self.capture.add_item(
@@ -84,18 +80,27 @@ class Capturer:
         )
 
         for r in imu_stack:
+            acceleration = np.array([
+                r['accel']['y'],
+                r['accel']['z'],
+                r['accel']['x'],
+            ])
+            angular_velocity = np.array([
+                r['gyro']['y'],
+                r['gyro']['z'],
+                r['gyro']['x'],
+            ])
             self.capture.add_item(
                 None,
                 {
                     'time': r['time'] - self.start_time,
                     'raspi_throttle': throttle,
                     'raspi_steering': angle,
-                    'raspi_imu_angular_velocity': r['gyro'].tolist(),
-                    'raspi_imu_acceleration': r['accel'].tolist(),
+                    'raspi_imu_angular_velocity': angular_velocity.tolist(),
+                    'raspi_imu_acceleration': acceleration.tolist(),
                 },
                 save=False,
             )
 
     def shutdown(self):
-        self.on = False
-        pass
+        self.capture.save()
