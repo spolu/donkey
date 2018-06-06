@@ -31,12 +31,12 @@ class Mpu6050:
 
     def poll(self):
         self.accel, self.gyro, self.temp = self.sensor.get_all_data()
-        self.stack.append[{
+        self.stack.append({
             'time': time.time(),
             'temp': self.temp,
             'accel': self.accel,
             'gyro': self.gyro,
-        }]
+        })
 
     def run_threaded(self):
         stack = self.stack
