@@ -1,4 +1,5 @@
 import sys
+import io
 import os
 import argparse
 import eventlet
@@ -12,6 +13,7 @@ import numpy as np
 from flask import Flask
 from flask import jsonify
 from flask import abort
+from flask import send_file
 from eventlet.green import threading
 
 from capture import Capture
@@ -20,14 +22,14 @@ from track import Track
 # import pdb; pdb.set_trace()
 
 TRACK_POINTS = 400
-CAPTURE_ROOT_PATH = '/tmp'
 
 _app = Flask(__name__)
+_root_path = '/tmp'
 _cache = {}
 
 def fetch_capture(capture):
     if capture not in _cache:
-        _cache[capture] = Capture(os.path.join(CAPTURE_ROOT_PATH, capture))
+        _cache[capture] = Capture(os.path.join(_root_path, capture))
     return _cache[capture]
 
 def run_server():
@@ -40,23 +42,61 @@ def run_server():
     except KeyboardInterrupt:
         print("Stopping shared server")
 
+@_app.route('/track/<track>/capture/<capture>/camera/<int:index>.jpeg', methods=['GET'])
+def camera(track, capture, index):
+    capture = fetch_capture(capture)
+
+    if capture.size() == 0:
+        abort(400)
+    if index > capture.size()-1:
+        abort(400)
+    if 'camera' not in capture.get_item(index):
+        abort(400)
+
+    ib = capture.get_item(index)['camera']
+
+    return send_file(
+        io.BytesIO(ib),
+        attachment_filename='%d.jpeg' % index,
+        mimetype='image/jpeg',
+    )
+
+@_app.route('/track/<track>/capture/<capture>/annotate/<int:index>/landmark/<int:landmark>', methods=['GET'])
+def annotate(track, capture, index, landmark):
+    capture = fetch_capture(capture)
+    t = Track(track)
+
+    if capture.size() == 0:
+        abort(400)
+    if index > capture.size()-1:
+        abort(400)
+    if 'camera' not in capture.get_item(index):
+        abort(400)
+
+    capture.update_item(index, {
+        'annotated_track_progress': float(landmark)/TRACK_POINTS,
+        'annotated_track_position': 0.0,
+    }, save=True)
+
+    return jsonify({})
+
 @_app.route('/track/<track>/capture/<capture>/annotated', methods=['GET'])
 def annotated(track, capture):
     capture = fetch_capture(capture)
 
-    if capture.__len__() == 0:
+    if capture.size() == 0:
         abort(400)
 
     t = Track(track)
 
     annotated = []
-    for i in range(capture.__len__()):
+    for i in range(capture.size()):
         if ('annotated_track_progress' in capture.get_item(i) and
                 'annotated_track_position' in capture.get_item(i)):
             annotated.append(
                 t.invert(
-                    capture.get_item(i)['annotated_track_progress'],
-                    capture.get_item(i)['annotated_track_position'],
+                    capture.get_item(i)['integrated_track_progress'],
+                    capture.get_item(i)['integrated_track_position'],
                 ).tolist()
             )
 
@@ -66,7 +106,7 @@ def annotated(track, capture):
 def integrated(track, capture):
     capture = fetch_capture(capture)
 
-    if capture.__len__() == 0:
+    if capture.size() == 0:
         abort(400)
 
     if 'integrated_track_progress' not in capture.get_item(0):
@@ -75,7 +115,7 @@ def integrated(track, capture):
     t = Track(track)
 
     c = []
-    for i in range(capture.__len__()):
+    for i in range(capture.size()):
         if 'integrated_track_progress' in capture.get_item(i):
             c.append(t.invert(
                 capture.get_item(i)['integrated_track_progress'],
@@ -88,7 +128,7 @@ def integrated(track, capture):
 def corrected(track, capture):
     capture = fetch_capture(capture)
 
-    if capture.__len__() == 0:
+    if capture.size() == 0:
         abort(400)
 
     if 'corrected_track_progress' not in capture.get_item(0):
@@ -100,7 +140,7 @@ def corrected(track, capture):
         t.invert(
             capture.get_item(i)['corrected_track_progress'],
             capture.get_item(i)['corrected_track_position'],
-        ).tolist() for i in range(capture.__len__())
+        ).tolist() for i in range(capture.size())
     ])
 
 
@@ -108,7 +148,7 @@ def corrected(track, capture):
 def reference(track, capture):
     capture = fetch_capture(urllib.parse.unquote(capture))
 
-    if capture.__len__() == 0:
+    if capture.size() == 0:
         abort(400)
 
     if 'reference_track_progress' not in capture.get_item(0):
@@ -120,7 +160,7 @@ def reference(track, capture):
         t.invert(
             capture.get_item(i)['reference_track_progress'],
             capture.get_item(i)['reference_track_position'],
-        ).tolist() for i in range(capture.__len__())
+        ).tolist() for i in range(capture.size())
     ])
 
 @_app.route('/track/<track>/path', methods=['GET'])
@@ -134,6 +174,13 @@ def track(track):
     })
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument('--root_path', type=str, help="root path to look for capture")
+
+    args = parser.parse_args()
+    if args.root_path is not None:
+        _root_path = args.root_path
+
     t = threading.Thread(target = run_server)
     t.start()
     t.join()

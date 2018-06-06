@@ -1,3 +1,15 @@
+var LANDMARKS = [0, 55, 122, 184, 230, 300, 347]
+var LANDMARKS_VALUE = {}
+
+var SCALE = 80
+var DX = 450;
+var DY = 450;
+
+var t = null;
+var ctxTrack = null;
+var track = null;
+var capture = null;
+
 $.urlParam = function(name){
   var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
   if (results==null){
@@ -8,11 +20,102 @@ $.urlParam = function(name){
   }
 }
 
-var SCALE = 80
-var DX = 450;
-var DY = 450;
+var integrated_refresh = function() {
+  $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
+    for (var p in data) {
+      ctxTrack.fillStyle="#999999";
+      ctxTrack.fillRect(
+        Math.trunc(SCALE * data[p][0]) + DX,
+        Math.trunc(SCALE * -data[p][2]) + DY,
+        1,1
+      );
+    }
+  })
+}
+
+var annotated_refresh = function() {
+  $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
+    for (var p in data) {
+      ctxTrack.fillStyle="#00FF00";
+      ctxTrack.fillRect(
+        Math.trunc(SCALE * data[p][0]) + DX - 3,
+        Math.trunc(SCALE * -data[p][2]) + DY - 3,
+        6,6
+      );
+    }
+  })
+}
+
+var reference_refresh = function() {
+  $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
+    for (var p in data) {
+      ctxTrack.fillStyle="#00FF00";
+      ctxTrack.fillRect(
+        Math.trunc(SCALE * data[p][0]) + DX,
+        Math.trunc(SCALE * -data[p][2]) + DY,
+        1,1
+      );
+    }
+  })
+}
+
+var corrected_refresh = function() {
+  $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
+    for (var p in data) {
+      ctxTrack.fillStyle="#0000FF";
+      ctxTrack.fillRect(
+        Math.trunc(SCALE * data[p][0]) + DX - 1,
+        Math.trunc(SCALE * -data[p][2]) + DY - 1,
+        2,2
+      );
+    }
+  })
+}
+
+var landmark_refresh = function(l, color) {
+  ctxTrack.fillStyle = color
+  ctxTrack.fillRect(
+    Math.trunc(SCALE * LANDMARKS_VALUE[l][0]) + DX - 3,
+    Math.trunc(SCALE * -LANDMARKS_VALUE[l][2]) + DY - 3,
+    6,6
+  );
+}
+
+var landmarks_refresh = function() {
+  $('#landmarks').empty()
+  LANDMARKS.forEach(function(l) {
+    landmark = jQuery(
+      '<div>' +
+        '' + l + ' - ' +
+        LANDMARKS_VALUE[l][0].toFixed(2) + ',' + LANDMARKS_VALUE[l][2].toFixed(2) +
+      '</div>', {
+      id: 'l' + l,
+      class: 'landmark',
+      }).css({
+        'margin-top': '5px',
+        'cursor': 'pointer',
+      })
+    landmark.mouseover(function() {
+      landmark_refresh(l, "#000000")
+    })
+    landmark.mouseout(function() {
+      landmark_refresh(l, "#FF0000")
+    })
+    landmark.click(function() {
+      index = $('#index').val()
+      url = "/track/" + track + "/capture/" + capture + "/annotate/" + index + "/landmark/" + l
+      $.get(url, function(data) {
+        annotated_refresh()
+      })
+    })
+    landmark.appendTo('#landmarks');
+  })
+}
 
 window.onload = function() {
+
+  t = document.getElementById("track");
+  ctxTrack = t.getContext("2d");
 
   track = $.urlParam('track');
   capture = $.urlParam('capture');
@@ -21,22 +124,17 @@ window.onload = function() {
     window.alert('You must specify a track name as GET parameter "track"');
     return;
   }
+
   $.get("/track/" + track + "/path", function(data) {
-    var t = document.getElementById("track");
-    var ctxTrack = t.getContext("2d");
-
-    landmarks = [0, 55, 122, 184, 230, 300, 347]
-
     for (s in data) {
       for (var p in data[s]) {
-        if (s == "center" && landmarks.includes(parseInt(p))) {
-          ctxTrack.fillStyle="#FF0000"
-          ctxTrack.fillRect(
-            Math.trunc(SCALE * data[s][p][0]) + DX - 2,
-            Math.trunc(SCALE * -data[s][p][2]) + DY - 2,
-            4,4
-          );
-          console.log("LANDMARK " + p + " " + data[s][p][0].toFixed(2) + "," + data[s][p][2].toFixed(2))
+        if (s == "center" && LANDMARKS.includes(parseInt(p))) {
+          LANDMARKS_VALUE[parseInt(p)] = [
+            data[s][p][0],
+            data[s][p][1],
+            data[s][p][2],
+          ]
+          landmark_refresh(parseInt(p), "#FF0000")
         } else {
           ctxTrack.fillStyle="#000000";
           ctxTrack.fillRect(
@@ -47,66 +145,19 @@ window.onload = function() {
         }
       }
     }
+    landmarks_refresh()
   })
 
   if (capture !== null) {
 
-    $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
-      var t = document.getElementById("track");
-      var ctxTrack = t.getContext("2d");
+    annotated_refresh()
+    reference_refresh()
+    corrected_refresh()
+    integrated_refresh()
 
-      console.log(data)
-
-      for (var p in data) {
-        ctxTrack.fillStyle="#999999";
-        ctxTrack.fillRect(
-          Math.trunc(SCALE * data[p][0]) + DX,
-          Math.trunc(SCALE * -data[p][2]) + DY,
-          1,1
-        );
-      }
-    })
-
-    $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
-      var t = document.getElementById("track");
-      var ctxTrack = t.getContext("2d");
-
-      for (var p in data) {
-        ctxTrack.fillStyle="#FF0000";
-        ctxTrack.fillRect(
-          Math.trunc(SCALE * data[p][0]) + DX - 2,
-          Math.trunc(SCALE * -data[p][2]) + DY - 2,
-          4,4
-        );
-      }
-    })
-
-    $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
-      var t = document.getElementById("track");
-      var ctxTrack = t.getContext("2d");
-
-      for (var p in data) {
-        ctxTrack.fillStyle="#0000FF";
-        ctxTrack.fillRect(
-          Math.trunc(SCALE * data[p][0]) + DX - 1,
-          Math.trunc(SCALE * -data[p][2]) + DY - 1,
-          2,2
-        );
-      }
-    })
-
-    $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
-      var t = document.getElementById("track");
-      var ctxTrack = t.getContext("2d");
-
-      for (var p in data) {
-        ctxTrack.fillStyle="#00FF00";
-        ctxTrack.fillRect(
-          Math.trunc(SCALE * data[p][0]) + DX,
-          Math.trunc(SCALE * -data[p][2]) + DY,
-          1,1
-        );
-      }
+    $('#index').change(function() {
+      url = "/track/" + track + "/capture/" + capture + "/camera/" + $('#index').val() + ".jpeg"
+      $('#camera').css("background-image", "url(" + url + ")");
     })
   }
 };
