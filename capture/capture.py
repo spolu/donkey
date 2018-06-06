@@ -209,3 +209,21 @@ class CaptureSet(data.Dataset):
     def get_capture(self, index):
         assert index < len(self.captures)
         return self.captures[index]
+
+    # data.Dataset interface (sum of captures camera/target ready frames)
+
+    def __getitem__(self, index):
+        for i in range(len(self.captures)):
+            if index >= len(self.captures[i].ready):
+                index -= len(self.captures[i].ready)
+                continue
+            else:
+                assert index < len(self.captures[i].ready)
+                item = self.captures[i].get_item(self.captures[i].ready[index])
+                return item['input'], item['target']
+
+    def __len__(self):
+        length = 0
+        for i in range(len(self.captures)):
+            length += len(self.captures[i].ready)
+        return length

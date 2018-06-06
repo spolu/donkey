@@ -35,12 +35,12 @@ class Trainer:
 
         self.device = torch.device('cuda:0' if self.cuda else 'cpu')
 
-        if not args.capture_train_dir:
-            raise Exception("Required argument: --capture_train_dir")
-        self.train_capture = Capture(args.capture_train_dir, self.device)
-        if not args.capture_test_dir:
-            raise Exception("Required argument: --capture_test_dir")
-        self.test_capture = Capture(args.capture_test_dir, self.device)
+        if not args.capture_set_train_dir:
+            raise Exception("Required argument: --capture_set_train_dir")
+        self.train_capture_set = CaptureSet(args.capture_set_train_dir, self.device)
+        if not args.capture_set_test_dir:
+            raise Exception("Required argument: --capture_set_test_dir")
+        self.test_capture_set = CaptureSet(args.capture_set_test_dir, self.device)
 
         self.model = ResNet(self.config, 3).to(self.device)
 
@@ -74,14 +74,14 @@ class Trainer:
         self.batch_count = 0
 
         self.train_loader = torch.utils.data.DataLoader(
-            self.train_capture,
+            self.train_capture_set,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=0,
         )
 
         self.test_loader = torch.utils.data.DataLoader(
-            self.test_capture,
+            self.test_capture_set,
             batch_size=1,
             shuffle=False,
             num_workers=0,
@@ -166,8 +166,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
-    parser.add_argument('--capture_train_dir', type=str, help="path to train captured data")
-    parser.add_argument('--capture_test_dir', type=str, help="path to test captured data")
+    parser.add_argument('--capture_set_train_dir', type=str, help="path to train captured data")
+    parser.add_argument('--capture_set_test_dir', type=str, help="path to test captured data")
 
     parser.add_argument('--cuda', type=str2bool, help="config override")
 
