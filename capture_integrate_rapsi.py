@@ -16,18 +16,19 @@ from track import Track
 
 _capture = None
 _track = None
+_speed = None
 
 _start_angle = math.pi
 _start_position = np.array([0, 0, 0])
 _start_velocity = np.array([0, 0, 0])
 
-FIXED_SPEED = 1.4
-
-def integrate(start,
-              end,
-              start_angle=math.pi,
-              start_position=np.array([0,0,0]),
-              start_speed=FIXED_SPEED):
+def integrate(
+        start,
+        end,
+        start_angle,
+        start_position,
+        start_speed,
+):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
     # orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
     angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
@@ -83,7 +84,12 @@ def integrate_raspi():
     # Integrate the path and update the _capture.
     print("Starting direct integration...")
 
-    angles, positions = integrate(0, _capture.__len__())
+    angles, positions = integrate(
+        0, _capture.__len__(),
+        math.pi,
+        np.array([0,0,0]),
+        _speed,
+    )
     for i in range(len(positions)):
         track_progress = _track.progress(positions[i])
         track_position = _track.position(positions[i])
@@ -103,6 +109,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
+    parser.add_argument('--speed', type=float, help="fixed speed")
 
     args = parser.parse_args()
 
@@ -111,5 +118,8 @@ if __name__ == "__main__":
 
     assert args.track is not None
     _track = Track(args.track)
+
+    assert args.speed is not None
+    _speed = args.speed
 
     integrate_raspi()
