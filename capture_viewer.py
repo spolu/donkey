@@ -24,7 +24,7 @@ from track import Track
 TRACK_POINTS = 400
 
 _app = Flask(__name__)
-_root_path = '/tmp'
+_root_path = '/tmp/capture_set_20180606_1400/train'
 _cache = {}
 
 def fetch_capture(capture):
