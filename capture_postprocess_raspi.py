@@ -15,34 +15,37 @@ from capture import Capture
 from track import Track
 
 NOISE_SAMPLES = 20
-NOISE_ANGLE_SCALE = 0.4
-NOISE_SPEED_SCALE = 10.0
-LOSS_LIMIT = 0.005
+
+NOISE_ANGLE_SCALE = 0.2
+NOISE_SPEED_SCALE = 1.0
+
+LOSS_LIMIT = 0.01
 
 _capture = None
 _track = None
 _segments = []
-_is_simulation = True
-
-FIXED_SPEED = 1.5
+_speed = None
+_max = None
 
 _start_angle = math.pi
 _start_position = np.array([0, 0, 0])
-_start_speed = FIXED_SPEED
+_start_speed = None
 
 Noise = collections.namedtuple(
     'Noise',
     'index type value'
 )
 
-def integrate(noises,
-              start,
-              end,
-              start_angle=math.pi,
-              start_position=np.array([0,0,0]),
-              start_speed=FIXED_SPEED):
+def integrate(
+        noises,
+        start,
+        end,
+        start_angle,
+        start_position,
+        start_speed,
+):
     time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
+    # orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
     angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
     acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
 
@@ -103,6 +106,8 @@ def course_correct(segment):
     global _start_angle
     global _start_position
     global _start_speed
+
+    _start_speed = _speed
 
     last_loss = loss(
         segment,
@@ -185,7 +190,16 @@ def course_correct(segment):
 def postprocess():
     # Course correct segment by segmet and update the _capture.
     print("Starting course correction...")
+
+    # Reinitialize first corrected value to the integrated value.
+    _capture.update_item(_segments[0][1], {
+        'corrected_track_progress': _capture.get_item(_segments[0][1])['integrated_track_progress'],
+        'corrected_track_position': _capture.get_item(_segments[0][1])['integrated_track_position'],
+    }, save=False)
+
     for s in range(len(_segments)):
+        if s >= _max:
+            break
         print("Processing segment {}/{} [{},{}]".format(
             s, len(_segments), _segments[s][0], _segments[s][1],
         ))
@@ -207,6 +221,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_dir', type=str, help="path to saved captured data")
     parser.add_argument('--track', type=str, help="track name")
+    parser.add_argument('--speed', type=float, help="fixed speed")
+    parser.add_argument('--max', type=float, help="course correction max")
 
     args = parser.parse_args()
 
@@ -215,6 +231,12 @@ if __name__ == "__main__":
 
     assert args.track is not None
     _track = Track(args.track)
+
+    assert args.speed is not None
+    _speed = args.speed
+
+    if args.max is not None:
+        _max = args.max
 
     # This code assumes that the first point of the path is annotated. It will
     # also only course correct to the last annotated point.

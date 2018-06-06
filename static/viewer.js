@@ -5,10 +5,12 @@ var SCALE = 80
 var DX = 450;
 var DY = 450;
 
-var t = null;
-var ctxTrack = null;
 var track = null;
 var capture = null;
+var max = null
+
+var t = null;
+var ctxTrack = null;
 
 $.urlParam = function(name){
   var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -23,6 +25,9 @@ $.urlParam = function(name){
 var integrated_refresh = function() {
   $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
     for (var p in data) {
+      if (max !== null && p >= max) {
+        break;
+      }
       ctxTrack.fillStyle="#999999";
       ctxTrack.fillRect(
         Math.trunc(SCALE * data[p][0]) + DX,
@@ -62,6 +67,9 @@ var reference_refresh = function() {
 var corrected_refresh = function() {
   $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
     for (var p in data) {
+      if (max !== null && p >= max) {
+        break;
+      }
       ctxTrack.fillStyle="#0000FF";
       ctxTrack.fillRect(
         Math.trunc(SCALE * data[p][0]) + DX - 1,
@@ -119,6 +127,9 @@ window.onload = function() {
 
   track = $.urlParam('track');
   capture = $.urlParam('capture');
+  if ($.urlParam('max') != null) {
+    max = parseInt($.urlParam('max'))
+  }
 
   if (track === null) {
     window.alert('You must specify a track name as GET parameter "track"');
