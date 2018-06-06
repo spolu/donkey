@@ -25,11 +25,11 @@ window.onload = function() {
     var t = document.getElementById("track");
     var ctxTrack = t.getContext("2d");
 
-    landmarks = [0, 108, 142, 182, 250, 347]
+    landmarks = [0, 55, 122, 184, 230, 300, 347]
 
     for (s in data) {
       for (var p in data[s]) {
-        if (s == "left" && landmarks.includes(parseInt(p))) {
+        if (s == "center" && landmarks.includes(parseInt(p))) {
           ctxTrack.fillStyle="#FF0000"
           ctxTrack.fillRect(
             Math.trunc(SCALE * data[s][p][0]) + DX - 2,
