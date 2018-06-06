@@ -67,8 +67,6 @@ class Capture(data.Dataset):
         while found and load:
             if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.json')):
                 found = False
-            if not os.path.isfile(os.path.join(self.data_dir, str(index) + '.jpeg')):
-                found = False
 
             if not found and not first:
                 continue
@@ -83,10 +81,12 @@ class Capture(data.Dataset):
 
             data = None
             camera = None
+
             with open(os.path.join(self.data_dir, str(index) + '.json'), "r") as f:
                 data = json.load(f)
-            with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "rb") as f:
-                camera = f.read()
+            if os.path.isfile(os.path.join(self.data_dir, str(index) + '.jpeg')):
+                with open(os.path.join(self.data_dir, str(index) + '.jpeg'), "rb") as f:
+                    camera = f.read()
 
             self.add_item(
                 camera,
@@ -105,16 +105,22 @@ class Capture(data.Dataset):
                 if p in self.data[index]:
                     d[p] = self.data[index][p]
             json.dump(d, f)
-        with open(os.path.join(self.data_dir, str(self.offset + index) + '.jpeg'), "wb+") as f:
-            f.write(self.data[index]['camera'])
+
+        if 'camera' in self.data[index]:
+            with open(os.path.join(self.data_dir, str(self.offset + index) + '.jpeg'), "wb+") as f:
+                f.write(self.data[index]['camera'])
 
     def add_item(self, camera, data, save=True):
         index = len(self.data)
 
-        self.data.append({
-            'camera': camera,
-            'input': input_from_camera(camera, self.device),
-        })
+        if camera is not None:
+            self.data.append({
+                'camera': camera,
+                'input': input_from_camera(camera, self.device),
+            })
+        else:
+            self.data.append({})
+
         self.update_item(index, data, save=save)
 
     def update_item(self, index, data, save=True):

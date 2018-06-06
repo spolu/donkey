@@ -18,7 +18,17 @@ class Capturer:
             self.capture.save()
             time.sleep(self.poll_delay)
 
-    def run_threaded(self, img_stack = None, accel = None, gyro = None, angle = None, throttle = None, position = None, sense = None):
+    def run_threaded(
+            self,
+            img_array = None,
+            accel = None,
+            gyro = None,
+            imu_stack = None,
+            angle = None,
+            throttle = None,
+            position = None,
+            sense = None,
+    ):
         '''
         API function needed to use as a Donkey part.
         Accepts values, pairs them with their inputs keys and saves them
@@ -26,7 +36,7 @@ class Capturer:
         '''
         t = time.time() - self.start_time
 
-        b,g,r = cv2.split(img_stack)       # get b,g,r as cv2 uses BGR and not RGB for colors
+        b,g,r = cv2.split(img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
         rgb_img = cv2.merge([r,g,b])
         camera = cv2.imencode(".jpg", rgb_img)[1].tostring()
 
@@ -62,17 +72,29 @@ class Capturer:
         self.capture.add_item(
             camera,
             {
-            'time': t,
-            'raspi_imu_angular_velocity': angular_velocity.tolist(),
-            'raspi_imu_acceleration': acceleration.tolist(),
-            'raspi_throttle': throttle,
-            'raspi_steering': angle,
-            'raspi_phone_position': phone_position.tolist(),
-            'raspi_sensehat_orientation': orientation.tolist(),
+                'time': t,
+                'raspi_imu_angular_velocity': angular_velocity.tolist(),
+                'raspi_imu_acceleration': acceleration.tolist(),
+                'raspi_throttle': throttle,
+                'raspi_steering': angle,
+                'raspi_phone_position': phone_position.tolist(),
+                'raspi_sensehat_orientation': orientation.tolist(),
             },
             save=False,
         )
 
+        for r in imu_stack:
+            self.capture.add_item(
+                None,
+                {
+                    'time': r['time'] - self.start_time,
+                    'raspi_throttle': throttle,
+                    'raspi_steering': angle,
+                    'raspi_imu_angular_velocity': r['gyro'].tolist(),
+                    'raspi_imu_acceleration': r['accel'].tolist(),
+                },
+                save=False,
+            )
 
     def shutdown(self):
         self.on = False

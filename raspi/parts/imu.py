@@ -19,6 +19,7 @@ class Mpu6050:
         self.sensor = mpu6050(addr)
         self.accel = { 'x' : 0., 'y' : 0., 'z' : 0. }
         self.gyro = { 'x' : 0., 'y' : 0., 'z' : 0. }
+        self.stack = []
         self.temp = 0.
         self.poll_delay = poll_delay
         self.on = True
@@ -27,18 +28,27 @@ class Mpu6050:
         while self.on:
             self.poll()
             time.sleep(self.poll_delay)
-                
+
     def poll(self):
         self.accel, self.gyro, self.temp = self.sensor.get_all_data()
+        self.stack.append[{
+            'time': time.time(),
+            'temp': self.temp,
+            'accel': self.accel,
+            'gyro': self.gyro,
+        }]
 
     def run_threaded(self):
-        # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.accel, self.gyro
+        stack = self.stack
+        self.stack = []
+        return self.accel, self.gyro, stack
 
     def run(self):
         self.poll()
-        # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.accel, self.gyro
+
+        stack = self.stack
+        self.stack = []
+        return self.accel, self.gyro, stack
 
     def shutdown(self):
         self.on = False
@@ -52,4 +62,3 @@ if __name__ == "__main__":
         print(data)
         time.sleep(0.1)
         iter += 1
-     

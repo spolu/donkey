@@ -20,7 +20,7 @@ class Sense:
         while self.on:
             self.poll()
             time.sleep(self.poll_delay)
-                
+
     def poll(self):
         self.orientation= self.sense.get_orientation_radians()
 
@@ -35,7 +35,6 @@ class Sense:
 
     def shutdown(self):
         self.on = False
-
 
 if __name__ == "__main__":
     iter = 0

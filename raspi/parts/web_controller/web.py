@@ -195,7 +195,6 @@ class LocalWebController(tornado.web.Application):
         # return 1.0, 1.0
         return self.angle, self.throttle, self.position
 
-        
     def run(self, img_arr=None):
         self.img_arr = img_arr
         return self.angle, self.throttle, self.position
@@ -206,8 +205,7 @@ class DriveAPI(tornado.web.RequestHandler):
     def get(self):
         data = {}
         self.render("templates/vehicle.html", **data)
-    
-    
+
     def post(self):
         '''
         Receive post requests as user changes the angle
@@ -232,7 +230,6 @@ class VideoAPI(tornado.web.RequestHandler):
         self.served_image_timestamp = time.time()
         my_boundary = "--boundarydonotcross"
         while True:
-            
             interval = .1
             if self.served_image_timestamp + interval < time.time():
 
@@ -249,8 +246,7 @@ class VideoAPI(tornado.web.RequestHandler):
                 yield tornado.gen.Task(ioloop.add_timeout, ioloop.time() + interval)
 
 
-class OdometryAPI(tornado.web.RequestHandler):    
-    
+class OdometryAPI(tornado.web.RequestHandler):
     def post(self):
         '''
         Receive post requests as user changes the angle
@@ -259,4 +255,3 @@ class OdometryAPI(tornado.web.RequestHandler):
         data = tornado.escape.json_decode(self.request.body)
         position = data['position']
         self.application.position = data['position']
-
