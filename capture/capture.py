@@ -57,6 +57,7 @@ class Capture(data.Dataset):
         self.data_dir = data_dir
         self.device = device
         self.offset = 0
+        self.ready = []
 
         self.sequence_cache = None
 
@@ -112,6 +113,14 @@ class Capture(data.Dataset):
 
         # print("CAPTURE: save_item {}".format(self.offset + index))
 
+    def target_ready(self, index):
+        d = self.data[index]
+
+        target_ready = True
+        for p in _target_params:
+            if p not in d:
+                target_ready = False
+
     def add_item(self, camera, data, save=True):
         index = len(self.data)
 
@@ -127,6 +136,9 @@ class Capture(data.Dataset):
 
         self.update_item(index, data, save=save)
 
+        if camera is not None and self.target_ready(index):
+            self.ready.append(index)
+
     def update_item(self, index, data, save=True):
         assert index < len(self.data)
 
@@ -135,12 +147,7 @@ class Capture(data.Dataset):
             if p in data:
                 d[p] = data[p]
 
-        target_ready = True
-        for p in _target_params:
-            if p not in d:
-                target_ready = False
-
-        if target_ready:
+        if self.target_ready(index):
             t = []
             for p in _target_params:
                 t += [d[p]]
@@ -171,14 +178,15 @@ class Capture(data.Dataset):
         for i in range(len(self.data)):
             self.update_item(i, {}, save=True)
 
-    # data.Dataset interface.
+    # data.Dataset interface (only camera/target ready frames)
 
     def __getitem__(self, index):
-        item = self.get_item(index)
+        assert index < len(self.ready)
+        item = self.get_item(self.ready[index])
         return item['input'], item['target']
 
     def __len__(self):
-        return self.size()
+        return len(self.ready)
 
 """
 A CaptureSet is a set of captures.
