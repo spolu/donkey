@@ -28,9 +28,7 @@ _root_path = '/tmp'
 _cache = {}
 
 def fetch_capture(capture):
-    if capture not in _cache:
-        _cache[capture] = Capture(os.path.join(_root_path, capture))
-    return _cache[capture]
+    return Capture(os.path.join(_root_path, capture))
 
 def run_server():
     global _app
