@@ -207,7 +207,8 @@ class Simulation:
 
         with lock:
             sio.emit('reset', data={
-                'track': track.serialize()
+                'track_path': track.serialize(),
+                'track_width': str(track.width()),
             }, room=self.client['sid'])
 
         self.client['condition'].wait()

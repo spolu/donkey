@@ -228,11 +228,12 @@ public class SimulationController : MonoBehaviour
 		lastTelemetry = 0.0f;
 
 		//Parse track
-		string trackPath = ev.data.GetField("track").str;
+		string trackPath = ev.data.GetField("track_path").str;
+		float trackWidth = float.Parse(ev.data.GetField("track_width").str);
 
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		CarPath path = roadBuilder.BuildRoad(trackPath);
+		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth);
 
 		Vector3 trackStartPos = Vector3.zero;
 		if (path != null)

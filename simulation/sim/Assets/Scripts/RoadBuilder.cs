@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RoadBuilder : MonoBehaviour {
-
-	public float roadWidth = 1.0f;
+    
 	public float roadOffsetW = 0.0f;
 
 	public GameObject roadPrefabMesh;
 
 	public int iRoadTexture = 0;
 	public Texture2D[] roadTextures;
-	public float[] roadWidths;
 
 	Texture2D customRoadTexure;
 
@@ -40,9 +38,6 @@ public class RoadBuilder : MonoBehaviour {
 	{
 		if(roadTextures.Length > 0)
 			customRoadTexure = roadTextures[ iVariation % roadTextures.Length ];
-
-		if(roadWidths.Length > 0)
-			roadWidth = roadWidths[ iVariation % roadWidths.Length ];
 	}
 
 	public void NegateYTiling()
@@ -89,17 +84,17 @@ public class RoadBuilder : MonoBehaviour {
 		return path;
 	}
 
-	public CarPath BuildRoad(string pathData)
+	public CarPath BuildRoad(string pathData, float roadWidth)
 	{
 		CarPath path = MakePointPath(pathData);
 
 		if (path != null)
-			InitRoad(path);
+			InitRoad(path, roadWidth);
 
 		return path;
 	}
 
-	public void InitRoad(CarPath path)
+	public void InitRoad(CarPath path, float roadWidth)
 	{
 		SetRoadVariation (iRoadTexture % roadTextures.Length);
 

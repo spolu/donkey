@@ -30,6 +30,7 @@ class Track:
 
         self.points = self.script.points()
         self.track_width = self.script.width
+        self.track_span = self.script.span
 
         # interpolate to first point
         self.points.append(np.array([
@@ -47,6 +48,9 @@ class Track:
 
     def width(self):
         return self.track_width
+
+    def span(self):
+        return self.track_span
 
     def length(self):
         return self.track_length
