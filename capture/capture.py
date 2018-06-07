@@ -97,6 +97,10 @@ class Capture(data.Dataset):
 
             index += 1
 
+        print("Capture loaded: offset={} size={} data_dir={}".format(
+            self.offset, len(self.data), data_dir,
+        ))
+
     def save_item(self, index):
         assert self.data[index] is not None
 
