@@ -24,12 +24,12 @@ from track import Track
 TRACK_POINTS = 400
 
 _app = Flask(__name__)
-_root_path = '/tmp/capture_set_20180606_1400/train'
+_capture_set_dir = '/tmp'
 _cache = {}
 
 def fetch_capture(capture):
     if capture not in _cache:
-        _cache[capture] = Capture(os.path.join(_root_path, capture))
+        _cache[capture] = Capture(os.path.join(_capture_set_dir, capture))
     return _cache[capture]
 
 def run_server():
@@ -175,11 +175,11 @@ def track(track):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('--root_path', type=str, help="root path to look for capture")
+    parser.add_argument('--capture_set_dir', type=str, help="path to captured data")
 
     args = parser.parse_args()
-    if args.root_path is not None:
-        _root_path = args.root_path
+    if args.capture_set_dir is not None:
+        _capture_set_dir = args.capture_set_dir
 
     t = threading.Thread(target = run_server)
     t.start()

@@ -35,12 +35,12 @@ class Trainer:
 
         self.device = torch.device('cuda:0' if self.cuda else 'cpu')
 
-        if not args.capture_set_train_dir:
-            raise Exception("Required argument: --capture_set_train_dir")
-        self.train_capture_set = CaptureSet(args.capture_set_train_dir, self.device)
-        if not args.capture_set_test_dir:
-            raise Exception("Required argument: --capture_set_test_dir")
-        self.test_capture_set = CaptureSet(args.capture_set_test_dir, self.device)
+        if not args.train_capture_set_dir:
+            raise Exception("Required argument: --train_capture_set_dir")
+        self.train_capture_set = CaptureSet(args.train_capture_set_dir, self.device)
+        if not args.test_capture_set_dir:
+            raise Exception("Required argument: --test_capture_set_dir")
+        self.test_capture_set = CaptureSet(args.test_capture_set_dir, self.device)
 
         self.model = ResNet(self.config, 3).to(self.device)
 
@@ -64,11 +64,9 @@ class Trainer:
             else:
                 self.model.load_state_dict(
                     torch.load(self.load_dir + "/model.pt", map_location='cpu'),
-                    # torch.load(self.load_dir + "/model.pt", map_location=lambda storage, loc: storage), #some how it only work this way for me
                 )
                 self.optimizer.load_state_dict(
                     torch.load(self.load_dir + "/optimizer.pt", map_location='cpu'),
-                    # torch.load(self.load_dir + "/optimizer.pt", map_location=lambda storage, loc: storage), #some how it only work this way for me
                 )
 
         self.batch_count = 0
@@ -166,8 +164,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--save_dir', type=str, help="directory to save models")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
-    parser.add_argument('--capture_set_train_dir', type=str, help="path to train captured data")
-    parser.add_argument('--capture_set_test_dir', type=str, help="path to test captured data")
+    parser.add_argument('--train_capture_set_dir', type=str, help="path to train captured data")
+    parser.add_argument('--test_capture_set_dir', type=str, help="path to test captured data")
 
     parser.add_argument('--cuda', type=str2bool, help="config override")
 
