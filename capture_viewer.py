@@ -29,6 +29,7 @@ _cache = {}
 
 def fetch_capture(capture):
     if capture not in _cache:
+        print("Loading capture: path={}".format(os.path.join(_root_path, capture)))
         _cache[capture] = Capture(os.path.join(_root_path, capture))
     return _cache[capture]
 
