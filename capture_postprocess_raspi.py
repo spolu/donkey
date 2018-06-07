@@ -19,7 +19,7 @@ NOISE_SAMPLES = 20
 NOISE_ANGLE_SCALE = 0.2
 NOISE_SPEED_SCALE = 0.1
 
-LOSS_LIMIT = 0.2
+LOSS_LIMIT = 0.5
 
 _capture = None
 _track = None
