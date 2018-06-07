@@ -85,7 +85,7 @@ def integrate_raspi():
     print("Starting direct integration...")
 
     angles, positions = integrate(
-        0, _capture.__len__(),
+        0, _capture.size(),
         math.pi,
         np.array([0,0,0]),
         _speed,

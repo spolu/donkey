@@ -158,7 +158,7 @@ def course_correct(segment):
     angles, speeds, positions = integrate(
         noises,
         _segments[segment][0],
-        _capture.__len__(),
+        _capture.size(),
         # _segments[segment][0],
         # _segments[segment][1] + 1,
         start_angle=_start_angle,
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     assert 'annotated_track_progress' in _capture.get_item(0)
 
     last = 0
-    for i in range(_capture.__len__()):
+    for i in range(_capture.size()):
         if ('annotated_track_progress' in _capture.get_item(i) and
                 'annotated_track_position' in _capture.get_item(i)):
             if i == 0:

@@ -78,4 +78,4 @@ if __name__ == "__main__":
     assert args.track is not None
     _track = Track(args.track)
 
-    plot_inputs(0,_capture.__len__())
+    plot_inputs(0,_capture.size())

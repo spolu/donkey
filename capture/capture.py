@@ -201,11 +201,9 @@ class CaptureSet(data.Dataset):
         self.data_dir = data_dir
         self.device = device
 
-        self.dataset_len = 0
         for d in [os.path.join(self.data_dir, s) for s in next(os.walk(self.data_dir))[1]]:
             c = Capture(d, load=True, device=self.device)
             self.captures.append(c)
-            self.dataset_len += c.__len__()
 
     def size(self):
         return len(self.captures)

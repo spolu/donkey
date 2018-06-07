@@ -13,6 +13,7 @@ from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from capture import Capture
+from track import Track
 
 ANNOTATION_FREQUENCY = 1000
 OFF_TRACK_DISTANCE = 6.0
@@ -80,21 +81,21 @@ def process_telemetry(telemetry):
         'time': time,
         'simulation_angular_velocity': angular_velocity.tolist(),
         'simulation_acceleration': acceleration.tolist(),
-        'reference_progress': progress,
+        'reference_progress': track_progress,
         'reference_track_position': track_position,
         'reference_track_angle': track_angle,
     }
 
     # Annotate every ANNOTATION_FREQUENCY the capture with the reference value
     # while in simulation.
-    if _capture.__len__() % ANNOTATION_FREQUENCY == 0:
-        data['annotated_progress'] = progress
+    if _capture.size() % ANNOTATION_FREQUENCY == 0:
+        data['annotated_progress'] = track_progress
         data['annotated_track_position'] = track_position
 
     _capture.add_item(camera_raw, data)
 
     _observation = {
-        'progress': progress,
+        'progress': track_progress,
         'track_position': track_position,
         'time': time,
         'track_linear_speed': track_linear_speed,
@@ -178,7 +179,7 @@ if __name__ == "__main__":
         cfg.get('simulation_capture_frame_rate'),
         process_telemetry,
     )
-    _track = simulation.Track(cfg.get('track_name'))
+    _track = Track(cfg.get('track_name'))
     _simulation.start(_track)
 
     t = threading.Thread(target = run_server)

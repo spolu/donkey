@@ -195,7 +195,7 @@ class Trainer:
             if self.episode % 5 == 0:
                 # Saving capture.
                 print("Saving capture...")
-                for j in range(capture.__len__()):
+                for j in range(capture.size()):
                     if j < len(progresses):
                         capture.update_item(j, {
                             'integrated_progress': progresses[j].item(),
@@ -250,7 +250,7 @@ class Trainer:
 
                 # Saving capture.
                 print("Saving capture...")
-                for j in range(capture.__len__()):
+                for j in range(capture.size()):
                     if j < len(progresses):
                         capture.update_item(j, {
                             'integrated_progress': progresses[j].item(),
