@@ -76,11 +76,17 @@ var reference_refresh = function() {
 
 var inferred_refresh = function() {
   $.get("/track/" + track + "/capture/" + capture + "/inferred", function(data) {
-    for (var p in data) {
-      ctxTrack.fillStyle="#00FF00";
+    for (var p in data['inferred']) {
+      if (max !== null && data['indices'][p] >= max) {
+        break;
+      }
+      if (min !== null && data['indices'][p] <= min) {
+        continue
+      }
+      ctxTrack.fillStyle="orange";
       ctxTrack.fillRect(
-        Math.trunc(SCALE * data[p][0]) + DX - 2,
-        Math.trunc(SCALE * -data[p][2]) + DY - 2,
+        Math.trunc(SCALE * data['inferred'][p][0]) + DX - 2,
+        Math.trunc(SCALE * -data['inferred'][p][2]) + DY - 2,
         4,4
       );
     }

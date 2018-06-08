@@ -145,15 +145,21 @@ def inferred(track, capture):
 
     t = Track(track)
 
-    c = []
+    inferred = []
+    indices = []
+
     for i in range(capture.size()):
         if 'inferred_track_progress' in capture.get_item(i):
-            c.append(t.invert(
+            indices.append(i)
+            inferred.append(t.invert(
                 capture.get_item(i)['inferred_track_progress'],
                 capture.get_item(i)['inferred_track_position'],
             ).tolist())
 
-    return jsonify(c)
+    return jsonify({
+        'inferred': inferred,
+        'indices': indices,
+    })
 
 @_app.route('/track/<track>/capture/<capture>/corrected', methods=['GET'])
 def corrected(track, capture):
