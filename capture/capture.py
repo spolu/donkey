@@ -149,7 +149,11 @@ class Capture(data.Dataset):
         d = self.data[index]
         for p in _stored_params:
             if p in data:
-                d[p] = data[p]
+                if data[p] is not None:
+                    d[p] = data[p]
+                else:
+                    if p in d:
+                        d.pop(p)
 
         if self.target_ready(index):
             t = []

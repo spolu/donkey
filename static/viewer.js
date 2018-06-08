@@ -44,11 +44,17 @@ var integrated_refresh = function() {
 
 var annotated_refresh = function() {
   $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
-    for (var p in data) {
+    for (var p in data['annotated']) {
+      if (max !== null && data['indices'][p] >= max) {
+        break;
+      }
+      if (min !== null && data['indices'][p] <= min) {
+        continue
+      }
       ctxTrack.fillStyle="#00FF00";
       ctxTrack.fillRect(
-        Math.trunc(SCALE * data[p][0]) + DX - 3,
-        Math.trunc(SCALE * -data[p][2]) + DY - 3,
+        Math.trunc(SCALE * data['annotated'][p][0]) + DX - 3,
+        Math.trunc(SCALE * -data['annotated'][p][2]) + DY - 3,
         6,6
       );
     }

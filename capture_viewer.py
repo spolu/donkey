@@ -90,17 +90,29 @@ def annotated(track, capture):
     t = Track(track)
 
     annotated = []
+    indices = []
     for i in range(capture.size()):
         if ('annotated_track_progress' in capture.get_item(i) and
                 'annotated_track_position' in capture.get_item(i)):
+            indices.append(i)
             annotated.append(
                 t.invert(
                     capture.get_item(i)['integrated_track_progress'],
                     capture.get_item(i)['integrated_track_position'],
                 ).tolist()
             )
+            indices.append(i)
+            annotated.append(
+                t.invert(
+                    capture.get_item(i)['corrected_track_progress'],
+                    capture.get_item(i)['corrected_track_position'],
+                ).tolist()
+            )
 
-    return jsonify(annotated)
+    return jsonify({
+        'annotated': annotated,
+        'indices': indices,
+    })
 
 @_app.route('/track/<track>/capture/<capture>/integrated', methods=['GET'])
 def integrated(track, capture):
