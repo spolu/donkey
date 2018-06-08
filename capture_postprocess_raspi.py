@@ -73,11 +73,11 @@ def integrate(
     positions = [start_position]
     for i in range(1, len(time)):
         positions.append(
-            positions[i-1] + [
+            positions[i-1] + np.array([
                 -np.sin(angles[i-1]) * speeds[i-1] * (time[i] - time[i-1]),
                 0,
                 -np.cos(angles[i-1]) * speeds[i-1] * (time[i] - time[i-1]),
-            ],
+            ]),
         )
 
     return angles, speeds, positions
@@ -180,8 +180,6 @@ def course_correct(segment):
         noises,
         _segments[segment][0],
         _capture.size(),
-        # _segments[segment][0],
-        # _segments[segment][1] + 1,
         start_angle=_start_angle,
         start_position=_start_position,
         start_speed=_start_speed,
@@ -190,9 +188,18 @@ def course_correct(segment):
     for i in range(len(positions)):
         track_progress = _track.progress(positions[i])
         track_position = _track.position(positions[i])
+
+        velocity = np.array([
+            -np.sin(angles[i]) * speeds[i],
+            0,
+            -np.cos(angles[i]) * speeds[i],
+        ])
+        track_angle = _track.angle(positions[i], velocity)
+
         d = {
             'corrected_track_progress': track_progress,
             'corrected_track_position': track_position,
+            'corrected_track_angle': track_angle,
         }
         _capture.update_item(_segments[segment][0] + i, d, save=False)
 
