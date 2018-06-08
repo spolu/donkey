@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from utils import Config, str2bool, Meter
-from capture import Capture
+from capture import Capture, CaptureSet
 from capture.models import ResNet
 
 # import pdb; pdb.set_trace()
@@ -42,7 +42,7 @@ class Trainer:
             raise Exception("Required argument: --test_capture_set_dir")
         self.test_capture_set = CaptureSet(args.test_capture_set_dir, self.device)
 
-        self.model = ResNet(self.config, 3).to(self.device)
+        self.model = ResNet(self.config, 3, 3).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir

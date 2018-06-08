@@ -119,11 +119,11 @@ class Capture(data.Dataset):
 
     def target_ready(self, index):
         d = self.data[index]
-
         target_ready = True
         for p in _target_params:
             if p not in d:
                 target_ready = False
+        return target_ready
 
     def add_item(self, camera, data, save=True):
         index = len(self.data)
