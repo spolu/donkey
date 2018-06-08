@@ -74,6 +74,19 @@ var reference_refresh = function() {
   })
 }
 
+var inferred_refresh = function() {
+  $.get("/track/" + track + "/capture/" + capture + "/inferred", function(data) {
+    for (var p in data) {
+      ctxTrack.fillStyle="#00FF00";
+      ctxTrack.fillRect(
+        Math.trunc(SCALE * data[p][0]) + DX - 2,
+        Math.trunc(SCALE * -data[p][2]) + DY - 2,
+        4,4
+      );
+    }
+  })
+}
+
 var corrected_refresh = function() {
   $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
     for (var p in data) {
@@ -179,6 +192,7 @@ window.onload = function() {
 
     annotated_refresh()
     reference_refresh()
+    inferred_refresh()
     corrected_refresh()
     integrated_refresh()
 

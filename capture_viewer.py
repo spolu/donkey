@@ -136,6 +136,25 @@ def integrated(track, capture):
 
     return jsonify(c)
 
+@_app.route('/track/<track>/capture/<capture>/inferred', methods=['GET'])
+def inferred(track, capture):
+    capture = fetch_capture(capture)
+
+    if capture.size() == 0:
+        abort(400)
+
+    t = Track(track)
+
+    c = []
+    for i in range(capture.size()):
+        if 'inferred_track_progress' in capture.get_item(i):
+            c.append(t.invert(
+                capture.get_item(i)['inferred_track_progress'],
+                capture.get_item(i)['inferred_track_position'],
+            ).tolist())
+
+    return jsonify(c)
+
 @_app.route('/track/<track>/capture/<capture>/corrected', methods=['GET'])
 def corrected(track, capture):
     capture = fetch_capture(capture)

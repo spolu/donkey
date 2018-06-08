@@ -31,7 +31,7 @@ _reward = None
 _done = None
 _track = None
 _model = {
-    'progress': 0.0,
+    'track_progress': 0.0,
     'track_position': 0.0,
     'track_angle': 0.0,
 }
@@ -45,21 +45,21 @@ def transition():
         'done': _done,
         'reward': _reward,
         'observation': {
-            'progress': _observations.progress,
+            'track_progress': _observations.track_progress,
             'track_position': _observations.track_position,
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
             'camera': _observations.camera_stack[0].tolist(),
             'position': _track.invert_position(
-                _observations.progress, _observations.track_position,
+                _observations.track_progress, _observations.track_position,
             ).tolist(),
         },
         'model': {
-            'progress': _model['progress'],
+            'track_progress': _model['track_progress'],
             'track_position': _model['track_position'],
             'track_angle': _model['track_angle'],
             'position': _track.invert_position(
-                _model['progress'],
+                _model['track_progress'],
                 _model['track_position'],
             ).tolist(),
         }
@@ -112,29 +112,29 @@ def run(cfg):
             _observations.camera_raw, device,
         ).unsqueeze(0))
 
-        progress = output[0][0].item()
+        track_progress = output[0][0].item()
         track_position = output[0][1].item()
         track_angle = output[0][2].item()
 
         _model = {
-            'progress': progress,
+            'track_progress': track_progress,
             'track_position': track_position,
             'track_angle': track_angle,
         }
 
         print("OUTPUT     {:.4f} {:.4f} {:.4f}".format(
-            progress,
+            track_progress,
             track_position,
             track_angle,
         ))
         print("SIMULATION {:.4f} {:.4f} {:.4f}".format(
-            _observations.progress,
+            _observations.track_progress,
             _observations.track_position,
             _observations.track_angles[0],
         ))
 
         steering, throttle_brake = planner.plan(
-            progress, track_position, track_angle,
+            track_progress, track_position, track_angle,
         )
 
         _observations, _reward, _done = _d.step([steering, throttle_brake])
