@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from simulation import Track
+from track import Track
 
 MAVG_LEN = 10
 

@@ -58,11 +58,11 @@ def drive(args):
     sense = Sense()
     V.add(sense, outputs=['sense/orientation'], threaded=True)
 
-    stack = ImgStack()
-    V.add(stack,
-          inputs=['cam/image_array'],
-          outputs=['cam/image_stack'],
-          threaded=False)
+    # stack = ImgStack()
+    # V.add(stack,
+    #       inputs=['cam/image_array'],
+    #       outputs=['cam/image_stack'],
+    #       threaded=False)
 
     ctr = LocalWebController()
     V.add(ctr,
