@@ -25,11 +25,13 @@ _capture = None
 def test_model(cfg):
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
+
     if cfg.get('cuda'):
         torch.cuda.manual_seed(cfg.get('seed'))
 
+    stack_size = cfg.get('stack_size')
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(cfg, 3, 3).to(device)
+    model = ResNet(cfg, 3 * stack_size, 1, 3).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -45,17 +47,23 @@ def test_model(cfg):
 
     model.eval()
 
-    for i in _capture.ready:
-        output = model(_capture.get_item(i)['input'].unsqueeze(0))
+    for i in range(stack_size, len(_capture.ready)):
+        arr = [_capture.get_item(_capture.ready[i])['input'] for i in range(i-stack_size, i)]
+        stack = torch.cat(arr, 0).unsqueeze(0)
+
+        output = model(
+            stack,
+            torch.zeros(stack.size(0), 1).to(device),
+        )
 
         track_progress = output[0][0].item()
         track_position = output[0][1].item()
         track_angle = output[0][2].item()
 
         print("INFERRED {} {} {}".format(
-            i, track_progress, track_position,
+            _capture.ready[i], track_progress, track_position,
         ))
-        _capture.update_item(i, {
+        _capture.update_item(_capture.ready[i], {
             'inferred_track_progress': track_progress,
             'inferred_track_position': track_position,
             'inferred_track_angle': track_angle,
@@ -73,7 +81,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    cfg = Config('configs/capture_trainer.json')
+    cfg = Config('configs/capture_trainer_stack.json')
 
     if args.cuda != None:
         cfg.override('cuda', args.cuda)
