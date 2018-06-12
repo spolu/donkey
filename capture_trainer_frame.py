@@ -94,7 +94,7 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.train_loader):
-            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1))
+            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1).to(self.device))
             loss = self.loss(outputs, values)
             loss_meter.update(loss.item())
 
@@ -118,7 +118,7 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.test_loader):
-            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1))
+            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1).to(self.device))
             loss = self.loss(outputs, values)
             loss_meter.update(loss.item())
 
