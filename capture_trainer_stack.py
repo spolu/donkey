@@ -22,7 +22,7 @@ from capture.models import ResNet
 
 class Trainer:
     def __init__(self, args):
-        self.config = Config('configs/capture_trainer.json')
+        self.config = Config('configs/capture_trainer_stack.json')
 
         if args.cuda != None:
             self.config.override('cuda', args.cuda)

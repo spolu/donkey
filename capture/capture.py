@@ -1,7 +1,9 @@
 import json
 import os
-import numpy as np
 import cv2
+import random
+
+import numpy as np
 
 import torch
 import torch.utils.data as data
@@ -247,7 +249,7 @@ class StackCaptureSet(CaptureSet):
         self.stack_indices = []
 
         for c in range(len(self.captures)):
-            for d in range(stack_size):
+            for d in range(1): # for now do not dropout
                 for j in range(stack_size+d, len(self.captures[c].ready)):
                     indices = [k for k in range(j-(stack_size+d), j)]
                     for k in range(d):
