@@ -202,7 +202,7 @@ class Capture(data.Dataset):
         return len(self.ready)
 
 """
-A CaptureSet is a set of captures.
+CaptureSet is a set of captures.
 """
 class CaptureSet(data.Dataset):
     def __init__(self, data_dir, device=torch.device('cpu')):
@@ -240,8 +240,8 @@ class CaptureSet(data.Dataset):
         return length
 
 """
-A StackCaptureSet is a set of captures whose data.Dataset interface returns
-stack frames with dropout (variable speeds despite fixed speed capture set).
+StackCaptureSet is a set of captures whose data.Dataset interface returns stack
+frames with dropout (variable speeds despite fixed speed capture set).
 """
 class StackCaptureSet(CaptureSet):
     def __init__(self, data_dir, stack_size=3, device=torch.device('cpu')):
@@ -263,7 +263,7 @@ class StackCaptureSet(CaptureSet):
     def __getitem__(self, index):
         stack = []
         for c in self.stack_indices[index]:
-            item = self.captures[c[0]].get_item(c[1]) 
+            item = self.captures[c[0]].get_item(c[1])
             stack.append(item['input'])
 
         last = self.captures[self.stack_indices[index][-1][0]].get_item(
@@ -274,3 +274,45 @@ class StackCaptureSet(CaptureSet):
 
     def __len__(self):
         return len(self.stack_indices)
+
+"""
+IMUStackCaptureSet is a set of captures whose data.Dataset interface returns
+stack frames with dropout (variable speeds despite fixed speed capture set).
+"""
+class IMUStackCaptureSet(StackCaptureSet):
+    def __init__(self, data_dir, stack_size=3, device=torch.device('cpu')):
+        super(IMUStackCaptureSet, self).__init__(
+            data_dir, stack_size=stack_size, device=device,
+        )
+    # data.Dataset interface (sum of captures camera/target ready frames)
+
+    def __getitem__(self, index):
+        stack = []
+        for c in self.stack_indices[index]:
+            item = self.captures[c[0]].get_item(c[1])
+            stack.append(item['input'])
+
+        last = self.captures[self.stack_indices[index][-1][0]].get_item(
+            self.stack_indices[index][-1][1]
+        )
+
+        imu_values = []
+        for i in range(1, len(self.stack_indices[index])):
+            added = 0
+            indices = self.stack_indices[index]
+            for j in reversed(range(indices[i-1][1], indices[i][1])):
+                if added == 3:
+                    break
+                item = self.captures[indices[i-1][0]].get_item(j)
+                imu_values.append(torch.tensor([
+                    last['time'] - item['time'],
+                    item['raspi_imu_angular_velocity'][0],
+                    item['raspi_imu_angular_velocity'][1],
+                    item['raspi_imu_angular_velocity'][2],
+                    item['raspi_imu_acceleration'][0],
+                    item['raspi_imu_acceleration'][1],
+                    item['raspi_imu_acceleration'][2],
+                ]).to(self.device))
+                added += 1
+
+        return (torch.cat(imu_values, 0), torch.cat(stack, 0)), last['target']
