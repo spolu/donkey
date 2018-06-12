@@ -46,7 +46,7 @@ class Trainer:
             raise Exception("Required argument: --test_capture_set_dir")
         self.test_capture_set = CaptureSet(args.test_capture_set_dir, self.device)
 
-        self.model = ResNet(self.config, 3, 3).to(self.device)
+        self.model = ResNet(self.config, 3, 0, 3).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir
@@ -94,8 +94,7 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.train_loader):
-            outputs = self.model(cameras)
-
+            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1))
             loss = self.loss(outputs, values)
             loss_meter.update(loss.item())
 
@@ -119,8 +118,7 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.test_loader):
-            outputs = self.model(cameras)
-
+            outputs = self.model(cameras, torch.zeros(cameras.size(0), 1))
             loss = self.loss(outputs, values)
             loss_meter.update(loss.item())
 

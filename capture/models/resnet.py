@@ -62,7 +62,7 @@ class HeadBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, config, stack_count, value_count):
+    def __init__(self, config, stack_count, scalar_count, value_count):
         super(ResNet, self).__init__()
         self.hidden_size = config.get('hidden_size')
         self.config = config
@@ -70,6 +70,7 @@ class ResNet(nn.Module):
 
         self.stack_count = stack_count
         self.value_count = value_count
+        self.scalar_count = scalar_count
 
         self.cv1 = nn.Conv2d(
             self.stack_count, 64,
@@ -86,11 +87,17 @@ class ResNet(nn.Module):
 
         self.avgp = nn.AvgPool2d(8, stride=1)
 
-        self.fc1 = nn.Linear(3*128, self.hidden_size)
+        self.fcv = nn.Linear(3*128, self.hidden_size)
+        self.fcs = nn.Linear(self.scalar_count, self.hidden_size)
 
-        # Value head.
+        self.fc1 = nn.Linear(2 * self.hidden_size, self.hidden_size)
+
         self.hd_v = HeadBlock(self.hidden_size, 'linear', self.value_count)
 
+        nn.init.xavier_normal_(self.fcv.weight.data, nn.init.calculate_gain('relu'))
+        self.fcv.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fcs.weight.data, nn.init.calculate_gain('relu'))
+        self.fcs.bias.data.fill_(0)
         nn.init.xavier_normal_(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
 
@@ -122,8 +129,8 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, inputs):
-        x = self.cv1(inputs)
+    def forward(self, visual_inputs, scalar_inputs):
+        x = self.cv1(visual_inputs)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxp(x)
@@ -132,14 +139,17 @@ class ResNet(nn.Module):
         x = self.rs12(x)
         x = self.rs21(x)
         x = self.rs22(x)
-        # x = self.rs3(x)
 
         x = self.avgp(x)
 
         x = x.view(x.size(0), -1)
+        x = self.fcv(x)
+        x = self.relu(x)
 
-        x = self.fc1(x)
+        y = self.fcs(scalar_inputs)
+        y = self.relu(y)
+
+        x = self.fc1(torch.cat((x, y), 1))
         x = self.relu(x)
 
         return self.hd_v(x)
-
