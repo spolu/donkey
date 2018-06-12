@@ -5,6 +5,5 @@
   "hidden_size": 128,
   "learning_rate": 0.001,
   "batch_size": 64,
-  "grad_norm_max": 1.0,
-  "sequence_size": 23
+  "stack_size": 3
 }

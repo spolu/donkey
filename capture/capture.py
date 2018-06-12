@@ -236,3 +236,39 @@ class CaptureSet(data.Dataset):
         for i in range(len(self.captures)):
             length += len(self.captures[i].ready)
         return length
+
+"""
+A StackCaptureSet is a set of captures whose data.Dataset interface returns
+stack frames with dropout (variable speeds despite fixed speed capture set).
+"""
+class StackCaptureSet(CaptureSet):
+    def __init__(self, data_dir, stack_size=3, device=torch.device('cpu')):
+        super(StackCaptureSet, self).__init__(data_dir, device=device)
+        self.stack_indices = []
+
+        for c in range(len(self.captures)):
+            for d in range(stack_size):
+                for j in range(stack_size+d, len(self.captures[c].ready)):
+                    indices = [k for k in range(j-(stack_size+d), j)]
+                    for k in range(d):
+                        indices.remove(random.choice(indices[:-1]))
+                    self.stack_indices.append(
+                        [[c, self.captures[c].ready[i]] for i in indices]
+                    )
+
+    # data.Dataset interface (sum of captures camera/target ready frames)
+
+    def __getitem__(self, index):
+        stack = []
+        for c in self.stack_indices[index]:
+            item = self.captures[c[0]].get_item(c[1]) 
+            stack.append(item['input'])
+
+        last = self.captures[self.stack_indices[index][-1][0]].get_item(
+            self.stack_indices[index][-1][1]
+        )
+
+        return torch.cat(stack, 0), last['target']
+
+    def __len__(self):
+        return len(self.stack_indices)
