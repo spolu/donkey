@@ -47,11 +47,9 @@ def drive(args):
 
     cfg.override('cuda', False)
 
-    # module = __import__('policies.' + cfg.get('policy'))
-    # policy = getattr(module, cfg.get('policy')).Policy(cfg)
-    
     #Initialize car
     V = raspi.vehicle.Vehicle()
+
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
@@ -60,7 +58,7 @@ def drive(args):
         V.add(lclzr,
           inputs=['cam/image_array'],
           outputs=['track_progress', 'track_position', 'track_angle'],
-          threaded=True)
+          threaded=False)
 
     if cfg is not None:
         plnr = Planner(cfg)

@@ -28,7 +28,7 @@ class Planner:
         # track_angle = np.mean(self.last_track_angle)
 
         steering = 0.0
-        throttle_brake = 0.5
+        throttle = 0.7
 
         position = self.track.invert(track_progress, track_position)
         unity = self.track.unity(position)
@@ -56,4 +56,4 @@ class Planner:
 
         print("COMMAND: {}".format(steering))
 
-        return steering, throttle_brake
+        return steering, throttle

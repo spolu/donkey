@@ -8,14 +8,7 @@ import torch.optim as optim
 from capture.models import ResNet
 
 class Localizer:
-    '''
-    Installation:
-    sudo apt-get install sense-hat
-
-    '''
-    def __init__(self, cfg, policy, load_dir ,poll_delay=0.0166):
-        self.on = True
-        self.poll_delay = poll_delay
+    def __init__(self, cfg, policy, load_dir):
         self.device = torch.device('cpu')
         self.stack_size = cfg.get('stack_size')
         self.model = ResNet(cfg, 3 * self.stack_size, 1, 3).to(self.device)
@@ -27,27 +20,25 @@ class Localizer:
             torch.load(load_dir + "/model.pt", map_location='cpu'),
         )
 
-    def update(self):
-        while self.on:
-            time.sleep(self.poll_delay)
+    def run(self, img_array = None):
+        width, height, _ = img_array.shape
 
-    def run_threaded(self, img_array = None):
-        arr = [img_array for i in range(0, self.stack_size)]
-        stack = torch.cat(arr, 0).unsqueeze(0)
+        if self.stack is None:
+            self.stack = torch.zeros(
+                self.stack_size * 3, width, height
+            ).to(self.device)
+
+        for ch in range(self.stack_size - 1):
+            self.stack[ch] = self.stack[ch+1]
+        self.stack[self.stack_size-1] = torch.tensor(img_array).to(self.device)
 
         output = self.model(
-            stack,
+            self.stack.unsqueeze(0),
             torch.zeros(self.stack_size, 1).to(self.device),
         )
+
         track_progress = output[0][0].item()
         track_position = output[0][1].item()
         track_angle = output[0][2].item()
-        return track_progress,track_position,track_angle
 
-    def shutdown(self):
-        self.on = False
-
-if __name__ == "__main__":
-    iter = 0
-    while iter < 100:
-        iter += 1
+        return track_progress, track_position, track_angle
