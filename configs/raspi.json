@@ -3,5 +3,6 @@
   "capture_model": "resnet",
   "cuda": false,
 
-  "hidden_size": 256
+  "hidden_size": 128,
+  "stack_size": 3
 }
