@@ -70,6 +70,12 @@ def drive(args):
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
+    if args.capture_dir is not None:
+        capturer = Capturer(args.capture_dir)
+        V.add(capturer,
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','phone/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
+              threaded=False)
+
     steering_controller = PCA9685(STEERING_CHANNEL)
     steering = PWMSteering(controller=steering_controller,
                                     left_pulse=STEERING_LEFT_PWM,
@@ -92,6 +98,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--config_path', type=str, help="path to the config file")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
+    parser.add_argument('--capture_dir', type=str, help="path to save run data")
 
     args = parser.parse_args()
 

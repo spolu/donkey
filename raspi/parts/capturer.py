@@ -24,6 +24,9 @@ class Capturer:
             throttle = None,
             position = None,
             sense = None,
+            track_progress = None, 
+            track_position = None,
+            track_angle = None
     ):
         '''
         API function needed to use as a Donkey part.
@@ -75,6 +78,9 @@ class Capturer:
                 'raspi_steering': angle,
                 'raspi_phone_position': phone_position.tolist(),
                 'raspi_sensehat_orientation': orientation.tolist(),
+                'inferred_track_progress': track_progress,
+                'inferred_track_position': track_position,
+                'inferred_track_angle': track_angle
             },
             save=False,
         )
