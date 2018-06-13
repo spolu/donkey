@@ -24,7 +24,7 @@ class Capturer:
             throttle = None,
             position = None,
             sense = None,
-            track_progress = None, 
+            track_progress = None,
             track_position = None,
             track_angle = None
     ):

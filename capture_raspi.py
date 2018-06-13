@@ -22,6 +22,7 @@ from raspi.parts.web_controller.web import LocalWebController
 from raspi.parts.imu import Mpu6050
 from raspi.parts.capturer import Capturer
 from raspi.parts.sense import Sense
+from raspi.parts.localizer import Localizer
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -70,10 +71,20 @@ def drive(args):
           outputs=['angle', 'throttle', 'phone/position'],
           threaded=True)
 
+    if args.load_dir is not None and args.config_path is not None:
+        cfg = Config(args.config_path)
+        cfg.override('cuda', False)
+
+        lclzr = Localizer(cfg, cfg, args.load_dir)
+        V.add(lclzr,
+          inputs=['cam/image_array'],
+          outputs=['track_progress', 'track_position', 'track_angle'],
+          threaded=False)
+
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','phone/position','sense/orientation'],
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','phone/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
@@ -96,6 +107,9 @@ def drive(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
+
+    parser.add_argument('--config_path', type=str, help="path to the config file")
+    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()

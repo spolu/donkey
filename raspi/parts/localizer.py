@@ -1,17 +1,19 @@
 import time
+import cv2
+
+import numpy as np
 
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim as optim
 
-from capture.models import ResNet
+from capture.models import ConvNet
 
 class Localizer:
     def __init__(self, cfg, policy, load_dir):
         self.device = torch.device('cpu')
-        self.stack_size = cfg.get('stack_size')
-        self.model = ResNet(cfg, 3 * self.stack_size, 1, 3).to(self.device)
+        self.model = ConvNet(cfg, 3, 3).to(self.device)
         self.stack = None
 
         if not load_dir:
@@ -22,27 +24,25 @@ class Localizer:
         )
 
     def run(self, img_array = None):
-        # width, height, _ = img_array.shape
+        b,g,r = cv2.split(img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
+        rgb_img = cv2.merge([r,g,b])
+        camera = cv2.imencode(".jpg", rgb_img)[1].tostring()
 
-        # if self.stack is None:
-        #     self.stack = torch.zeros(
-        #         self.stack_size * 3, width, height
-        #     ).to(self.device)
+        tensor = torch.tensor(cv2.imdecode(
+            np.fromstring(camera, np.uint8),
+            cv2.IMREAD_COLOR,
+        ), dtype=torch.float).to(self.device)
+        tensor = tensor / 127.5 - 1
+        tensor = tensor.transpose(0, 2)
 
-        # for ch in range(self.stack_size - 1):
-        #     self.stack[3*ch+0] = self.stack[3*(ch+1)+0]
-        #     self.stack[3*ch+1] = self.stack[3*(ch+1)+1]
-        #     self.stack[3*ch+2] = self.stack[3*(ch+1)+2]
-
-        camera = torch.tensor(img_array.transpose(2, 0, 1)).to(self.device)
-        # self.stack[3*(self.stack_size-1)+0] = camera[0]
-        # self.stack[3*(self.stack_size-1)+1] = camera[1]
-        # self.stack[3*(self.stack_size-1)+2] = camera[2]
-
-        output = self.model(camera.unsqueeze(0))
+        output = self.model(tensor.unsqueeze(0))
 
         track_progress = output[0][0].item()
         track_position = output[0][1].item()
         track_angle = output[0][2].item()
+
+        print(">> LOCALIZER {:.2f} {:.2f} {:.2f}".format(
+            track_progress, track_position, track_angle,
+        ))
 
         return track_progress, track_position, track_angle

@@ -31,7 +31,6 @@ class Planner:
 
         position = self.track.invert(track_progress, track_position)
         unity = self.track.unity(position)
-
         future_angle = self.track.angle(position, unity, 4) + track_angle
 
         print(">>>>>>>>>>>>>>> PROGRESS: {}".format(track_progress))
@@ -41,12 +40,12 @@ class Planner:
         print(">>>>>>>>>>>>>>> UNITY: {}".format(unity))
         print(">>>>>>>>>>>>>>> FUTURE ANGLE: {}".format(future_angle))
 
-        if future_angle > 0.25:
-            print("################### FUTURE_ANGLE STEERING")
-            steering = -min(1.0, 2 * future_angle)
-        elif future_angle < -0.25:
-            print("################### FUTURE_ANGLE STEERING")
-            steering = min(1.0, -2 * future_angle)
+        # if future_angle > 0.25:
+        #     print("################### FUTURE_ANGLE STEERING")
+        #     steering = -min(1.0, 2 * future_angle)
+        # elif future_angle < -0.25:
+        #     print("################### FUTURE_ANGLE STEERING")
+        #     steering = min(1.0, -2 * future_angle)
 
         if track_position > 0 and track_angle > 0:
             steering = -min(1.0, 5 * max(track_angle, track_position))
@@ -55,4 +54,4 @@ class Planner:
 
         print("COMMAND: {}".format(steering))
 
-        return steering, 0.0
+        return steering, 0.7
