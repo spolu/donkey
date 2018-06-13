@@ -1,2 +1,2 @@
 from capture.models.resnet import ResNet
-from capture.models.resnet import ConvNet
+from capture.models.convnet import ConvNet

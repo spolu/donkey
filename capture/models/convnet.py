@@ -28,7 +28,7 @@ class ConvNet(nn.Module):
         self.cv4 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=True)
         self.cv5 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=True)
 
-        self.fc1 = nn.Linear(3*128, 128)
+        self.fc1 = nn.Linear(8064, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, self.value_count)
 
