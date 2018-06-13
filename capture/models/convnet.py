@@ -12,17 +12,15 @@ import torch.optim as optim
 # import pdb; pdb.set_trace()
 
 class ConvNet(nn.Module):
-    def __init__(self, config, stack_count):
+    def __init__(self, config):
         super(ConvNet, self).__init__()
         self.config = config
-
-        self.stack_count = stack_count
 
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
 
-        self.cv1 = nn.Conv2d(self.stack_count, 24, kernel_size=5, stride=2, bias=True)
+        self.cv1 = nn.Conv2d(3, 24, kernel_size=5, stride=2, bias=True)
         self.bn1 = nn.BatchNorm2d(24)
         self.cv2 = nn.Conv2d(24, 32, kernel_size=5, stride=2, bias=True)
         self.cv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2, bias=True)
@@ -80,4 +78,4 @@ class ConvNet(nn.Module):
         progress = self.sigmoid(self.fc_progress(x))
         position = self.tanh(self.fc_position(x))
 
-        return x
+        return progress, position

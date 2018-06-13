@@ -46,7 +46,7 @@ class Trainer:
             raise Exception("Required argument: --test_capture_set_dir")
         self.test_capture_set = CaptureSet(args.test_capture_set_dir, self.device)
 
-        self.model = ConvNet(self.config, 3, 3).to(self.device)
+        self.model = ConvNet(self.config).to(self.device)
 
         self.save_dir = args.save_dir
         self.load_dir = args.load_dir
@@ -95,7 +95,7 @@ class Trainer:
 
         for i, (cameras, values) in enumerate(self.train_loader):
             progress, position = self.model(cameras)
-            loss = self.loss(torch.tensor([progress, position]), values)
+            loss = self.loss(torch.cat((progress, position), 1), values)
             loss_meter.update(loss.item())
 
             self.optimizer.zero_grad()
@@ -119,7 +119,7 @@ class Trainer:
 
         for i, (cameras, values) in enumerate(self.test_loader):
             progress, position = self.model(cameras)
-            loss = self.loss(torch.tensor([progress, position]), values)
+            loss = self.loss(torch.cat((progress, position), 1), values)
             loss_meter.update(loss.item())
 
         print(
