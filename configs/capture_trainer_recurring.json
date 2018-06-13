@@ -1,0 +1,8 @@
+{
+  "seed": 31,
+  "cuda": true,
+
+  "hidden_size": 128,
+  "learning_rate": 0.001,
+  "sequence_size": 16
+}

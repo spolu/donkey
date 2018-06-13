@@ -12,14 +12,15 @@ import torch.optim as optim
 # import pdb; pdb.set_trace()
 
 class ConvNet(nn.Module):
-    def __init__(self, config, stack_count, value_count):
+    def __init__(self, config, stack_count):
         super(ConvNet, self).__init__()
         self.config = config
 
         self.stack_count = stack_count
-        self.value_count = value_count
 
         self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
 
         self.cv1 = nn.Conv2d(self.stack_count, 24, kernel_size=5, stride=2, bias=True)
         self.bn1 = nn.BatchNorm2d(24)
@@ -30,14 +31,18 @@ class ConvNet(nn.Module):
 
         self.fc1 = nn.Linear(8064, 128)
         self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, self.value_count)
+        self.fc_progress = nn.Linear(64, 1)
+        self.fc_position = nn.Linear(64, 1)
 
         nn.init.xavier_normal_(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
         nn.init.xavier_normal_(self.fc2.weight.data, nn.init.calculate_gain('relu'))
         self.fc2.bias.data.fill_(0)
-        nn.init.xavier_normal_(self.fc3.weight.data, nn.init.calculate_gain('linear'))
-        self.fc3.bias.data.fill_(0)
+
+        nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('sigmoid'))
+        self.fc_progress.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('tanh'))
+        self.fc_position.bias.data.fill_(0)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -72,6 +77,7 @@ class ConvNet(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
 
-        x = self.fc3(x)
+        progress = self.sigmoid(self.fc_progress(x))
+        position = self.tanh(self.fc_position(x))
 
         return x

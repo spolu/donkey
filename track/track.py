@@ -169,7 +169,7 @@ class Track:
             t,
             w,
             [0,1,0],
-        ])) * np.arccos(np.dot(t, w))
+        ])) * np.arccos(np.dot(t, w)) / math.pi
 
     def divergence(self, position, offset=0):
         """

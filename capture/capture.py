@@ -40,7 +40,7 @@ _stored_params = [
 _target_params = [
     'corrected_track_progress',
     'corrected_track_position',
-    'corrected_track_angle',
+    # 'corrected_track_angle',
 ]
 
 def input_from_camera(camera, device):
