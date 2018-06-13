@@ -67,8 +67,8 @@ def drive(args):
             outputs=['angle', 'throttle'],
             threaded=False)
 
-    sense = Sense()
-    V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
+    # sense = Sense()
+    # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
     steering = PWMSteering(controller=steering_controller,

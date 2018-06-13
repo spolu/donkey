@@ -12,6 +12,7 @@ class Localizer:
         self.device = torch.device('cpu')
         self.stack_size = cfg.get('stack_size')
         self.model = ResNet(cfg, 3 * self.stack_size, 1, 3).to(self.device)
+        self.stack = None
 
         if not load_dir:
             raise Exception("Required argument: --load_dir")
@@ -29,12 +30,18 @@ class Localizer:
             ).to(self.device)
 
         for ch in range(self.stack_size - 1):
-            self.stack[ch] = self.stack[ch+1]
-        self.stack[self.stack_size-1] = torch.tensor(img_array).to(self.device)
+            self.stack[3*ch+0] = self.stack[3*(ch+1)+0]
+            self.stack[3*ch+1] = self.stack[3*(ch+1)+1]
+            self.stack[3*ch+2] = self.stack[3*(ch+1)+2]
+
+        camera = torch.tensor(img_array.transpose(2, 0, 1)).to(self.device)
+        self.stack[3*(self.stack_size-1)+0] = camera[0]
+        self.stack[3*(self.stack_size-1)+1] = camera[1]
+        self.stack[3*(self.stack_size-1)+2] = camera[2]
 
         output = self.model(
             self.stack.unsqueeze(0),
-            torch.zeros(self.stack_size, 1).to(self.device),
+            torch.zeros(1, 1).to(self.device),
         )
 
         track_progress = output[0][0].item()
