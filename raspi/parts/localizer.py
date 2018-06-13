@@ -22,27 +22,24 @@ class Localizer:
         )
 
     def run(self, img_array = None):
-        width, height, _ = img_array.shape
+        # width, height, _ = img_array.shape
 
-        if self.stack is None:
-            self.stack = torch.zeros(
-                self.stack_size * 3, width, height
-            ).to(self.device)
+        # if self.stack is None:
+        #     self.stack = torch.zeros(
+        #         self.stack_size * 3, width, height
+        #     ).to(self.device)
 
-        for ch in range(self.stack_size - 1):
-            self.stack[3*ch+0] = self.stack[3*(ch+1)+0]
-            self.stack[3*ch+1] = self.stack[3*(ch+1)+1]
-            self.stack[3*ch+2] = self.stack[3*(ch+1)+2]
+        # for ch in range(self.stack_size - 1):
+        #     self.stack[3*ch+0] = self.stack[3*(ch+1)+0]
+        #     self.stack[3*ch+1] = self.stack[3*(ch+1)+1]
+        #     self.stack[3*ch+2] = self.stack[3*(ch+1)+2]
 
         camera = torch.tensor(img_array.transpose(2, 0, 1)).to(self.device)
-        self.stack[3*(self.stack_size-1)+0] = camera[0]
-        self.stack[3*(self.stack_size-1)+1] = camera[1]
-        self.stack[3*(self.stack_size-1)+2] = camera[2]
+        # self.stack[3*(self.stack_size-1)+0] = camera[0]
+        # self.stack[3*(self.stack_size-1)+1] = camera[1]
+        # self.stack[3*(self.stack_size-1)+2] = camera[2]
 
-        output = self.model(
-            self.stack.unsqueeze(0),
-            torch.zeros(1, 1).to(self.device),
-        )
+        output = self.model(camera.unsqueeze(0))
 
         track_progress = output[0][0].item()
         track_position = output[0][1].item()

@@ -18,7 +18,7 @@ import torch.optim as optim
 from utils import Config, str2bool, Meter
 from capture import Capture
 from track import Track
-from capture.models import ResNet
+from capture.models import ResNet, ConvNet
 
 _capture = None
 
@@ -29,9 +29,8 @@ def test_model(cfg):
     if cfg.get('cuda'):
         torch.cuda.manual_seed(cfg.get('seed'))
 
-    stack_size = cfg.get('stack_size')
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ResNet(cfg, 3 * stack_size, 1, 3).to(device)
+    model = ConvNet(cfg, 3, 3).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -47,14 +46,9 @@ def test_model(cfg):
 
     model.eval()
 
-    for i in range(stack_size, len(_capture.ready)):
-        arr = [_capture.get_item(_capture.ready[i])['input'] for i in range(i-stack_size, i)]
-        stack = torch.cat(arr, 0).unsqueeze(0)
-
-        output = model(
-            stack,
-            torch.zeros(stack.size(0), 1).to(device),
-        )
+    for i in range(len(_capture.ready)):
+        camera = _capture.get_item(_capture.ready[i])['input']
+        output = model(camera.unsqueeze(0))
 
         track_progress = output[0][0].item()
         track_position = output[0][1].item()
