@@ -141,7 +141,8 @@ def step(sid, data):
 
 @_sio.on('reset')
 def reset(sid, data):
-    _d.reset()
+    pass
+# _d.reset()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
