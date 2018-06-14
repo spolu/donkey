@@ -21,7 +21,7 @@ class ConvNet(nn.Module):
         self.tanh = nn.Tanh()
 
         self.cv1 = nn.Conv2d(3, 24, kernel_size=5, stride=2, bias=True)
-        self.bn1 = nn.BatchNorm2d(24)
+        # self.bn1 = nn.BatchNorm2d(24)
         self.cv2 = nn.Conv2d(24, 32, kernel_size=5, stride=2, bias=True)
         self.cv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2, bias=True)
         self.cv4 = nn.Conv2d(64, 64, kernel_size=3, stride=1, bias=True)
@@ -52,7 +52,7 @@ class ConvNet(nn.Module):
 
     def forward(self, inputs):
         x = self.cv1(inputs)
-        x = self.bn1(x)
+        # x = self.bn1(x)
         x = self.relu(x)
 
         x = self.cv2(x)
