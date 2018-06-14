@@ -17,8 +17,6 @@ class ConvNet(nn.Module):
         self.config = config
 
         self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
-        self.tanh = nn.Tanh()
 
         self.cv1 = nn.Conv2d(3, 24, kernel_size=5, stride=2, bias=True)
         # self.bn1 = nn.BatchNorm2d(24)
@@ -37,9 +35,9 @@ class ConvNet(nn.Module):
         nn.init.xavier_normal_(self.fc2.weight.data, nn.init.calculate_gain('relu'))
         self.fc2.bias.data.fill_(0)
 
-        nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('sigmoid'))
+        nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('linear'))
         self.fc_progress.bias.data.fill_(0)
-        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('tanh'))
+        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('linear'))
         self.fc_position.bias.data.fill_(0)
 
         for m in self.modules():
@@ -75,7 +73,7 @@ class ConvNet(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
 
-        progress = self.sigmoid(self.fc_progress(x))
-        position = self.tanh(self.fc_position(x))
+        progress = self.fc_progress(x)
+        position = self.fc_position(x)
 
         return progress, position

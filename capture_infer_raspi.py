@@ -18,7 +18,7 @@ import torch.optim as optim
 from utils import Config, str2bool, Meter
 from capture import Capture
 from track import Track
-from capture.models import ResNet, ConvNet
+from capture.models import ConvNet
 
 _capture = None
 
@@ -30,7 +30,7 @@ def test_model(cfg):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     device = torch.device('cuda:0' if cfg.get('cuda') else 'cpu')
-    model = ConvNet(cfg, 3, 3).to(device)
+    model = ConvNet(cfg).to(device)
 
     if not args.load_dir:
         raise Exception("Required argument: --load_dir")
@@ -48,11 +48,11 @@ def test_model(cfg):
 
     for i in range(len(_capture.ready)):
         camera = _capture.get_item(_capture.ready[i])['input']
-        output = model(camera.unsqueeze(0))
+        progress, position = model(camera.unsqueeze(0))
 
-        track_progress = output[0][0].item()
-        track_position = output[0][1].item()
-        track_angle = output[0][2].item()
+        track_progress = progress[0][0].item()
+        track_position = position[0][0].item()
+        # track_angle = output[0][2].item()
 
         print("INFERRED {} {} {}".format(
             _capture.ready[i], track_progress, track_position,
@@ -60,7 +60,7 @@ def test_model(cfg):
         _capture.update_item(_capture.ready[i], {
             'inferred_track_progress': track_progress,
             'inferred_track_position': track_position,
-            'inferred_track_angle': track_angle,
+            # 'inferred_track_angle': track_angle,
         }, save=False)
 
     _capture.save()
