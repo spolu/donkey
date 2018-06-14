@@ -4,6 +4,71 @@ from pypozyx import (POZYX_POS_ALG_UWB_ONLY, POZYX_3D, Coordinates, POZYX_SUCCES
                      DeviceCoordinates, PozyxSerial, get_first_pozyx_serial_port, SingleRegister, DeviceList)
 from pythonosc.udp_client import SimpleUDPClient
 
+
+class Pozyxer:
+    def __init__(self, poll_delay=0.0166):
+# shortcut to not have to find out the port yourself
+        serial_port = get_first_pozyx_serial_port()
+        if serial_port is None:
+            print("No Pozyx connected. Check your USB cable or your driver!")
+            quit()
+
+        remote_id = 0x6069                 # remote device network ID
+        remote_id = 0x677d                 # remote device network ID
+        remote = False                   # whether to use a remote device
+        if not remote:
+            remote_id = None
+
+        use_processing = True             # enable to send position data through OSC
+        ip = "127.0.0.1"                   # IP for the OSC UDP
+        network_port = 8888                # network port for the OSC UDP
+        osc_udp_client = None
+        if use_processing:
+            osc_udp_client = SimpleUDPClient(ip, network_port)
+        # necessary data for calibration, change the IDs and coordinates yourself
+        anchors = [DeviceCoordinates(0x6e67, 1, Coordinates(700, -570, 2600)),
+                   DeviceCoordinates(0x6e64, 1, Coordinates(-3110, -1240, 1300)),
+                   DeviceCoordinates(0x6940, 1, Coordinates(-3110, -1075, -1720)),
+                   DeviceCoordinates(0x6935, 1, Coordinates(700, -570, -10225))]
+
+        algorithm = POZYX_POS_ALG_UWB_ONLY  # positioning algorithm to use
+        # dimension = POZYX_2_5D               # positioning dimension
+        dimension = POZYX_3D
+        height = 17                     # height of device, required in 2.5D positioning
+
+        pozyx = PozyxSerial(serial_port)
+        self.r = ReadyToLocalize(pozyx, osc_udp_client, anchors, algorithm, dimension, height, remote_id)
+        self.r.setup()
+        self.on = True
+        self.poll_delay = poll_delay
+
+
+    def poll(self):
+        self.r.position = Coordinates()
+        status = self.pozyx.doPositioning(
+            self.r.position, self.r.dimension, self.r.height, self.r.algorithm, remote_id=self.r.remote_id)
+        if status == POZYX_SUCCESS:
+            self.position = self.self.r.position)
+
+    def update(self):
+        while self.on:
+            self.poll()
+            time.sleep(self.poll_delay)
+
+    def run(self):
+        return self.position
+
+    def run_threaded(self):
+        pos = {}
+        pos['x'] = float(self.position.x)/1000.0
+        pos['y'] = float(self.position.y)/1000.0
+        pos['z'] = float(self.position.z)/1000.0
+        return pos
+
+    def shutdown(self):
+        self.on = False
+
+
 class ReadyToLocalize(object):
     """Continuously calls the Pozyx positioning function and prints its position."""
 
@@ -20,9 +85,8 @@ class ReadyToLocalize(object):
     def setup(self):
         """Sets up the Pozyx for positioning by calibrating its anchor list."""
         self.pozyx.clearDevices(self.remote_id)
-
         self.setAnchorsManual()
-        self.printPublishConfigurationResult()
+        # self.printPublishConfigurationResult()
 
     def loop(self):
         """Performs positioning and displays/exports the results."""
@@ -112,68 +176,6 @@ class ReadyToLocalize(object):
                     "/anchor", [anchor.network_id, int(anchor.coordinates.x), int(anchor.coordinates.y), int(anchor.coordinates.z)])
                 time.sleep(0.025)
 
-class Pozyxer:
-    def __init__(self, poll_delay=0.0166):
-# shortcut to not have to find out the port yourself
-        serial_port = get_first_pozyx_serial_port()
-        if serial_port is None:
-            print("No Pozyx connected. Check your USB cable or your driver!")
-            quit()
-
-        remote_id = 0x6069                 # remote device network ID
-        remote_id = 0x677d                 # remote device network ID
-        remote = False                   # whether to use a remote device
-        if not remote:
-            remote_id = None
-
-        use_processing = True             # enable to send position data through OSC
-        ip = "127.0.0.1"                   # IP for the OSC UDP
-        network_port = 8888                # network port for the OSC UDP
-        osc_udp_client = None
-        if use_processing:
-            osc_udp_client = SimpleUDPClient(ip, network_port)
-        # necessary data for calibration, change the IDs and coordinates yourself
-        anchors = [DeviceCoordinates(0x6e67, 1, Coordinates(700, -570, 2600)),
-                   DeviceCoordinates(0x6e64, 1, Coordinates(-3110, -1240, 1300)),
-                   DeviceCoordinates(0x6940, 1, Coordinates(-3110, -1075, -1720)),
-                   DeviceCoordinates(0x6935, 1, Coordinates(700, -570, -10225))]
-
-        algorithm = POZYX_POS_ALG_UWB_ONLY  # positioning algorithm to use
-        # dimension = POZYX_2_5D               # positioning dimension
-        dimension = POZYX_3D
-        height = 17                     # height of device, required in 2.5D positioning
-
-        pozyx = PozyxSerial(serial_port)
-        self.r = ReadyToLocalize(pozyx, osc_udp_client, anchors, algorithm, dimension, height, remote_id)
-        self.r.setup()
-        self.on = True
-        self.poll_delay = poll_delay
-
-
-    def poll(self):
-        self.position = Coordinates()
-        print("polling poxyz")
-        status = self.r.pozyx.doPositioning(
-            self.position, self.r.dimension, self.r.height, self.r.algorithm, remote_id=self.r.remote_id)
-
-    def update(self):
-        while self.on:
-            self.poll()
-            time.sleep(self.poll_delay)
-
-    def run(self):
-        return self.position
-
-    def run_threaded(self):
-        pos = {}
-        pos['x'] = float(self.position.x)/1000.0
-        pos['y'] = float(self.position.y)/1000.0
-        pos['z'] = float(self.position.z)/1000.0
-        return pos
-
-
-    def shutdown(self):
-        self.on = False
 
 
 if __name__ == "__main__":
