@@ -16,6 +16,7 @@ _stored_params = [
     'raspi_imu_acceleration',
     'raspi_sensehat_orientation',
     'raspi_phone_position',
+    'raspi_pozyx_position',
     'annotated_track_progress',
     'annotated_track_position',
     'annotated_track_angle',

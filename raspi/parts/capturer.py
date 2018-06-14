@@ -56,7 +56,8 @@ class Capturer:
             gyro['x'],
         ])
 
-        phone_position = np.array([
+        print(position)
+        pozyx_position = np.array([
             position['x'],
             position['y'],
             position['z'],
@@ -76,11 +77,8 @@ class Capturer:
                 'raspi_imu_acceleration': acceleration.tolist(),
                 'raspi_throttle': throttle,
                 'raspi_steering': angle,
-                'raspi_phone_position': phone_position.tolist(),
+                'raspi_pozyx_position': pozyx_position.tolist(),
                 'raspi_sensehat_orientation': orientation.tolist(),
-                'inferred_track_progress': track_progress,
-                'inferred_track_position': track_position,
-                'inferred_track_angle': track_angle
             },
             save=False,
         )

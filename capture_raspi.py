@@ -23,6 +23,7 @@ from raspi.parts.imu import Mpu6050
 from raspi.parts.capturer import Capturer
 from raspi.parts.sense import Sense
 from raspi.parts.localizer import Localizer
+from raspi.parts.pozyx import Pozyxer
 
 # VEHICLE
 DRIVE_LOOP_HZ = 10
@@ -81,10 +82,15 @@ def drive(args):
           outputs=['track_progress', 'track_position', 'track_angle'],
           threaded=False)
 
+    pozyxr = Pozyxer()
+    V.add(pozyxr,
+          outputs=['pozyx/position'],
+          threaded=True)
+
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','phone/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
+              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','pozyx/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
