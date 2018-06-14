@@ -24,7 +24,7 @@ var command = () => {
     c['steering'] = 1.0
   }
   if (keypressed['s']) {
-    c['brake'] = 1.0
+    c['brake'] = 0.0
   }
 
   return c

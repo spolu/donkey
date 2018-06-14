@@ -7,10 +7,11 @@ public class Car : MonoBehaviour, ICar {
 	public WheelCollider[] wheelColliders;
 	public Transform[] wheelMeshes;
     
-	public float maxBrakeTorque = 100f;
-	public float maxMotorTorque = 400f;
+	public float maxBrakeTorque = 10f;
+	public float maxMotorTorque = 2f;
 	public float maxSpeed = 3f;
-	public float maxSteer = 33.0f;
+	public float maxSteer = 44.0f;
+	public float wheelDampingRate = 0.001f;
 
 	public Transform centrOfMass;
 
@@ -161,7 +162,7 @@ public class Car : MonoBehaviour, ICar {
 			}
 
 			wc.brakeTorque = maxBrakeTorque * brake;
-			wc.wheelDampingRate = 5f;
+			wc.wheelDampingRate = wheelDampingRate;
 		}
 
 		acceleration = (rb.velocity - prevVelocity) / Time.fixedDeltaTime;
