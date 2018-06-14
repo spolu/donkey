@@ -1,5 +1,9 @@
 var socket = io.connect("ws://127.0.0.1:9091")
 
+var SCALE = 80
+var DX = 450;
+var DY = 450;
+
 var keypressed = {
   w: false,
   a: false,
@@ -68,16 +72,16 @@ socket.on('transition', (message) => {
 
   ctxTrack.fillStyle="#000000";
   ctxTrack.fillRect(
-    Math.trunc(3 * message['observation']['position'][0]) + 300,
-    Math.trunc(3 * message['observation']['position'][2]) + 300,
+    Math.trunc(SCALE * message['observation']['position'][0]) + DX,
+    Math.trunc(SCALE * message['observation']['position'][2]) + DY,
     1,1
   );
 
   if (message['model']) {
     ctxTrack.fillStyle="#FF0000";
     ctxTrack.fillRect(
-      Math.trunc(3 * message['model']['position'][0]) + 300,
-      Math.trunc(3 * message['model']['position'][2]) + 300,
+      Math.trunc(SCALE * message['model']['position'][0]) + DX,
+      Math.trunc(SCALE * message['model']['position'][2]) + DY,
       1,1
     );
   }
