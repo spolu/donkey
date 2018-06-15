@@ -29,8 +29,8 @@ class Pozyxer:
         # Necessary data for calibration, change the IDs and coordinates yourself
         self.anchors = [
             DeviceCoordinates(0x6e67, 1, Coordinates(700, -570, 2600)),
-            DeviceCoordinates(0x6e64, 1, Coordinates(-3110, -1240, 1300)),
-            DeviceCoordinates(0x6940, 1, Coordinates(-3110, -1075, -1720)),
+            DeviceCoordinates(0x6e64, 1, Coordinates(-3110, -1325, 1320)),
+            DeviceCoordinates(0x6940, 1, Coordinates(-3110, -985, -1760)),
             DeviceCoordinates(0x6935, 1, Coordinates(700, -570, -10225)),
         ]
 
