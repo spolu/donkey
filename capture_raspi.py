@@ -22,7 +22,6 @@ from raspi.parts.web_controller.web import LocalWebController
 from raspi.parts.imu import Mpu6050
 from raspi.parts.capturer import Capturer
 from raspi.parts.sense import Sense
-from raspi.parts.localizer import Localizer
 from raspi.parts.pozyx import Pozyxer
 
 # VEHICLE
@@ -55,10 +54,10 @@ def drive(args):
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     imu = Mpu6050()
-    V.add(imu, outputs=['imu/acl', 'imu/gyr', 'imu/stack'], threaded=True)
+    V.add(imu, outputs=['imu/accel', 'imu/gyro', 'imu/stack'], threaded=True)
 
-    sense = Sense()
-    V.add(sense, outputs=['sense/orientation'], threaded=True)
+    # sense = Sense()
+    # V.add(sense, outputs=['sense/orientation'], threaded=True)
 
     # stack = ImgStack()
     # V.add(stack,
@@ -84,13 +83,23 @@ def drive(args):
 
     pozyxr = Pozyxer()
     V.add(pozyxr,
-          outputs=['pozyx/position'],
+          outputs=['pozyx/position', 'pozyx/stack'],
           threaded=True)
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','pozyx/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
+              inputs=[
+                  'angle',
+                  'throttle',
+                  'cam/image_array',
+                  'imu/accel',
+                  'imu/gyro',
+                  'imu/stack',
+                  'sense/orientation',
+                  'pozyx/position',
+                  'pozyx/stack',
+              ],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)

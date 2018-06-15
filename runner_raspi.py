@@ -73,7 +73,17 @@ def drive(args):
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
         V.add(capturer,
-              inputs=['cam/image_array','imu/acl', 'imu/gyr', 'imu/stack', 'angle', 'throttle','phone/position','sense/orientation','track_progress', 'track_position', 'track_angle'],
+              inputs=[
+                  'angle',
+                  'throttle',
+                  'cam/image_array',
+                  'imu/accel',
+                  'imu/gyro',
+                  'imu/stack',
+                  'sense/orientation',
+                  'pozyx/position',
+                  'pozyx/stack',
+              ],
               threaded=False)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
