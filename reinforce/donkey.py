@@ -7,14 +7,13 @@ import random
 import math
 
 from eventlet.green import threading
-from simulation import Track
+from track import Track
+from simulation import Simulation
 
 MAX_SPEED = 10.0
 
 STALL_SPEED = 0.1
 MAX_STALL_TIME = 10
-
-OFF_TRACK_DISTANCE = 6.0
 
 LAP_COUNT = 3
 PROGRESS_INCREMENT = 0.01
@@ -31,7 +30,16 @@ ANGLES_WINDOW = 5
 
 Observation = collections.namedtuple(
     'Observation',
-    'progress, time, track_angles, track_position, track_linear_speed, position, velocity, acceleration, camera_stack, camera_raw'
+    ('time '
+     'track_progress '
+     'track_position '
+     'track_angles '
+     'track_linear_speed '
+     'position '
+     'velocity '
+     'acceleration '
+     'camera_stack '
+     'camera_raw'),
 )
 
 class Donkey:
@@ -54,21 +62,22 @@ class Donkey:
         if self.track_randomized:
             self.track.randomize()
 
-        self.simulation = simulation.Simulation(
+        self.simulation = Simulation(
             True,
             self.simulation_headless,
             self.simulation_time_scale,
             self.simulation_step_interval,
             self.simulation_capture_frame_rate,
+            None,
         )
 
         self.last_reset_time = 0.0
         self.step_count = 0
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_progress = 0.0
+        self.last_advance = 0.0
         self.last_unstall_time = 0.0
-        self.last_rewarded_progress = 0.0
+        self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
         self.camera_stack = None
@@ -87,7 +96,9 @@ class Donkey:
         camera = camera / 127.5 - 1
 
         if self.camera_stack is None:
-            self.camera_stack = np.zeros((CAMERA_STACK_SIZE, CAMERA_WIDTH, CAMERA_HEIGHT))
+            self.camera_stack = np.zeros(
+                (CAMERA_STACK_SIZE, CAMERA_WIDTH, CAMERA_HEIGHT),
+            )
             for i in range(CAMERA_STACK_SIZE):
                 self.camera_stack[i] = np.copy(camera)
         else:
@@ -117,18 +128,19 @@ class Donkey:
         for i in range(ANGLES_WINDOW):
             track_angles.append(self.track.angle(position, velocity, i) / math.pi)
 
-        track_position = self.track.position(position) / OFF_TRACK_DISTANCE
+        track_position = self.track.position(position)
+        track_progress = self.track.progress(position)
+
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
         self.last_track_linear_speed = track_linear_speed
 
-        progress = self.track.progress(position) / self.track.length
         time = telemetry['time'] - self.last_reset_time
 
         return Observation(
-            progress,
             time,
-            track_angles,
+            track_progress,
             track_position,
+            track_angles,
             track_linear_speed,
             position,
             velocity,
@@ -149,19 +161,21 @@ class Donkey:
             telemetry['velocity']['z'],
         ])
 
-        progress = self.track.progress(position) / self.track.length
         time = telemetry['time'] - self.last_reset_time
+
+        track_progress = self.track.progress(position)
+        track_position = self.track.position(position)
+        track_advance = self.track.advance(position)
 
         track_linear_speed = self.track.linear_speed(position, velocity)
         track_lateral_speed = self.track.lateral_speed(position, velocity)
-        track_position = self.track.position(position)
 
         if self.reward_type == "speed":
             return (
                 2 * track_linear_speed -
                 track_lateral_speed -
                 np.linalg.norm(track_position)
-            ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+            ) / MAX_SPEED
 
         if self.reward_type == "speed_cap":
             if track_linear_speed > 2.0:
@@ -169,19 +183,19 @@ class Donkey:
                     - (track_linear_speed - 1.0) -
                     track_lateral_speed -
                     np.linalg.norm(track_position)
-                ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+                ) / MAX_SPEED
             else:
                 return (
                     4 * track_linear_speed -
                     track_lateral_speed -
                     np.linalg.norm(track_position)
-                ) / (MAX_SPEED * OFF_TRACK_DISTANCE)
+                ) / MAX_SPEED
 
 
         if self.reward_type == "time":
-            if (progress - self.last_rewarded_progress) > PROGRESS_INCREMENT:
-                self.last_rewarded_progress = progress
-                return 1.0 - (time - self.last_lap_time) / (progress * REFERENCE_LAP_TIME)
+            if (track_advance - self.last_rewarded_advance) > PROGRESS_INCREMENT:
+                self.last_rewarded_advance = track_advance
+                return 1.0 - (time - self.last_lap_time) / (track_advance * REFERENCE_LAP_TIME)
             return 0.0
 
         return 0.0
@@ -201,7 +215,7 @@ class Donkey:
         # If we're off track, stop.
         track_position = self.track.position(position)
         if self.track_off_reset:
-            if np.linalg.norm(track_position) > OFF_TRACK_DISTANCE:
+            if np.linalg.norm(track_position) > 1.0:
                 return True
 
         # If we stall (STALL_SPEED) for more than MAX_STALL_TIME then stop.
@@ -214,15 +228,15 @@ class Donkey:
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
-        progress = self.track.progress(position) / self.track.length
-        if self.last_progress > progress + 0.5:
+        track_advance = self.track.advance(position)
+        if self.last_advance > track_advance + 0.02:
             print("LAP TIME: {}".format(time - self.last_lap_time))
             if self.lap_count == 2:
                 return True
             self.lap_count += 1
             self.last_lap_time = time
-            self.last_rewarded_progress = 0.0
-        self.last_progress = progress
+            self.last_rewarded_advance = 0.0
+        self.last_advance = track_advance
 
         return False
 
@@ -249,9 +263,9 @@ class Donkey:
 
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_progress = 0.0
+        self.last_advance = 0.0
         self.last_unstall_time = 0.0
-        self.last_rewarded_progress = 0.0
+        self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
         self.camera_stack = None

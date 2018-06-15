@@ -9,6 +9,7 @@ from flask import Flask
 from eventlet.green import threading
 from utils import Config
 from track import Track
+from reinforce import Donkey
 
 sio = socketio.Server(logging=False, engineio_logger=False)
 app = Flask(__name__)
@@ -24,13 +25,13 @@ def transition():
         'done': _done,
         'reward': _reward,
         'observation': {
-            'progress': _observations.progress,
+            'track_progress': _observations.track_progress.tolist(),
             'track_position': _observations.track_position,
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
             'camera': _observations.camera_stack[0].tolist(),
-            'position': _track.invert_position(
-                _observations.progress, _observations.track_position,
+            'position': _track.invert(
+                _observations.track_progress, _observations.track_position,
             ).tolist(),
         },
     }

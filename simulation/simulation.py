@@ -44,7 +44,11 @@ def telemetry(sid, data):
     # print("Received telemetry: sid={} client_id={}".format(sid, data['id']))
 
     # if int(data['id']) == 0:
-    #     print("TIMELOG time={:.3f} fps={:.3f} last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} real_delta={:.3f} delta={:.3f} fixed_delta={:.3f} time_scale={:.3f}".format(
+    #     print("TIMELOG "
+    #           "time={:.3f} fps={:.3f} "
+    #           "last_resume={:.3f} last_pause={:.3f} last_telemetry={:.3f} "
+    #           "real_delta={:.3f} delta={:.3f} fixed_delta={:.3f} "
+    #           "time_scale={:.3f}".format(
     #         data['time'],
     #         data['fps'],
     #         data['last_resume'],
@@ -122,11 +126,21 @@ Simulation interface
 
 Command = collections.namedtuple(
     'Command',
-    'steering throttle brake',
+    ('steering '
+     'throttle '
+     'brake'),
 )
 
 class Simulation:
-    def __init__(self, launch, headless, time_scale, step_interval, capture_frame_rate, callback):
+    def __init__(
+            self,
+            launch,
+            headless,
+            time_scale,
+            step_interval,
+            capture_frame_rate,
+            callback,
+    ):
         global lock
         global clients
         self.launch = launch
@@ -169,7 +183,7 @@ class Simulation:
         if os.uname().sysname == 'Darwin':
             sim_path = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(__file__), 
+                    os.path.dirname(__file__),
                     'build/sim.app/Contents/MacOS/sim'
                 ),
             )
