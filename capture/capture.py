@@ -164,7 +164,11 @@ class Capture(data.Dataset):
         if self.target_ready(index):
             t = []
             for p in _target_params:
-                t += [d[p]]
+                if p == 'corrected_track_progress':
+                    t += [d[p][0]]
+                    t += [d[p][1]]
+                else:
+                    t += [d[p]]
             d['target'] = torch.tensor(t, dtype=torch.float).to(self.device)
 
         if save:

@@ -19,7 +19,7 @@ _track = None
 
 EPSILON = 0.10
 
-def postprocess_raspi_pozyx():
+def postprocess():
     # Integrate the path and update the _capture.
     print("Starting pozyx heuristic...")
 
@@ -30,7 +30,7 @@ def postprocess_raspi_pozyx():
         if 'raspi_pozyx_position' in _capture.get_item(i):
             position = np.array(_capture.get_item(i)['raspi_pozyx_position'])
             advance = _track.advance(position)
-            distance = np.linalg.norm(postion - last_position)
+            distance = np.linalg.norm(position - last_position)
 
             if distance > EPSILON and advance > last_advance:
                 last_position = (position + last_position) / 2.0
@@ -40,8 +40,13 @@ def postprocess_raspi_pozyx():
                 last_position = position
             last_advance = _track.advance(last_position)
 
+            _capture.update_item(i, {
+                'integrated_track_progress': _track.progress(position).tolist(),
+                'integrated_track_position': _track.position(position),
+            }, save=False)
+
         _capture.update_item(i, {
-            'corrected_track_progress': _track.progress(last_position),
+            'corrected_track_progress': _track.progress(last_position).tolist(),
             'corrected_track_position': _track.position(last_position),
         }, save=False)
 
@@ -62,4 +67,4 @@ if __name__ == "__main__":
     assert args.track is not None
     _track = Track(args.track)
 
-    postprocess_pozyx_raspi()
+    postprocess()
