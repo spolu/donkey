@@ -37,34 +37,45 @@ class Capturer:
         rgb_img = cv2.merge([r,g,b])
         camera = cv2.imencode(".jpg", rgb_img)[1].tostring()
 
-        '''
-        vertical vector is [1], keep the vector orientation direct
-        '''
-        acceleration = np.array([
-            imu_accel['y'],
-            imu_accel['z'],
-            imu_accel['x'],
-        ])
-        '''
-        vertical vector is [1], keep the vector orientation direct
-        '''
-        angular_velocity = np.array([
-            imu_gyro['y'],
-            imu_gyro['z'],
-            imu_gyro['x'],
-        ])
+        item = {
+            'time': t,
+            'raspi_throttle': throttle,
+            'raspi_steering': angle,
+        },
 
-        position = np.array([
-            pozyx_position['x'],
-            pozyx_position['y'],
-            pozyx_position['z'],
-        ])
+        if imu_accel is not None:
+            # vertical vector is [1], keep the vector orientation direct
+            acceleration = np.array([
+                imu_accel['y'],
+                imu_accel['z'],
+                imu_accel['x'],
+            ])
+            item['raspi_imu_acceleration'] = acceleration
 
-        orientation = np.array([
-            sense_orientation['roll'],
-            sense_orientation['yaw'],
-            sense_orientation['pitch'],
-        ])
+        if imu_gyro is not None:
+            # vertical vector is [1], keep the vector orientation direct
+            angular_velocity = np.array([
+                imu_gyro['y'],
+                imu_gyro['z'],
+                imu_gyro['x'],
+            ])
+            item['raspi_imu_angular_velocity'] = angular_velocity
+
+        if pozyx_position is not None:
+            position = np.array([
+                pozyx_position['x'],
+                pozyx_position['y'],
+                pozyx_position['z'],
+            ])
+            item['raspi_pozyz_position'] = position
+
+        if sense_orientation is not None:
+            orientation = np.array([
+                sense_orientation['roll'],
+                sense_orientation['yaw'],
+                sense_orientation['pitch'],
+            ])
+            item['raspi_sensehat_orientation'] = orientation
 
         items = []
 
@@ -99,23 +110,8 @@ class Capturer:
         items.sort(key=lambda it: it['time'])
 
         for it in items:
-            self.capture.add_item(
-                None, it, save=False
-            )
-
-        self.capture.add_item(
-            camera,
-            {
-                'time': t,
-                'raspi_throttle': throttle,
-                'raspi_steering': angle,
-                'raspi_imu_angular_velocity': angular_velocity.tolist(),
-                'raspi_imu_acceleration': acceleration.tolist(),
-                'raspi_pozyx_position': position.tolist(),
-                'raspi_sensehat_orientation': orientation.tolist(),
-            },
-            save=False,
-        )
+            self.capture.add_item(None, it, save=False)
+        self.capture.add_item(camera, item, save=False)
 
     def shutdown(self):
         self.capture.save()

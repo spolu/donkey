@@ -17,68 +17,17 @@ from track import Track
 _capture = None
 _track = None
 
-
-def integrate(
-        start,
-        end,
-        start_angle,
-        start_position,
-        start_speed,
-):
-    time = [_capture.get_item(i)['time'] for i in range(start, end)]
-    # orientation = [_capture.get_item(i)['raspi_sensehat_orientation'] for i in range(start, end)]
-    angular_velocity = [_capture.get_item(i)['raspi_imu_angular_velocity'] for i in range(start, end)]
-    acceleration = [_capture.get_item(i)['raspi_imu_acceleration'] for i in range(start, end)]
-
-    # angles = [start_angle]
-    # for i in range(1, len(time)):
-    #     angles.append(orientation[i][1] - orientation[0][1] + start_angle)
-
-    angles = [start_angle]
-    for i in range(1, len(time)):
-        # print("ANGULAR_VELOCITY: {}".format(angular_velocity[i][1]))
-        angles.append(angles[i-1] - angular_velocity[i][1] / 57.2958 * (time[i] - time[i-1]))
-
-    speeds = [start_speed]
-    for i in range(1, len(time)):
-        # print("{}".format(acceleration[i][0]))
-        # speeds.append(speeds[i-1] + acceleration[i][0] * (time[i] - time[i-1]))
-        speeds.append(start_speed)
-
-    positions = [start_position]
-    for i in range(1, len(time)):
-        positions.append(
-            positions[i-1] + [
-                -np.sin(angles[i-1]) * speeds[i-1] * (time[i] - time[i-1]),
-                0,
-                -np.cos(angles[i-1]) * speeds[i-1] * (time[i] - time[i-1]),
-            ],
-        )
-        # print("POSITION: {}".format(positions[i-1]))
-
-    # for i in range(1, len(angles)):
-    #     print("{},{},{},{},{}".format(
-    #         time[i-1],
-    #         time[i],
-    #         orientation[i][0],
-    #         orientation[i][1],
-    #         orientation[i][2],
-    #     ))
-    # for i in range(1, len(angles)):
-    #     print("{},{},{},{},{}".format(
-    #         time[i-1],
-    #         time[i],
-    #         angular_velocity[i][0],
-    #         angular_velocity[i][1],
-    #         angular_velocity[i][2],
-    #     ))
-
-
-    return angles, positions
-
 def postprocess_raspi_pozyx():
     # Integrate the path and update the _capture.
     print("Starting pozyx heuristic...")
+
+    self.position = np.array([0,0,0])
+
+    for i in range(_capture.size()):
+        if 'raspi_pozyx_position' in _capture.get_item(i):
+            last = np.array(_capture.get_item(i)['raspi_pozyx_position'])
+            distance = np.linalg.norm(last - self.position)
+
 
 
 
