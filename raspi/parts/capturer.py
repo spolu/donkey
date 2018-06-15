@@ -41,7 +41,7 @@ class Capturer:
             'time': t,
             'raspi_throttle': throttle,
             'raspi_steering': angle,
-        },
+        }
 
         if imu_accel is not None:
             # vertical vector is [1], keep the vector orientation direct
@@ -50,7 +50,7 @@ class Capturer:
                 imu_accel['z'],
                 imu_accel['x'],
             ])
-            item['raspi_imu_acceleration'] = acceleration
+            item['raspi_imu_acceleration'] = acceleration.tolist()
 
         if imu_gyro is not None:
             # vertical vector is [1], keep the vector orientation direct
@@ -59,7 +59,7 @@ class Capturer:
                 imu_gyro['z'],
                 imu_gyro['x'],
             ])
-            item['raspi_imu_angular_velocity'] = angular_velocity
+            item['raspi_imu_angular_velocity'] = angular_velocity.tolist()
 
         if pozyx_position is not None:
             position = np.array([
@@ -67,7 +67,7 @@ class Capturer:
                 pozyx_position['y'],
                 pozyx_position['z'],
             ])
-            item['raspi_pozyz_position'] = position
+            item['raspi_pozyz_position'] = position.tolist()
 
         if sense_orientation is not None:
             orientation = np.array([
@@ -75,7 +75,7 @@ class Capturer:
                 sense_orientation['yaw'],
                 sense_orientation['pitch'],
             ])
-            item['raspi_sensehat_orientation'] = orientation
+            item['raspi_sensehat_orientation'] = orientation.tolist()
 
         items = []
 
