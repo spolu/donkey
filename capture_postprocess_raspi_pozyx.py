@@ -17,36 +17,33 @@ from track import Track
 _capture = None
 _track = None
 
+EPSILON = 0.10
+
 def postprocess_raspi_pozyx():
     # Integrate the path and update the _capture.
     print("Starting pozyx heuristic...")
 
-    self.position = np.array([0,0,0])
+    last_position = np.array([0,0,0])
+    last_advance = _track.advance(last_position)
 
     for i in range(_capture.size()):
         if 'raspi_pozyx_position' in _capture.get_item(i):
-            last = np.array(_capture.get_item(i)['raspi_pozyx_position'])
-            distance = np.linalg.norm(last - self.position)
+            position = np.array(_capture.get_item(i)['raspi_pozyx_position'])
+            advance = _track.advance(position)
+            distance = np.linalg.norm(postion - last_position)
 
+            if distance > EPSILON and advance > last_advance:
+                last_position = (position + last_position) / 2.0
+            elif advance < last_advance:
+                last_position = last_position
+            else:
+                last_position = position
+            last_advance = _track.advance(last_position)
 
-
-
-    angles, positions = integrate(
-        0, _capture.size(),
-        math.pi,
-        np.array([0,0,0]),
-        _speed,
-    )
-    for i in range(len(positions)):
-        track_progress = _track.progress(positions[i])
-        track_position = _track.position(positions[i])
-        d = {
-            'integrated_track_progress': track_progress,
-            'integrated_track_position': track_position,
-            'corrected_track_progress': track_progress,
-            'corrected_track_position': track_position,
-        }
-        _capture.update_item(i, d, save=False)
+        _capture.update_item(i, {
+            'corrected_track_progress': _track.progress(last_position),
+            'corrected_track_position': _track.position(last_position),
+        }, save=False)
 
     # Saving capture.
     print("Saving capture...")

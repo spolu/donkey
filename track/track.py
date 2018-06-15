@@ -204,7 +204,22 @@ class Track:
         v = self.points[closests[1]] - self.points[closests[0]]
         p -= np.linalg.norm(v) - np.dot(t, u)
 
-        return (p / self.track_length)
+        return np.array([
+            np.cos(2*math.pi*(p / self.track_length)),
+            np.sin(2*math.pi*(p / self.track_length)),
+        ])
+
+    def advance(self, position):
+        progress = self.progress(position)
+
+        if progress[1] > 0:
+            pp = np.arccos(progress[0])/(2*math.pi)
+        else:
+            pp = 1-np.arccos(progress[0])/(2*math.pi)
+        if pp == 1:
+            pp = 0
+
+        return pp
 
     def serialize(self):
         serialized = ''
@@ -213,17 +228,18 @@ class Track:
         return serialized
 
     def invert(self, progress, position):
-        if progress < 0:
-            progress = 0
-        if progress > 1:
-            progress = 1
+        assert np.shape(progress) == (2,)
+        assert progress[0] >= -1 and progress[0] <= 1
+        assert progress[1] >= -1 and progress[1] <= 1
 
-        if progress == 0:
-            progress += 0.000001
-        if progress == 1:
-            progress -= 0.000001
+        if progress[1] > 0:
+            pp = np.arccos(progress[0])/(2*math.pi)
+        else:
+            pp = 1-np.arccos(progress[0])/(2*math.pi)
+        if pp == 1:
+            pp = 0
 
-        l = progress * len(self.points)
+        l = pp * len(self.points)
         p = self.points[int(math.floor(l))]
 
         i = int(math.ceil(l))
@@ -316,9 +332,6 @@ class Script:
 
 if __name__ == "__main__":
     track = Track("newworld")
-    print(track.invert(0.01, 1.0))
-    print(track.invert(0.05, 1.0))
-    print(track.invert(0.1, 1.0))
-    print(track.invert(0.2, 1.0))
-    print(track.invert(0.3, 1.0))
-
+    print(track.invert(track.progress(np.array([0, 0, 0])), 1.0))
+    print(track.invert(track.progress(np.array([1.0, 0, 0])), track.position(np.array([1.0, 0, 0]))))
+    print(track.invert(track.progress(np.array([1.0, 0, 5.0])), track.position(np.array([1.0, 0, 5.0]))))
