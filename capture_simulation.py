@@ -1,6 +1,5 @@
 import time
 import socketio
-import numpy as np
 import base64
 import eventlet
 import eventlet.wsgi
@@ -8,6 +7,8 @@ import os
 import argparse
 import cv2
 import simulation
+
+import numpy as np
 
 from flask import Flask
 from eventlet.green import threading
