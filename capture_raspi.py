@@ -69,7 +69,7 @@ def drive(args):
     V.add(
         ctr,
         inputs=['cam/image_array'],
-        outputs=['angle', 'throttle', 'phone/position'],
+        outputs=['angle', 'throttle'],
         threaded=True,
     )
 

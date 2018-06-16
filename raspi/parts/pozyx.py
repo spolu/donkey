@@ -67,7 +67,7 @@ class Pozyxer:
             self.position = self.pozyx_position
             self.stack.append({
                 'time': time.time(),
-                'positon': {
+                'position': {
                     'x': float(self.position.x)/1000.0,
                     'y': float(self.position.y)/1000.0,
                     'z': float(self.position.z)/1000.0,
