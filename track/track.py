@@ -153,15 +153,6 @@ class Track:
         t = (v-u) / np.linalg.norm(v-u)
         return t
 
-    def position(self, position, offset=0):
-        """
-        Returns the position of the car on the track axis orthogonal.
-        """
-        closests = self.closests(position, offset)
-        u = self.points[closests[0]] - position
-        v = self.points[closests[1]] - position
-        return ((np.cross(u, v) / np.linalg.norm(u-v))[1] / self.track_width)
-
     def angle(self, position, velocity, offset=0):
         t = self.unity(position, offset)
         w = velocity / np.linalg.norm(velocity)
@@ -192,8 +183,9 @@ class Track:
         t = self.unity(position, offset)
         return np.cross(t, velocity)[1]
 
-    def progress(self, position):
+    def coordinates(self, position):
         closests = self.closests(position, 0)
+
         p = 0.0
         for i in range(closests[1]):
             p += np.linalg.norm(
@@ -204,38 +196,57 @@ class Track:
         v = self.points[closests[1]] - self.points[closests[0]]
         p -= np.linalg.norm(v) - np.dot(t, u)
 
+        u = self.points[closests[0]] - position
+        v = self.points[closests[1]] - position
+        l = (np.cross(u, v) / np.linalg.norm(u-v))[1]
+
         return np.array([
             np.cos(2*math.pi*(p / self.track_length)),
             np.sin(2*math.pi*(p / self.track_length)),
+            l / self.track_width,
         ])
 
-    def advance(self, position):
-        progress = self.progress(position)
+    def position(self, coordinates):
+        """
+        Returns the position of the car on the track axis orthogonal from its
+        track coordinates.
+        """
+        assert np.shape(coordinates) == (3,)
 
-        if progress[1] > 0:
-            pp = np.arccos(progress[0])/(2*math.pi)
+        return coordinates[2]
+
+    def progress(self, coordinates):
+        """
+        Returns the progress of the car along the track from its track
+        coordinates.
+        """
+        assert np.shape(coordinates) == (3,)
+
+        if coordinates[1] > 0:
+            pp = np.arccos(coordinates[0])/(2*math.pi)
         else:
-            pp = 1-np.arccos(progress[0])/(2*math.pi)
+            pp = 1-np.arccos(coordinates[0])/(2*math.pi)
         if pp == 1:
             pp = 0
 
         return pp
 
-    def serialize(self):
-        serialized = ''
-        for p in self.points:
-            serialized += ','.join(map(str, p)) + ';'
-        return serialized
+    def coordinates_from_progress(self, progress, position):
+        return np.array([
+            np.cos(2*math.pi*progress),
+            np.sin(2*math.pi*progress),
+            position,
+        ])
 
-    def invert(self, progress, position):
-        assert np.shape(progress) == (2,)
-        assert progress[0] >= -1 and progress[0] <= 1
-        assert progress[1] >= -1 and progress[1] <= 1
+    def invert(self, coordinates):
+        assert np.shape(coordinates) == (3,)
+        assert coordinates[0] >= -1 and coordinates[0] <= 1
+        assert coordinates[1] >= -1 and coordinates[1] <= 1
 
-        if progress[1] > 0:
-            pp = np.arccos(progress[0])/(2*math.pi)
+        if coordinates[1] > 0:
+            pp = np.arccos(coordinates[0])/(2*math.pi)
         else:
-            pp = 1-np.arccos(progress[0])/(2*math.pi)
+            pp = 1-np.arccos(coordinates[0])/(2*math.pi)
         if pp == 1:
             pp = 0
 
@@ -256,7 +267,14 @@ class Track:
         v[0] = u[2]
         v[2] = -u[0]
 
-        return ((1-k)*p + k*n + position * self.track_width * v)
+        return ((1-k)*p + k*n + coordinates[2] * self.track_width * v)
+
+    def serialize(self):
+        serialized = ''
+        for p in self.points:
+            serialized += ','.join(map(str, p)) + ';'
+        return serialized
+
 
 class ScriptElemState(Enum):
     STRAIGHT = 1

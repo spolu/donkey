@@ -10,6 +10,10 @@ import torch.utils.data as data
 
 _stored_params = [
     'time',
+    'simulation_throttle',
+    'simulation_steering',
+    'raspi_throttle',
+    'raspi_steering',
     'simulation_angular_velocity',
     'simulation_acceleration',
     'raspi_imu_angular_velocity',
@@ -17,31 +21,15 @@ _stored_params = [
     'raspi_sensehat_orientation',
     'raspi_phone_position',
     'raspi_pozyx_position',
-    'annotated_track_progress',
-    'annotated_track_position',
-    'annotated_track_angle',
-    'reference_track_progress',
-    'reference_track_position',
-    'reference_track_angle',
-    'integrated_track_progress',
-    'integrated_track_position',
-    'integrated_track_angle',
-    'corrected_track_progress',
-    'corrected_track_position',
-    'corrected_track_angle',
-    'inferred_track_progress',
-    'inferred_track_position',
-    'inferred_track_angle',
-    'simulation_throttle',
-    'simulation_steering',
-    'raspi_throttle',
-    'raspi_steering',
+    'annotated_track_coordinates',
+    'reference_track_coordinates',
+    'integrated_track_coordinates',
+    'corrected_track_coordinates',
+    'inferred_track_coordinates',
 ]
 
 _target_params = [
-    'corrected_track_progress',
-    'corrected_track_position',
-    # 'corrected_track_angle',
+    'corrected_track_coordinates',
 ]
 
 def input_from_camera(camera, device):

@@ -23,93 +23,39 @@ $.urlParam = function(name){
   }
 }
 
-var integrated_refresh = function() {
-  $.get("/track/" + track + "/capture/" + capture + "/integrated", function(data) {
-    for (var p in data) {
-      if (max !== null && p >= max) {
-        break;
-      }
-      if (min !== null && p <= min) {
-        continue
-      }
-      ctxTrack.fillStyle="#999999";
-      ctxTrack.fillRect(
-        Math.trunc(SCALE * data[p][0]) + DX,
-        Math.trunc(SCALE * -data[p][2]) + DY,
-        1,1
-      );
-    }
-  })
-}
-
-var annotated_refresh = function() {
-  $.get("/track/" + track + "/capture/" + capture + "/annotated", function(data) {
-    for (var p in data['annotated']) {
+var data_refresh = function(type, color, size) {
+  $.get("/track/" + track + "/capture/" + capture + "/" + type, function(data) {
+    for (var p in data[type]) {
       if (max !== null && data['indices'][p] >= max) {
         break;
       }
       if (min !== null && data['indices'][p] <= min) {
         continue
       }
-      ctxTrack.fillStyle="#00FF00";
+      ctxTrack.fillStyle=color;
       ctxTrack.fillRect(
-        Math.trunc(SCALE * data['annotated'][p][0]) + DX - 3,
-        Math.trunc(SCALE * -data['annotated'][p][2]) + DY - 3,
-        6,6
-      );
-    }
-  })
-}
-
-var reference_refresh = function() {
-  $.get("/track/" + track + "/capture/" + capture + "/reference", function(data) {
-    for (var p in data) {
-      ctxTrack.fillStyle="#00FF00";
-      ctxTrack.fillRect(
-        Math.trunc(SCALE * data[p][0]) + DX,
-        Math.trunc(SCALE * -data[p][2]) + DY,
-        1,1
+        Math.trunc(SCALE * data[type][p][0]) + DX - size,
+        Math.trunc(SCALE * -data[type][p][2]) + DY - size,
+        2*size,2*size
       );
     }
   })
 }
 
 var inferred_refresh = function() {
-  $.get("/track/" + track + "/capture/" + capture + "/inferred", function(data) {
-    for (var p in data['inferred']) {
-      if (max !== null && data['indices'][p] >= max) {
-        break;
-      }
-      if (min !== null && data['indices'][p] <= min) {
-        continue
-      }
-      ctxTrack.fillStyle="orange";
-      ctxTrack.fillRect(
-        Math.trunc(SCALE * data['inferred'][p][0]) + DX - 2,
-        Math.trunc(SCALE * -data['inferred'][p][2]) + DY - 2,
-        4,4
-      );
-    }
-  })
+  data_refresh('inferred', 'orange', 2)
+}
+
+var annotated_refresh = function() {
+  data_refresh('annotated', '#00FF00', 3)
 }
 
 var corrected_refresh = function() {
-  $.get("/track/" + track + "/capture/" + capture + "/corrected", function(data) {
-    for (var p in data) {
-      if (max !== null && p >= max) {
-        break;
-      }
-      if (min !== null && p <= min) {
-        continue
-      }
-      ctxTrack.fillStyle="#0000FF";
-      ctxTrack.fillRect(
-        Math.trunc(SCALE * data[p][0]) + DX - 1,
-        Math.trunc(SCALE * -data[p][2]) + DY - 1,
-        2,2
-      );
-    }
-  })
+  data_refresh('corrected', '#0000FF', 1)
+}
+
+var integrated_refresh = function() {
+  data_refresh('integrated', '#888', 1)
 }
 
 var landmark_refresh = function(l, color) {
@@ -197,7 +143,6 @@ window.onload = function() {
   if (capture !== null) {
 
     annotated_refresh()
-    reference_refresh()
     inferred_refresh()
     corrected_refresh()
     integrated_refresh()

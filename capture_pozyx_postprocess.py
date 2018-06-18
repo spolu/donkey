@@ -17,38 +17,66 @@ from track import Track
 _capture = None
 _track = None
 
-EPSILON = 0.10
+GAMMA = 1/10
 
 def postprocess():
     # Integrate the path and update the _capture.
-    print("Starting pozyx heuristic...")
+    print("Starting pozyx integration...")
 
-    last_position = np.array([0,0,0])
-    last_advance = _track.advance(last_position)
+    last_position = None
+    last_index = _capture.size()
+    running_position = None
 
-    for i in range(_capture.size()):
+    for i in reversed(range(_capture.size())):
         if 'raspi_pozyx_position' in _capture.get_item(i):
-            position = np.array(_capture.get_item(i)['raspi_pozyx_position'])
-            advance = _track.advance(position)
-            distance = np.linalg.norm(position - last_position)
+            next_position = np.array(_capture.get_item(i)['raspi_pozyx_position'])
 
-            if distance > EPSILON and advance > last_advance:
-                last_position = (position + last_position) / 2.0
-            elif advance < last_advance:
-                last_position = last_position
-            else:
-                last_position = position
-            last_advance = _track.advance(last_position)
+            print("Processing position {}".format(i))
 
-            _capture.update_item(i, {
-                'integrated_track_progress': _track.progress(position).tolist(),
-                'integrated_track_position': _track.position(position),
-            }, save=False)
+            if last_position is not None:
+                for j in reversed(range(i, last_index)):
+                    p = (j-i)/(last_index-i)*last_position + \
+                        (last_index-j)/(last_index-i)*next_position
+                    track_coordinates = _track.coordinates(p)
+                    _capture.update_item(j, {
+                        'integrated_track_coordinates': track_coordinates.tolist(),
+                    }, save=False)
 
-        _capture.update_item(i, {
-            'corrected_track_progress': _track.progress(last_position).tolist(),
-            'corrected_track_position': _track.position(last_position),
-        }, save=False)
+                    if running_position is None:
+                        running_position = p
+                    else:
+                        running_position = (1-GAMMA) * running_position + GAMMA * p
+                    track_coordinates = _track.coordinates(running_position)
+                    _capture.update_item(j, {
+                        'corrected_track_coordinates': track_coordinates.tolist(),
+                    }, save=False)
+
+            last_position = next_position
+            last_index = i
+
+
+
+    # for i in reversed(range(_capture.size())):
+    #     if last_position is not None:
+    #     else:
+    #         if 'raspi_pozyx_position' in _capture.get_item(i):
+    #             position = np.array(_capture.get_item(i)['raspi_pozyx_position'])
+    #             track_advance = _track.advance(position)
+    #             track_position = _track.position(position)
+    #             track_progress = _track.progress(position)
+
+    #             last_position = track.position
+
+    #         if 'integrated_track_progress' in _capture.get_item(i):
+    #             last_position = _capture.get_item(i)['integrated_track_progress']
+    #             last_progress = _capture.get_item(i)['integrated_track_progress']
+
+
+    #     if last_position is not None:
+    #         _capture.update_item(i, {
+    #             'corrected_track_progress': _track.progress(last_position).tolist(),
+    #             'corrected_track_position': _track.position(last_position),
+    #         }, save=False)
 
     # Saving capture.
     print("Saving capture...")

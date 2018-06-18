@@ -73,9 +73,13 @@ def annotate(track, capture, index, landmark):
     if 'camera' not in capture.get_item(index):
         abort(400)
 
+    track_coordinates = t.coordinates_from_progress(
+        float(landmark)/TRACK_POINTS,
+        0.0,
+    )
+
     capture.update_item(index, {
-        'annotated_track_progress': float(landmark)/TRACK_POINTS,
-        'annotated_track_position': 0.0,
+        'annotated_track_coordinates': track_coordinates,
     }, save=True)
 
     return jsonify({})
@@ -92,20 +96,17 @@ def annotated(track, capture):
     annotated = []
     indices = []
     for i in range(capture.size()):
-        if ('annotated_track_progress' in capture.get_item(i) and
-                'annotated_track_position' in capture.get_item(i)):
+        if 'annotated_track_coordinates' in capture.get_item(i):
             indices.append(i)
             annotated.append(
                 t.invert(
-                    capture.get_item(i)['integrated_track_progress'],
-                    capture.get_item(i)['integrated_track_position'],
+                    capture.get_item(i)['integrated_track_coordinates'],
                 ).tolist()
             )
             indices.append(i)
             annotated.append(
                 t.invert(
-                    capture.get_item(i)['corrected_track_progress'],
-                    capture.get_item(i)['corrected_track_position'],
+                    capture.get_item(i)['corrected_track_coordinates'],
                 ).tolist()
             )
 
@@ -121,20 +122,22 @@ def integrated(track, capture):
     if capture.size() == 0:
         abort(400)
 
-    if 'integrated_track_progress' not in capture.get_item(0):
-        abort(400)
-
     t = Track(track)
 
-    c = []
+    integrated = []
+    indices = []
+
     for i in range(capture.size()):
-        if 'integrated_track_progress' in capture.get_item(i):
-            c.append(t.invert(
-                capture.get_item(i)['integrated_track_progress'],
-                capture.get_item(i)['integrated_track_position'],
+        if 'integrated_track_coordinates' in capture.get_item(i):
+            indices.append(i)
+            integrated.append(t.invert(
+                capture.get_item(i)['integrated_track_coordinates'],
             ).tolist())
 
-    return jsonify(c)
+    return jsonify({
+        'integrated': integrated,
+        'indices': indices,
+    })
 
 @_app.route('/track/<track>/capture/<capture>/inferred', methods=['GET'])
 def inferred(track, capture):
@@ -149,11 +152,10 @@ def inferred(track, capture):
     indices = []
 
     for i in range(capture.size()):
-        if 'inferred_track_progress' in capture.get_item(i):
+        if 'inferred_track_coordinates' in capture.get_item(i):
             indices.append(i)
             inferred.append(t.invert(
-                capture.get_item(i)['inferred_track_progress'],
-                capture.get_item(i)['inferred_track_position'],
+                capture.get_item(i)['inferred_track_coordinates'],
             ).tolist())
 
     return jsonify({
@@ -168,46 +170,31 @@ def corrected(track, capture):
     if capture.size() == 0:
         abort(400)
 
-    if 'corrected_track_progress' not in capture.get_item(0):
-        abort(400)
-
     t = Track(track)
 
-    return jsonify([
-        t.invert(
-            capture.get_item(i)['corrected_track_progress'],
-            capture.get_item(i)['corrected_track_position'],
-        ).tolist() for i in range(capture.size())
-    ])
+    corrected = []
+    indices = []
 
+    for i in range(capture.size()):
+        if 'corrected_track_coordinates' in capture.get_item(i):
+            indices.append(i)
+            corrected.append(t.invert(
+                capture.get_item(i)['corrected_track_coordinates'],
+            ).tolist())
 
-@_app.route('/track/<track>/capture/<capture>/reference', methods=['GET'])
-def reference(track, capture):
-    capture = fetch_capture(urllib.parse.unquote(capture))
-
-    if capture.size() == 0:
-        abort(400)
-
-    if 'reference_track_progress' not in capture.get_item(0):
-        abort(400)
-
-    t = Track(track)
-
-    return jsonify([
-        t.invert(
-            capture.get_item(i)['reference_track_progress'],
-            capture.get_item(i)['reference_track_position'],
-        ).tolist() for i in range(capture.size())
-    ])
+    return jsonify({
+        'corrected': corrected,
+        'indices': indices,
+    })
 
 @_app.route('/track/<track>/path', methods=['GET'])
 def track(track):
     t = Track(track)
 
     return jsonify({
-      'center': [t.invert(float(p)/TRACK_POINTS, 0).tolist() for p in range(TRACK_POINTS)],
-      'right': [t.invert(float(p)/TRACK_POINTS, 1.0).tolist() for p in range(TRACK_POINTS)],
-      'left': [t.invert(float(p)/TRACK_POINTS, -1.0).tolist() for p in range(TRACK_POINTS)],
+      'center': [t.invert(t.coordinates_from_progress(float(p)/TRACK_POINTS, 0)).tolist() for p in range(TRACK_POINTS)],
+      'right': [t.invert(t.coordinates_from_progress(float(p)/TRACK_POINTS, 1.0)).tolist() for p in range(TRACK_POINTS)],
+      'left': [t.invert(t.coordinates_from_progress(float(p)/TRACK_POINTS, -1.0)).tolist() for p in range(TRACK_POINTS)],
     })
 
 if __name__ == "__main__":
