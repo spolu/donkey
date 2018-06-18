@@ -21,6 +21,8 @@ from track import Track
 from capture.models import ConvNet
 
 _capture = None
+_track = None
+GAMMA = 1/5
 
 def test_model(cfg):
     torch.manual_seed(cfg.get('seed'))
@@ -46,18 +48,41 @@ def test_model(cfg):
 
     model.eval()
 
+    last_position = None
+    last_index = _capture.size()
+    running_position = None
+
     for i in range(len(_capture.ready)):
         camera = _capture.get_item(_capture.ready[i])['input']
         out = model(camera.unsqueeze(0))
 
         track_coordinates = out[0].data.numpy().tolist()
+        position = _track.invert(np.array(track_coordinates))
 
-        print("INFERRED {} {}".format(
-            _capture.ready[i], track_coordinates,
-        ))
-        _capture.update_item(_capture.ready[i], {
-            'inferred_track_coordinates': track_coordinates,
-        }, save=False)
+        if running_position is None:
+            running_position = position
+
+        if last_position is not None:
+            next_index = _capture.ready[i]
+            for j in range(last_index, next_index):
+                p = (j-last_index)/(next_index-last_index)*position + \
+                    (next_index-j)/(next_index-last_index)*last_position
+                running_position = (1-GAMMA) * running_position + GAMMA * p
+                track_coordinates = _track.coordinates(running_position)
+                _capture.update_item(j, {
+                    'inferred_track_coordinates': track_coordinates.tolist(),
+                }, save=False)
+
+        last_position = position
+        last_index = _capture.ready[i]
+
+
+        # print("INFERRED {} {}".format(
+        #     _capture.ready[i], track_coordinates,
+        # ))
+        # _capture.update_item(_capture.ready[i], {
+        #     'inferred_track_coordinates': track_coordinates,
+        # }, save=False)
 
     _capture.save()
 
@@ -78,5 +103,8 @@ if __name__ == "__main__":
 
     assert args.capture_dir is not None
     _capture = Capture(args.capture_dir, load=True)
+
+    assert args.track is not None
+    _track = Track(args.track)
 
     test_model(cfg)

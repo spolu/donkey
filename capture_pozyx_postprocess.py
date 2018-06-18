@@ -16,7 +16,6 @@ from track import Track
 
 _capture = None
 _track = None
-
 GAMMA = 1/10
 
 def postprocess():
