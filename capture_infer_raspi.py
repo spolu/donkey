@@ -48,19 +48,15 @@ def test_model(cfg):
 
     for i in range(len(_capture.ready)):
         camera = _capture.get_item(_capture.ready[i])['input']
-        progress, position = model(camera.unsqueeze(0))
+        out = model(camera.unsqueeze(0))
 
-        track_progress = progress[0][0].item()
-        track_position = position[0][0].item()
-        # track_angle = output[0][2].item()
+        track_coordinates = out[0].data.numpy().tolist()
 
-        print("INFERRED {} {} {}".format(
-            _capture.ready[i], track_progress, track_position,
+        print("INFERRED {} {}".format(
+            _capture.ready[i], track_coordinates,
         ))
         _capture.update_item(_capture.ready[i], {
-            'inferred_track_progress': track_progress,
-            'inferred_track_position': track_position,
-            # 'inferred_track_angle': track_angle,
+            'inferred_track_coordinates': track_coordinates,
         }, save=False)
 
     _capture.save()

@@ -7,8 +7,8 @@ var DY = 450;
 
 var track = null;
 var capture = null;
-var max = null
-var min = null
+var min = 0
+var delta = 9999
 
 var t = null;
 var ctxTrack = null;
@@ -26,10 +26,10 @@ $.urlParam = function(name){
 var data_refresh = function(type, color, size) {
   $.get("/track/" + track + "/capture/" + capture + "/" + type, function(data) {
     for (var p in data[type]) {
-      if (max !== null && data['indices'][p] >= max) {
+      if (data['indices'][p] >= min + delta) {
         break;
       }
-      if (min !== null && data['indices'][p] <= min) {
+      if(data['indices'][p] <= min) {
         continue
       }
       ctxTrack.fillStyle=color;
@@ -98,25 +98,7 @@ var landmarks_refresh = function() {
   })
 }
 
-window.onload = function() {
-
-  t = document.getElementById("track");
-  ctxTrack = t.getContext("2d");
-
-  track = $.urlParam('track');
-  capture = $.urlParam('capture');
-  if ($.urlParam('max') != null) {
-    max = parseInt($.urlParam('max'))
-  }
-  if ($.urlParam('min') != null) {
-    min = parseInt($.urlParam('min'))
-  }
-
-  if (track === null) {
-    window.alert('You must specify a track name as GET parameter "track"');
-    return;
-  }
-
+var track_refresh = function() {
   $.get("/track/" + track + "/path", function(data) {
     for (s in data) {
       for (var p in data[s]) {
@@ -139,17 +121,54 @@ window.onload = function() {
     }
     landmarks_refresh()
   })
+}
+
+var all_refresh = function(track) {
+  ctxTrack.fillStyle='white';
+  ctxTrack.fillRect(
+    0, 0, 800, 800
+  );
+
+  if (track) {
+    track_refresh()
+  }
+  annotated_refresh()
+  inferred_refresh()
+  corrected_refresh()
+  integrated_refresh()
+}
+
+window.onload = function() {
+
+  t = document.getElementById("track");
+  ctxTrack = t.getContext("2d");
+
+  track = $.urlParam('track');
+  capture = $.urlParam('capture');
+
+  if (track === null) {
+    window.alert('You must specify a track name as GET parameter "track"');
+    return;
+  }
+
+  track_refresh()
 
   if (capture !== null) {
-
-    annotated_refresh()
-    inferred_refresh()
-    corrected_refresh()
-    integrated_refresh()
+    all_refresh(false)
 
     $('#index').change(function() {
-      url = "/track/" + track + "/capture/" + capture + "/camera/" + $('#index').val() + ".jpeg"
+      url = "/track/" + track + "/capture/" + capture + "/camera/" + $('#index').val() + ".jpeg" +
+        "?" + (new Date()).getTime();
       $('#camera').css("background-image", "url(" + url + ")");
+    })
+
+    $('#min').change(function() {
+      min = parseInt($('#min').val())
+      all_refresh(true)
+    })
+    $('#delta').change(function() {
+      delta = parseInt($('#delta').val())
+      all_refresh(true)
     })
   }
 };
