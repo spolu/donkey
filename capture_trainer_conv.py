@@ -94,8 +94,8 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.train_loader):
-            progress, position = self.model(cameras)
-            loss = self.loss(torch.cat((progress, position), 1), values)
+            coordinates = self.model(cameras)
+            loss = self.loss(coordinates, values)
             loss_meter.update(loss.item())
 
             self.optimizer.zero_grad()
@@ -118,8 +118,8 @@ class Trainer:
         loss_meter = Meter()
 
         for i, (cameras, values) in enumerate(self.test_loader):
-            progress, position = self.model(cameras)
-            loss = self.loss(torch.cat((progress, position), 1), values)
+            coordinates = self.model(cameras)
+            loss = self.loss(coordinates, values)
             loss_meter.update(loss.item())
 
         print(

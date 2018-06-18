@@ -27,18 +27,18 @@ class ConvNet(nn.Module):
 
         self.fc1 = nn.Linear(8064, 128)
         self.fc2 = nn.Linear(128, 64)
-        self.fc_progress = nn.Linear(64, 1)
-        self.fc_position = nn.Linear(64, 1)
+        self.fc_v1 = nn.Linear(64, 2)
+        self.fc_v2 = nn.Linear(64, 1)
 
         nn.init.xavier_normal_(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
         nn.init.xavier_normal_(self.fc2.weight.data, nn.init.calculate_gain('relu'))
         self.fc2.bias.data.fill_(0)
 
-        nn.init.xavier_normal_(self.fc_progress.weight.data, nn.init.calculate_gain('linear'))
-        self.fc_progress.bias.data.fill_(0)
-        nn.init.xavier_normal_(self.fc_position.weight.data, nn.init.calculate_gain('linear'))
-        self.fc_position.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_v1.weight.data, nn.init.calculate_gain('tanh'))
+        self.fc_v1.bias.data.fill_(0)
+        nn.init.xavier_normal_(self.fc_v2.weight.data, nn.init.calculate_gain('linear'))
+        self.fc_v2.bias.data.fill_(0)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -73,7 +73,6 @@ class ConvNet(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
 
-        progress = self.fc_progress(x)
-        position = self.fc_position(x)
-
-        return progress, position
+        return torch.cat(
+            (F.tanh(self.fc_v1(x)), self.fc_v2(x)), 1,
+        )
