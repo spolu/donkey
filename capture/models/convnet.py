@@ -27,6 +27,9 @@ class ConvNet(nn.Module):
 
         self.fc1 = nn.Linear(8064, 128)
         self.fc2 = nn.Linear(128, 64)
+
+        self.dp1 = nn.Dropout(p=0.3)
+
         self.fc_v1 = nn.Linear(64, 2)
         self.fc_v2 = nn.Linear(64, 1)
 
@@ -72,6 +75,8 @@ class ConvNet(nn.Module):
 
         x = self.fc2(x)
         x = self.relu(x)
+
+        x = self.dp1(x)
 
         return torch.cat(
             (F.tanh(self.fc_v1(x)), self.fc_v2(x)), 1,
