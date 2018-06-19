@@ -22,8 +22,8 @@ PROGRESS_INCREMENT = 0.01
 REFERENCE_LAP_TIME = 100.0
 
 CAMERA_STACK_SIZE = 3
-CAMERA_WIDTH = 120
-CAMERA_HEIGHT = 160
+CAMERA_HEIGHT = 120
+CAMERA_WIDTH = 160
 
 CONTINUOUS_CONTROL_SIZE = 2
 DISCRETE_CONTROL_SIZE = 9
@@ -39,6 +39,7 @@ Observation = collections.namedtuple(
      'position '
      'velocity '
      'acceleration '
+     'camera '
      'camera_stack '
      'camera_raw'),
 )
@@ -98,7 +99,7 @@ class Donkey:
 
         if self.camera_stack is None:
             self.camera_stack = np.zeros(
-                (CAMERA_STACK_SIZE, CAMERA_WIDTH, CAMERA_HEIGHT),
+                (CAMERA_STACK_SIZE, CAMERA_HEIGHT, CAMERA_WIDTH),
             )
             for i in range(CAMERA_STACK_SIZE):
                 self.camera_stack[i] = np.copy(camera)
@@ -144,6 +145,7 @@ class Donkey:
             position,
             velocity,
             acceleration,
+            np.copy(camera),
             np.copy(self.camera_stack),
             camera_raw,
         )
