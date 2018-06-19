@@ -38,7 +38,7 @@ public class SimulationController : MonoBehaviour
 	private float fpsValue = 0.0f;
 	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
-	private float carStartY = 0.8f;
+	private float carStartY = 0.001f;
 
     private Vector3 prevVelocity = Vector3.zero;
 
@@ -181,7 +181,7 @@ public class SimulationController : MonoBehaviour
 				m.json.AddField("angular_velocity", angularVelocity);
 
 				Send (m);
-				// Pause ();
+				Pause ();
 			}
 		}
 
@@ -227,10 +227,10 @@ public class SimulationController : MonoBehaviour
 		lastResume = Time.time;
 		lastTelemetry = 0.0f;
 
-		//Parse track
+		// Parse track
 		string trackPath = ev.data.GetField("track_path").str;
 		float trackWidth = float.Parse(ev.data.GetField("track_width").str);
-
+        
 		// Redraw the track
 		roadBuilder.DestroyRoad();
 		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth);
@@ -253,7 +253,7 @@ public class SimulationController : MonoBehaviour
 		car.RequestThrottle (float.Parse(ev.data.GetField("throttle").str));
 		car.RequestBrake (float.Parse(ev.data.GetField("brake").str));
         
-		// Resume ();
+		Resume ();
 	}
 
 	void OnExit(SocketIOEvent ev)

@@ -31,15 +31,15 @@ ANGLES_WINDOW = 5
 Observation = collections.namedtuple(
     'Observation',
     ('time '
-     'track_progress '
-     'track_position '
+     'track_coordinates '
      'track_angles '
      'track_linear_speed '
      'position '
      'velocity '
      'acceleration '
      'camera_stack '
-     'camera_raw'),
+     'camera_raw '
+     'edges'),
 )
 
 class Donkey:
@@ -75,7 +75,7 @@ class Donkey:
         self.step_count = 0
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_advance = 0.0
+        self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
@@ -90,6 +90,9 @@ class Donkey:
         camera = cv2.imdecode(
             np.fromstring(camera_raw, np.uint8),
             cv2.IMREAD_GRAYSCALE,
+        ).astype(np.float)
+        edges = cv2.Canny(
+            camera.astype(np.uint8), 50, 150, apertureSize = 3,
         ).astype(np.float)
 
         # Scale, size is 120x160.
@@ -128,8 +131,7 @@ class Donkey:
         for i in range(ANGLES_WINDOW):
             track_angles.append(self.track.angle(position, velocity, i) / math.pi)
 
-        track_position = self.track.position(position)
-        track_progress = self.track.progress(position)
+        track_coordinates = self.track.coordinates(position)
 
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
         self.last_track_linear_speed = track_linear_speed
@@ -138,8 +140,7 @@ class Donkey:
 
         return Observation(
             time,
-            track_progress,
-            track_position,
+            track_coordinates,
             track_angles,
             track_linear_speed,
             position,
@@ -147,6 +148,7 @@ class Donkey:
             acceleration,
             np.copy(self.camera_stack),
             camera_raw,
+            edges,
         )
 
     def reward_from_telemetry(self, telemetry):
@@ -163,9 +165,9 @@ class Donkey:
 
         time = telemetry['time'] - self.last_reset_time
 
-        track_progress = self.track.progress(position)
-        track_position = self.track.position(position)
-        track_advance = self.track.advance(position)
+        track_coordinates = self.track.coordinates(position)
+        track_position = self.track.position(track_coordinates)
+        track_progress = self.track.progress(track_coordinates)
 
         track_linear_speed = self.track.linear_speed(position, velocity)
         track_lateral_speed = self.track.lateral_speed(position, velocity)
@@ -193,9 +195,9 @@ class Donkey:
 
 
         if self.reward_type == "time":
-            if (track_advance - self.last_rewarded_advance) > PROGRESS_INCREMENT:
-                self.last_rewarded_advance = track_advance
-                return 1.0 - (time - self.last_lap_time) / (track_advance * REFERENCE_LAP_TIME)
+            if (track_progress - self.last_rewarded_advance) > PROGRESS_INCREMENT:
+                self.last_rewarded_advance = track_progress
+                return 1.0 - (time - self.last_lap_time) / (track_progress * REFERENCE_LAP_TIME)
             return 0.0
 
         return 0.0
@@ -213,9 +215,11 @@ class Donkey:
         ])
 
         # If we're off track, stop.
-        track_position = self.track.position(position)
+        track_coordinates = self.track.coordinates(position)
+        track_position = self.track.position(track_coordinates)
         if self.track_off_reset:
             if np.linalg.norm(track_position) > 1.0:
+                print("RESET TRACK_POSITION: {}".format(track_position))
                 return True
 
         # If we stall (STALL_SPEED) for more than MAX_STALL_TIME then stop.
@@ -224,19 +228,29 @@ class Donkey:
         if track_linear_speed > STALL_SPEED:
             self.last_unstall_time = time
         elif (time - self.last_unstall_time > MAX_STALL_TIME):
+            print("RESET STALL: {} {}".format(
+                time - self.last_unstall_time,
+                track_linear_speed,
+            ))
             return True
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
-        track_advance = self.track.advance(position)
-        if self.last_advance > track_advance + 0.02:
+        track_coordinates = self.track.coordinates(position)
+        track_position = self.track.position(track_coordinates)
+        track_progress = self.track.progress(track_coordinates)
+
+        if self.last_progress > track_progress + 0.02:
             print("LAP TIME: {}".format(time - self.last_lap_time))
             if self.lap_count == 2:
+                print("RESET LAPCOUNT: {}".format(
+                    self.lap_count,
+                ))
                 return True
             self.lap_count += 1
             self.last_lap_time = time
             self.last_rewarded_advance = 0.0
-        self.last_advance = track_advance
+        self.last_progress = track_progress
 
         return False
 
@@ -263,7 +277,7 @@ class Donkey:
 
         self.lap_count = 0
         self.last_lap_time = 0.0
-        self.last_advance = 0.0
+        self.last_progress = 0.0
         self.last_unstall_time = 0.0
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
