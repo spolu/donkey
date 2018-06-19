@@ -12,9 +12,10 @@ from track import Track
 from simulation import Simulation
 
 MAX_SPEED = 10.0
-
 STALL_SPEED = 0.1
 MAX_STALL_TIME = 10
+
+MAX_OUTTRACK_TIME = 1
 
 LAP_COUNT = 3
 PROGRESS_INCREMENT = 0.01
@@ -77,6 +78,7 @@ class Donkey:
         self.last_lap_time = 0.0
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
+        self.last_intrack_time = 0.0
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
@@ -172,7 +174,8 @@ class Donkey:
             return (
                 2 * track_linear_speed -
                 track_lateral_speed -
-                np.linalg.norm(track_position)
+                np.linalg.norm(track_position) -
+                10 * max(0, np.linalg.norm(track_position) - 1.0)
             ) / MAX_SPEED
 
         if self.reward_type == "speed_cap":
@@ -180,7 +183,8 @@ class Donkey:
                 return (
                     - (track_linear_speed - 1.0) -
                     track_lateral_speed -
-                    np.linalg.norm(track_position)
+                    np.linalg.norm(track_position) -
+                    10 * max(0, np.linalg.norm(track_position) - 1.0)
                 ) / MAX_SPEED
             else:
                 return (
@@ -210,17 +214,25 @@ class Donkey:
             telemetry['velocity']['z'],
         ])
 
-        # If we're off track, stop.
+        time = telemetry['time'] - self.last_reset_time
+
         track_coordinates = self.track.coordinates(position)
         track_position = self.track.position(track_coordinates)
-        if self.track_off_reset:
-            if np.linalg.norm(track_position) > 1.0:
-                print("RESET TRACK_POSITION: {}".format(track_position))
+        track_progress = self.track.progress(track_coordinates)
+
+        # If we're off track for too long, stop
+        if np.linalg.norm(track_position) > 1.0:
+            if (time - self.last_intrack_time > MAX_OUTTRACK_TIME):
+                print("RESET OUTTRACK: {}".format(
+                    time - self.last_intrack_time,
+                    track_position,
+                ))
                 return True
+        else:
+            self.last_intrack_time = time
 
         # If we stall (STALL_SPEED) for more than MAX_STALL_TIME then stop.
         track_linear_speed = self.track.linear_speed(position, velocity)
-        time = telemetry['time'] - self.last_reset_time
         if track_linear_speed > STALL_SPEED:
             self.last_unstall_time = time
         elif (time - self.last_unstall_time > MAX_STALL_TIME):
@@ -232,10 +244,6 @@ class Donkey:
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
-        track_coordinates = self.track.coordinates(position)
-        track_position = self.track.position(track_coordinates)
-        track_progress = self.track.progress(track_coordinates)
-
         if self.last_progress > track_progress + 0.02:
             print("LAP TIME: {}".format(time - self.last_lap_time))
             if self.lap_count == 2:
@@ -275,6 +283,7 @@ class Donkey:
         self.last_lap_time = 0.0
         self.last_progress = 0.0
         self.last_unstall_time = 0.0
+        self.last_intrack_time = 0.0
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
