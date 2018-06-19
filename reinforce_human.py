@@ -1,10 +1,13 @@
 import time
+import cv2
 import socketio
 import argparse
 import eventlet
 import eventlet.wsgi
 import os
 import simulation
+
+import numpy as np
 
 from flask import Flask
 from eventlet.green import threading
@@ -22,6 +25,14 @@ _done = None
 _track = None
 
 def transition():
+    camera = cv2.imdecode(
+        np.fromstring(_observations.camera_raw, np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    ).astype(np.float)
+    edges = cv2.Canny(
+        camera.astype(np.uint8), 50, 150, apertureSize = 3,
+    )
+
     return {
         'done': _done,
         'reward': _reward,
@@ -29,7 +40,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': _observations.edges.tolist(),
+            'camera': edges.tolist(),
             'position': _track.invert(
                 _observations.track_coordinates,
             ).tolist(),

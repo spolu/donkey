@@ -2,9 +2,10 @@ import simulation
 import base64
 import collections
 import cv2
-import numpy as np
 import random
 import math
+
+import numpy as np
 
 from eventlet.green import threading
 from track import Track
@@ -38,8 +39,7 @@ Observation = collections.namedtuple(
      'velocity '
      'acceleration '
      'camera_stack '
-     'camera_raw '
-     'edges'),
+     'camera_raw'),
 )
 
 class Donkey:
@@ -90,9 +90,6 @@ class Donkey:
         camera = cv2.imdecode(
             np.fromstring(camera_raw, np.uint8),
             cv2.IMREAD_GRAYSCALE,
-        ).astype(np.float)
-        edges = cv2.Canny(
-            camera.astype(np.uint8), 50, 150, apertureSize = 3,
         ).astype(np.float)
 
         # Scale, size is 120x160.
@@ -148,7 +145,6 @@ class Donkey:
             acceleration,
             np.copy(self.camera_stack),
             camera_raw,
-            edges,
         )
 
     def reward_from_telemetry(self, telemetry):
