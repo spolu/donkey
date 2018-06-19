@@ -47,7 +47,6 @@ class Donkey:
     def __init__(self, config):
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
-        self.track_off_reset = config.get('track_off_reset')
         self.reward_type = config.get('reward_type')
         self.action_type = config.get('action_type')
         self.speed_limit = config.get('speed_limit')
