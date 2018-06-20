@@ -97,13 +97,13 @@ def run_server():
     global _app
     global _sio
     global _port
-    print("Starting shared server: port=" + str(_port))
+    # print("Starting shared server: port=" + str(_port))
     address = ('0.0.0.0', _port)
     _app = socketio.Middleware(_sio, _app)
     try:
         eventlet.wsgi.server(eventlet.listen(address), _app)
     except KeyboardInterrupt:
-        print("Stopping shared server")
+        # print("Stopping shared server")
 
 def init_server():
     global _inited
@@ -209,17 +209,15 @@ class Simulation:
             if self.headless:
                 cmd.append('-batchmode')
 
-            print(cmd)
-
             self.process = subprocess.Popen(cmd, env=self.env)
             self.client['process'] = self.process
 
         self.client['condition'].wait()
 
         self.client['condition'].release()
-        print("Simulation started: id={} sid={}".format(
-            self.client['id'], self.client['sid'],
-        ))
+        # print("Simulation started: id={} sid={}".format(
+        #     self.client['id'], self.client['sid'],
+        # ))
 
         self.client['condition'].acquire()
 
@@ -231,17 +229,17 @@ class Simulation:
 
         self.client['condition'].wait()
         self.client['condition'].release()
-        print("Received initial telemetry: id={} sid={}".format(
-            self.client['id'], self.client['sid'],
-        ))
+        # print("Received initial telemetry: id={} sid={}".format(
+        #     self.client['id'], self.client['sid'],
+        # ))
 
     def stop(self):
         if self.launch:
             self.process.terminate()
 
-        print("Simulation stopped: id={} sid={}".format(
-            self.client['id'], self.client['sid'],
-        ))
+        # print("Simulation stopped: id={} sid={}".format(
+        #     self.client['id'], self.client['sid'],
+        # ))
 
     def reset(self, track):
         self.client['condition'].acquire()
