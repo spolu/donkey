@@ -1,5 +1,6 @@
 import math
 import cv2
+import random
 
 import numpy as np
 
@@ -125,8 +126,11 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
     def input(self, observation):
         cameras = [
             cv2.Canny(
-                o.camera.astype(np.uint8), 50, 150, apertureSize = 3,
-            ).astype(np.float)[50:]
+                cv2.imdecode(
+                    np.fromstring(o.camera_raw, np.uint8),
+                    cv2.IMREAD_GRAYSCALE,
+                ), 50, 150, apertureSize = 3,
+            )[50:]
             for o in observation
         ]
 
