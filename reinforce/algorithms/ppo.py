@@ -240,7 +240,7 @@ class PPO:
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
-            ).to(self.device)
+            )
 
             self.episode_rewards += reward
             self.final_rewards *= mask
