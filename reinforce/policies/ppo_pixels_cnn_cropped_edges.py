@@ -136,7 +136,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             ),
             axis=-1,
         )
-        observation = torch.from_numpy(observation).float()
+        observation = torch.from_numpy(observation).float().unsqueeze(1)
 
         return observation
 
