@@ -12,23 +12,29 @@ from torch.distributions import Normal, Categorical
 
 import reinforce
 
+# import pdb; pdb.set_trace()
+
 class PPOPixelsCNNCroppedEdges(nn.Module):
     def __init__(self, config):
         super(PPOPixelsCNNCroppedEdges, self).__init__()
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
         self.action_type = config.get('action_type')
-        self.config = config
+        self.fixed_action_std = config.get('fixed_action_std')
 
-        self.cv1 = nn.Conv2d(reinforce.CAMERA_STACK_SIZE, 24, 5, stride=2)
+        self.device = torch.device(
+            'cuda:0' if config.get('cuda') else 'cpu'
+        )
+
+        self.cv1 = nn.Conv2d(1, 24, 5, stride=2)
         self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
         self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
         self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
-        self.cv5 = nn.Conv2d(64, 64, 3, stride=1)
+        self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
 
         self.dp1 = nn.Dropout(p=0.1)
 
-        self.fc1 = nn.Linear(234, self.hidden_size)
+        self.fc1 = nn.Linear(1344, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -80,7 +86,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         x = F.elu(self.cv5(x))
         x = self.dp1(x)
 
-        x = x.view(-1, 234)
+        x = x.view(-1, 1344)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":
@@ -135,7 +141,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         return observation
 
     def action(self, inputs, hiddens, masks, deterministic=False):
-        value, x, auxiliary, hiddens = self(inputs, hiddens, masks)
+        value, x, hiddens = self(inputs, hiddens, masks)
 
         if self.action_type == 'discrete':
             probs = F.softmax(x, dim=1)
@@ -147,20 +153,18 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             action_log_probs = log_probs.gather(1, actions)
             entropy = -(log_probs * probs).sum(-1).mean()
 
-            return value, actions, auxiliary, hiddens, action_log_probs, entropy
+            return value, actions, hiddens, action_log_probs, entropy
         else:
             slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()
 
-            if self.config.get('fixed_action_std'):
+            if self.fixed_action_std > 0.0:
                 action_std = (
-                    self.config.get('fixed_action_std') *
+                    self.fixed_action_std *
                     torch.ones(action_mean.size()).float()
-                )
-                if self.config.get('cuda'):
-                    action_std = action_std.cuda()
+                ).to(self.device)
                 action_std = autograd.Variable(action_std)
                 action_logstd = action_std.log()
 
@@ -178,10 +182,10 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
             entropy = entropy.sum(-1, keepdim=True)
 
-            return value, actions, auxiliary, hiddens, log_probs, entropy
+            return value, actions, hiddens, log_probs, entropy
 
     def evaluate(self, inputs, hiddens, masks, actions):
-        value, x, auxiliary, hiddens = self(inputs, hiddens, masks)
+        value, x, hiddens = self(inputs, hiddens, masks)
 
         if self.action_type == 'discrete':
             probs = F.softmax(x, dim=1)
@@ -193,20 +197,18 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             action_log_probs = log_probs.gather(1, actions)
             entropy = -(log_probs * probs).sum(-1).mean()
 
-            return value, auxiliary, hiddens, action_log_probs, entropy
+            return value, hiddens, action_log_probs, entropy
         else:
             slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()
 
-            if self.config.get('fixed_action_std'):
+            if self.fixed_action_std > 0.0:
                 action_std = (
-                    self.config.get('fixed_action_std') *
+                    self.fixed_action_std *
                     torch.ones(action_mean.size()).float()
-                )
-                if self.config.get('cuda'):
-                    action_std = action_std.cuda()
+                ).to(self.device)
                 action_std = autograd.Variable(action_std)
                 action_logstd = action_std.log()
 
@@ -219,4 +221,4 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             entropy = 0.5 + 0.5 * math.log(2 * math.pi) + action_logstd
             entropy = entropy.sum(-1, keepdim=True)
 
-            return value, auxiliary, hiddens, log_probs, entropy
+            return value, hiddens, log_probs, entropy

@@ -224,8 +224,9 @@ class Donkey:
         # If we're off track for too long, stop
         if np.linalg.norm(track_position) > 1.0:
             if (time - self.last_intrack_time > MAX_OUTTRACK_TIME):
-                print("RESET OUTTRACK: {}".format(
-                    time - self.last_intrack_time,
+                print("Reset for outtrack: time={:.2f} progress={:.2f} position={:.2f}".format(
+                    time,
+                    track_progress,
                     track_position,
                 ))
                 return True
@@ -237,19 +238,20 @@ class Donkey:
         if track_linear_speed > STALL_SPEED:
             self.last_unstall_time = time
         elif (time - self.last_unstall_time > MAX_STALL_TIME):
-            print("RESET STALL: {} {}".format(
-                time - self.last_unstall_time,
-                track_linear_speed,
+            print("Reset for stall: time={:.2f} progress={:.2f} position={:.2f}".format(
+                time,
+                track_progress,
+                track_position,
             ))
             return True
 
         # If the last progress is bigger than the current one, it means we just
         # crossed the finish line, stop.
         if self.last_progress > track_progress + 0.02:
-            print("LAP TIME: {}".format(time - self.last_lap_time))
+            print("LAP TIME: {:.2f}".format(time - self.last_lap_time))
             if self.lap_count == 2:
-                print("RESET LAPCOUNT: {}".format(
-                    self.lap_count,
+                print("Reset for lapcount: time={:.2f}".format(
+                    time,
                 ))
                 return True
             self.lap_count += 1

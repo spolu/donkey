@@ -17,7 +17,7 @@ from reinforce.policies import PPOPixelsCNNCroppedEdges
 # import pdb; pdb.set_trace()
 
 class PPOStorage:
-    def __init__(self, config, policy):
+    def __init__(self, config, policy, device):
         self.rollout_size = config.get('rollout_size')
         self.worker_count = config.get('worker_count')
         self.hidden_size = config.get('hidden_size')
@@ -25,37 +25,37 @@ class PPOStorage:
         self.tau = config.get('tau')
         self.mini_batch_count = config.get('mini_batch_count')
 
+        self.device = device
+
         self.observations = torch.zeros(
-            self.rollout_size + 1,
-            self.worker_count,
-            *(policy.input_shape()),
-        )
+            self.rollout_size + 1, self.worker_count, *(policy.input_shape()),
+        ).to(self.device)
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.hidden_size,
-        )
-        self.rewards = torch.zeros(self.rollout_size, self.worker_count, 1)
-        self.values = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
-        self.returns = torch.zeros(self.rollout_size + 1, self.worker_count, 1)
-        self.log_probs = torch.zeros(self.rollout_size, self.worker_count, 1)
+        ).to(self.device)
+        self.rewards = torch.zeros(
+            self.rollout_size, self.worker_count, 1
+        ).to(self.device)
+        self.values = torch.zeros(
+            self.rollout_size + 1, self.worker_count, 1
+        ).to(self.device)
+        self.returns = torch.zeros(
+            self.rollout_size + 1, self.worker_count, 1,
+        ).to(self.device)
+        self.log_probs = torch.zeros(
+            self.rollout_size, self.worker_count, 1,
+        ).to(self.device)
         if config.get('action_type') == 'discrete':
             self.actions = torch.zeros(
                 self.rollout_size, self.worker_count, 1,
-            )
+            ).to(self.device)
         else:
             self.actions = torch.zeros(
                 self.rollout_size, self.worker_count, reinforce.CONTINUOUS_CONTROL_SIZE,
-            )
-        self.masks = torch.ones(self.rollout_size + 1, self.worker_count, 1)
-
-    def cuda(self):
-        self.observations = self.observations.cuda()
-        self.hiddens = self.hiddens.cuda()
-        self.rewards = self.rewards.cuda()
-        self.values = self.values.cuda()
-        self.returns = self.returns.cuda()
-        self.log_probs = self.log_probs.cuda()
-        self.actions = self.actions.cuda()
-        self.masks = self.masks.cuda()
+            ).to(self.device)
+        self.masks = torch.ones(
+            self.rollout_size + 1, self.worker_count, 1,
+        ).to(self.device)
 
     def insert(self, step, observations, hidden, action, log_prob, value, reward, mask):
         self.observations[step + 1].copy_(observations)
@@ -121,15 +121,17 @@ class PPOStorage:
         mini_batch_size = batch_size // self.mini_batch_count
         sampler = BatchSampler(SubsetRandomSampler(range(batch_size)), mini_batch_size, drop_last=False)
         for indices in sampler:
-            indices = torch.LongTensor(indices)
+            indices = torch.LongTensor(indices).to(self.device)
 
-            if advantages.is_cuda:
-                indices = indices.cuda()
-
-            observations_batch = self.observations[:-1].view(-1,
-                                        *self.observations.size()[2:])[indices]
-            hiddens_batch = self.hiddens[:-1].view(-1, self.hiddens.size(-1))[indices]
-            actions_batch = self.actions.view(-1, self.actions.size(-1))[indices]
+            observations_batch = self.observations[:-1].view(
+                -1, *self.observations.size()[2:],
+            )[indices]
+            hiddens_batch = self.hiddens[:-1].view(
+                -1, self.hiddens.size(-1),
+            )[indices]
+            actions_batch = self.actions.view(
+                -1, self.actions.size(-1),
+            )[indices]
             returns_batch = self.returns[:-1].view(-1, 1)[indices]
             masks_batch = self.masks[:-1].view(-1, 1)[indices]
             log_probs_batch = self.log_probs.view(-1, 1)[indices]
@@ -146,7 +148,6 @@ class PPOStorage:
 
 class PPO:
     def __init__(self, config, save_dir=None, load_dir=None):
-        self.cuda = config.get('cuda')
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
         self.rollout_size = config.get('rollout_size')
@@ -159,8 +160,10 @@ class PPO:
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
 
+        self.device = torch.device('cuda:0' if config.get('cuda') else 'cpu')
+
         if config.get('policy') == 'ppo_pixels_cnn_cropped_edges':
-            self.policy = PPOPixelsCNNCroppedEdges(config)
+            self.policy = PPOPixelsCNNCroppedEdges(config).to(self.device)
         assert self.policy is not None
 
         self.save_dir = save_dir
@@ -173,7 +176,7 @@ class PPO:
             self.learning_rate,
         )
 
-        self.rollouts = PPOStorage(config, self.policy)
+        self.rollouts = PPOStorage(config, self.policy, self.device)
 
         if self.load_dir:
             if self.cuda:
@@ -199,28 +202,17 @@ class PPO:
 
     def initialize(self):
         observation = self.envs.reset()
-
         observation = self.policy.input(observation)
-
-        self.rollouts.observations[0].copy_(observation)
-
-        if self.cuda:
-            self.policy.cuda()
-            self.rollouts.cuda()
+        self.rollouts.observations[0].copy_(observation.to(self.device))
 
     def batch_train(self):
         for step in range(self.rollout_size):
-            value, action, hidden, log_prob, entropy = self.policy.action(
-                autograd.Variable(
-                    self.rollouts.observations[step], requires_grad=False,
-                ),
-                autograd.Variable(
-                    self.rollouts.hiddens[step], requires_grad=False,
-                ),
-                autograd.Variable(
-                    self.rollouts.masks[step], requires_grad=False,
-                ),
-            )
+            with torch.no_grad():
+                value, action, hidden, log_prob, entropy = self.policy.action(
+                    self.rollouts.observations[step].detach(),
+                    self.rollouts.hiddens[step].detach(),
+                    self.rollouts.masks[step].detach(),
+                )
 
             observation, reward, done = self.envs.step(
                 action.data.cpu().numpy(),
@@ -245,43 +237,33 @@ class PPO:
             #     ))
 
             observation = self.policy.input(observation)
-
             reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
             mask = torch.FloatTensor(
                 [[0.0] if done_ else [1.0] for done_ in done]
-            )
+            ).to(self.device)
 
             self.episode_rewards += reward
             self.final_rewards *= mask
             self.final_rewards += (1 - mask) * self.episode_rewards
             self.episode_rewards *= mask
 
-            if self.cuda:
-                mask = mask.cuda()
-                observation = observation.cuda()
-
             self.rollouts.insert(
                 step,
-                observation,
+                observation.to(self.device),
                 hidden.data,
                 action.data,
                 log_prob.data,
                 value.data,
                 reward,
-                mask,
+                mask.to(self.device),
             )
 
-        next_value = self.policy(
-            autograd.Variable(
-                self.rollouts.observations[-1], requires_grad=False,
-            ),
-            autograd.Variable(
-                self.rollouts.hiddens[-1], requires_grad=False,
-            ),
-            autograd.Variable(
-                self.rollouts.masks[-1], requires_grad=False,
-            ),
-        )[0].data
+        with torch.no_grad():
+            next_value = self.policy(
+                self.rollouts.observations[-1].detach(),
+                self.rollouts.hiddens[-1].detach(),
+                self.rollouts.masks[-1].detach(),
+            )[0].data
 
         self.rollouts.compute_returns(next_value)
 
@@ -301,21 +283,21 @@ class PPO:
                     advantage_targets = sample
 
             values, hiddens, log_probs, entropy = self.policy.evaluate(
-                autograd.Variable(observations_batch),
-                autograd.Variable(hiddens_batch),
-                autograd.Variable(masks_batch),
-                autograd.Variable(actions_batch),
+                observations_batch.detach(),
+                hiddens_batch.detach(),
+                masks_batch.detach(),
+                actions_batch.detach(),
             )
 
-            advantage_targets = autograd.Variable(advantage_targets)
-            ratio = torch.exp(log_probs - autograd.Variable(log_probs_batch))
+            advantage_targets = advantage_targets.detach()
+            ratio = torch.exp(log_probs - log_probs_batch.detach())
 
             action_loss = -torch.min(
                 ratio * advantage_targets,
                 torch.clamp(ratio, 1.0 - self.ppo_clip, 1.0 + self.ppo_clip) * advantage_targets,
             ).mean()
 
-            value_loss = (autograd.Variable(returns_batch) - values).pow(2).mean()
+            value_loss = (returns_batch.detach() - values).pow(2).mean()
 
             entropy_loss = -entropy.mean()
 
@@ -354,9 +336,9 @@ class PPO:
                 self.final_rewards.median(),
                 self.final_rewards.min(),
                 self.final_rewards.max(),
-                entropy_loss.data[0],
-                value_loss.data[0],
-                action_loss.data[0],
+                entropy_loss.item(),
+                value_loss.item(),
+                action_loss.item(),
             ))
         sys.stdout.flush()
 
@@ -386,18 +368,13 @@ class PPO:
 
         while not end:
             for step in range(self.rollout_size):
-                value, action, hidden, log_prob, entropy = self.policy.action(
-                    autograd.Variable(
-                        self.rollouts.observations[step], requires_grad=False,
-                    ),
-                    autograd.Variable(
-                        self.rollouts.hiddens[step], requires_grad=False,
-                    ),
-                    autograd.Variable(
-                        self.rollouts.masks[step], requires_grad=False,
-                    ),
-                    deterministic=True,
-                )
+                with torch.no_grad():
+                    value, action, hidden, log_prob, entropy = self.policy.action(
+                        self.rollouts.observations[step].detach(),
+                        self.rollouts.hiddens[step].detach(),
+                        self.rollouts.masks[step].detach(),
+                        deterministic=True,
+                    )
 
                 observation, reward, done = self.envs.step(
                     action.data.numpy(),
@@ -432,25 +409,20 @@ class PPO:
                     final_reward = 0.0
 
                 observation = self.policy.input(observation)
-
                 reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
                 mask = torch.FloatTensor(
                     [[0.0] if done_ else [1.0] for done_ in done]
                 )
 
-                if self.cuda:
-                    mask = mask.cuda()
-                    observation = observation.cuda()
-
                 self.rollouts.insert(
                     step,
-                    observation,
+                    observation.to(self.device),
                     hidden.data,
                     action.data,
                     log_prob.data,
                     value.data,
                     reward,
-                    mask,
+                    mask.to(self.device),
                 )
 
             self.rollouts.after_update()

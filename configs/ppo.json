@@ -10,8 +10,8 @@
   "cuda": true,
   "seed": 1,
 
-  "fixed_action_std": false,
-  "hidden_size": 256,
+  "fixed_action_std": 0.0,
+  "hidden_size": 128,
   "recurring_cell": "none",
 
   "rollout_size": 128,
