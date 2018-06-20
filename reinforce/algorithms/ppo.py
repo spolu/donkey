@@ -159,6 +159,7 @@ class PPO:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
+        self.config = config
 
         self.device = torch.device('cuda:0' if config.get('cuda') else 'cpu')
 
@@ -169,9 +170,6 @@ class PPO:
         self.save_dir = save_dir
         self.load_dir = load_dir
 
-        self.envs = reinforce.Envs(config)
-        self.test_env = reinforce.Donkey(config)
-
         self.optimizer = optim.Adam(
             self.policy.parameters(),
             self.learning_rate,
@@ -180,7 +178,7 @@ class PPO:
         self.rollouts = PPOStorage(config, self.policy, self.device)
 
         if self.load_dir:
-            if self.cuda:
+            if config.get('cuda'):
                 self.policy.load_state_dict(
                     torch.load(self.load_dir + "/policy.pt"),
                 )
@@ -201,8 +199,10 @@ class PPO:
         self.start = time.time()
         self.running_reward = None
         self.best_test_reward = 0.0
+        self.test_env = None
 
     def initialize(self):
+        self.envs = reinforce.Envs(self.config)
         observation = self.envs.reset()
         observation = self.policy.input(observation)
         self.rollouts.observations[0].copy_(observation.to(self.device))
@@ -368,6 +368,9 @@ class PPO:
 
     def test(self, step_callback=None):
         self.policy.eval()
+
+        if self.test_env is None:
+            self.test_env = reinforce.Donkey(self.config)
 
         observations = self.policy.input([self.test_env.reset()]).to(self.device)
         hiddens = torch.zeros(1, self.hidden_size).to(self.device)

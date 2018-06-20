@@ -15,10 +15,10 @@ from utils import Config, str2bool
 from track import Track
 from reinforce import Donkey
 
-sio = socketio.Server(logging=False, engineio_logger=False)
-app = Flask(__name__)
+_sio = socketio.Server(logging=False, engineio_logger=False)
+_app = Flask(__name__)
 
-d = None
+_d = None
 _observations = None
 _reward = None
 _done = None
@@ -48,22 +48,23 @@ def transition():
     }
 
 def run_server():
-    global app
+    global _app
+    global _sio
     print("Starting shared server: port=9091")
     address = ('0.0.0.0', 9091)
-    app = socketio.Middleware(sio, app)
+    _app = socketio.Middleware(_sio, _app)
     try:
-        eventlet.wsgi.server(eventlet.listen(address), app)
+        eventlet.wsgi.server(eventlet.listen(address), _app)
     except KeyboardInterrupt:
         print("Stopping shared server")
 
-@sio.on('connect')
+@_sio.on('connect')
 def connect(sid, environ):
     print("Received connect: sid={}".format(sid))
-    sio.emit('transition', transition())
-    sio.emit('next')
+    _sio.emit('transition', transition())
+    _sio.emit('next')
 
-@sio.on('step')
+@_sio.on('step')
 def step(sid, data):
     global _observations
     global _reward
@@ -77,15 +78,15 @@ def step(sid, data):
     if data['throttle'] > 0.0:
         throttle_brake = data['throttle']
 
-    _observations, _reward, _done = d.step([steering, throttle_brake])
+    _observations, _reward, _done = _d.step([steering, throttle_brake])
 
-    sio.emit('transition', transition())
-    sio.emit('next')
+    _sio.emit('transition', transition())
+    _sio.emit('next')
 
-@sio.on('reset')
+@_sio.on('reset')
 def reset(sid, data):
-    d.reset()
-    sio.emit('next')
+    _d.reset()
+    _sio.emit('next')
 
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -109,8 +110,8 @@ if __name__ == "__main__":
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
-    d = Donkey(cfg)
-    _observations = d.reset()
+    _d = Donkey(cfg)
+    _observations = _d.reset()
     _track = Track(cfg.get('track_name'))
 
     run_server()
