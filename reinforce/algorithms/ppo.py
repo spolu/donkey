@@ -346,8 +346,13 @@ class PPO:
         sys.stdout.flush()
 
         if self.batch_count % 10 == 0 and self.save_dir:
-            test_reward = self.test()
+            test_reward = 0.0
+
+            for i in range(8):
+                test_reward += self.test()
             self.policy.train()
+            test_reward /= 8
+
             if test_reward > self.best_test_reward:
                 self.best_test_reward = test_reward
                 print("Saving models and optimizer: save_dir={} test_reward={}".format(
