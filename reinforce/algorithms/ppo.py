@@ -170,6 +170,7 @@ class PPO:
         self.load_dir = load_dir
 
         self.envs = reinforce.Envs(config)
+        self.test_env = reinforce.Donkey(config)
 
         self.optimizer = optim.Adam(
             self.policy.parameters(),
@@ -345,6 +346,7 @@ class PPO:
 
         if self.batch_count % 10 == 0 and self.save_dir:
             test_reward = self.test()
+            self.policy.train()
             if test_reward > self.best_test_reward:
                 self.best_test_reward = test_reward
                 print("Saving models and optimizer: save_dir={} test_reward={}".format(
@@ -366,9 +368,7 @@ class PPO:
     def test(self, step_callback=None):
         self.policy.eval()
 
-        self.env = reinforce.Donkey(config)
-
-        observations = self.policy.input([self.env.reset()]).to(self.device)
+        observations = self.policy.input([self.test_env.reset()]).to(self.device)
         hiddens = torch.zeros(1, self.hidden_size).to(self.device)
         masks = torch.ones(1, 1).to(self.device)
 
@@ -384,8 +384,8 @@ class PPO:
                     deterministic=True,
                 )
 
-                observation, reward, done = self.envs.step(
-                    action.data.numpy(),
+                observation, reward, done = self.test_env.step(
+                    action[0].data.cpu().numpy(),
                 )
 
                 if step_callback is not None:

@@ -14,7 +14,7 @@ while [ true ]; do
   kill -0 $MAKEPID 2>/dev/null || exit
 
   RUNTIME=$((`date +%s`-$START))
-  echo "[Update] experiment=$EXPERIMENT tempdir=$TEMP runtime=$RUNTIME"
+  echo "[Update] experiment=reinforce_$EXPERIMENT tempdir=$TEMP runtime=$RUNTIME"
   grep STEP $TEMP/out.log | cut -d' ' -f6 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/fps.png"; plot "/dev/stdin";'
   grep STEP $TEMP/out.log | cut -d' ' -f9 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/mean.png"; plot "/dev/stdin";'
   grep STEP $TEMP/out.log | cut -d' ' -f10 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/median.png"; plot "/dev/stdin";'

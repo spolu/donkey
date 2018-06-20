@@ -16,7 +16,7 @@ else
   EXPERIMENT=$2
 fi
 
-TEMP="$(dirname `mktemp`)/exp_$EXPERIMENT"
+TEMP="$(dirname `mktemp`)/reinforce_$EXPERIMENT"
 
 ARGS="--save_dir $TEMP"
 
@@ -24,7 +24,7 @@ if [ "$2" != "" ]; then
   ARGS="--save_dir $TEMP --load_dir=$TEMP"
 fi
 
-echo "[Start] experiment=$EXPERIMENT config=$CONFIG tempdir=$TEMP"
+echo "[Start] experiment=reinforce_$EXPERIMENT config=$CONFIG tempdir=$TEMP"
 
 mkdir -p $TEMP
 cp $CONFIG $TEMP/config.json
