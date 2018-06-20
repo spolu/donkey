@@ -56,25 +56,25 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 m.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc1.weight.data, nn.init.calculate_gain('relu'))
+        nn.init.xavier_normal_(self.fc1.weight.data, nn.init.calculate_gain('relu'))
         self.fc1.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
+        nn.init.xavier_normal_(self.fc1_a.weight.data, nn.init.calculate_gain('tanh'))
         if self.action_type == 'discrete':
-            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('linear'))
+            nn.init.xavier_normal_(self.fc2_a.weight.data, nn.init.calculate_gain('linear'))
         else:
-            nn.init.xavier_normal(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
+            nn.init.xavier_normal_(self.fc2_a.weight.data, nn.init.calculate_gain('tanh'))
         self.fc1_a.bias.data.fill_(0)
         self.fc2_a.bias.data.fill_(0)
 
-        nn.init.xavier_normal(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
-        nn.init.xavier_normal(self.fc2_v.weight.data, nn.init.calculate_gain('linear'))
+        nn.init.xavier_normal_(self.fc1_v.weight.data, nn.init.calculate_gain('tanh'))
+        nn.init.xavier_normal_(self.fc2_v.weight.data, nn.init.calculate_gain('linear'))
         self.fc1_v.bias.data.fill_(0)
         self.fc2_v.bias.data.fill_(0)
 
         if self.recurring_cell == "gru":
-            nn.init.xavier_normal(self.gru.weight_ih.data)
-            nn.init.xavier_normal(self.gru.weight_hh.data)
+            nn.init.xavier_normal_(self.gru.weight_ih.data)
+            nn.init.xavier_normal_(self.gru.weight_hh.data)
             self.gru.bias_ih.data.fill_(0)
             self.gru.bias_hh.data.fill_(0)
 
