@@ -77,8 +77,6 @@ def telemetry(sid, data):
 def hello(sid, data):
     # print("Received hello: sid={} id={}".format(sid, data['id']))
 
-    print ("HELLO {}".format(data))
-
     # Record sid on the client and notify.
     client = client_for_id(int(data['id']))
     client['condition'].acquire()
