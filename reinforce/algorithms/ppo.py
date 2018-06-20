@@ -199,6 +199,7 @@ class PPO:
         self.batch_count = 0
         self.start = time.time()
         self.running_reward = None
+        self.best_test_reward = 0.0
 
     def initialize(self):
         observation = self.envs.reset()
@@ -343,9 +344,15 @@ class PPO:
 
 
         if self.batch_count % 10 == 0 and self.save_dir:
-            print("Saving models and optimizer: save_dir={}".format(self.save_dir))
-            torch.save(self.policy.state_dict(), self.save_dir + "/policy.pt")
-            torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
+            test_reward = self.test()
+            if test_reward > self.best_test_reward:
+                self.best_test_reward = test_reward
+                print("Saving models and optimizer: save_dir={} test_reward={}".format(
+                    self.save_dir,
+                    test_reward
+                ))
+                torch.save(self.policy.state_dict(), self.save_dir + "/policy.pt")
+                torch.save(self.optimizer.state_dict(), self.save_dir + "/optimizer.pt")
 
         self.batch_count += 1
         if self.running_reward is None:
