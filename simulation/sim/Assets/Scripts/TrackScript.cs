@@ -82,7 +82,7 @@ public class TrackScript
 	{
 		track = new List<TrackScriptElem>();
 
-		Debug.Log("loading: " + filename);
+		// Debug.Log("loading: " + filename);
 
 		TextAsset bindata = Resources.Load(filename) as TextAsset;
 

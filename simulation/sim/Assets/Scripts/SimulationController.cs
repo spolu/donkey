@@ -70,7 +70,7 @@ public class SimulationController : MonoBehaviour
 
 	void Start()
 	{
-		Debug.Log ("SimulationController initializing");
+		// Debug.Log ("SimulationController initializing");
 
 		Time.captureFramerate = captureFrameRate;
 
@@ -84,12 +84,12 @@ public class SimulationController : MonoBehaviour
 
 	private void OnEnable()
 	{
-		Debug.Log("SimulationController enabling");
+		// Debug.Log("SimulationController enabling");
 	}
 
 	private void OnDisable()
 	{
-		Debug.Log ("SimulationController disabling");
+		// Debug.Log ("SimulationController disabling");
 
 		car.RequestThrottle (0.0f);
 		car.RequestBrake (1.0f);

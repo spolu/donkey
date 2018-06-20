@@ -59,7 +59,7 @@ public class RoadBuilder : MonoBehaviour {
 
 		string[] lines = pathData.Split(';');
 
-		Debug.Log(string.Format("found {0} path points. to load", lines.Length));
+		// Debug.Log(string.Format("found {0} path points to load", lines.Length));
 
 		CarPath path = new CarPath();
 
