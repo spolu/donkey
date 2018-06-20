@@ -435,8 +435,9 @@ class PPO:
 
         test_end = time.time()
 
-        print("TEST FPS {} final_reward {:.1f}".format(
+        print("TEST FPS {} step_count {} final_reward {:.1f}".format(
             int(episode_size / (test_end - test_start)),
+            episode_size,
             final_reward
         ))
 
