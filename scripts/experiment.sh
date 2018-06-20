@@ -31,4 +31,4 @@ cp $CONFIG $TEMP/config.json
 ./scripts/update_experiment.sh $$ $EXPERIMENT $TEMP &
 
 touch $TEMP/out.log
-$PYTHON trainer.py $CONFIG $ARGS >> $TEMP/out.log 2>&1
+$PYTHON reinforce_trainer.py $CONFIG $ARGS >> $TEMP/out.log 2>&1
