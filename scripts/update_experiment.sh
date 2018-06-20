@@ -23,6 +23,5 @@ while [ true ]; do
   grep STEP $TEMP/out.log | cut -d' ' -f16 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/loss_entropy.png"; plot "/dev/stdin";'
   grep STEP $TEMP/out.log | cut -d' ' -f18 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/loss_value.png"; plot "/dev/stdin";'
   grep STEP $TEMP/out.log | cut -d' ' -f20 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/loss_action.png"; plot "/dev/stdin";'
-  grep STEP $TEMP/out.log | cut -d' ' -f22 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/loss_auxiliary.png"; plot "/dev/stdin";'
   grep STAT $TEMP/out.log | cut -d' ' -f3 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/reward.png"; plot "/dev/stdin";'
 done

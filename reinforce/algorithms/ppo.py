@@ -206,6 +206,8 @@ class PPO:
         self.rollouts.observations[0].copy_(observation.to(self.device))
 
     def batch_train(self):
+        self.policy.train()
+
         for step in range(self.rollout_size):
             with torch.no_grad():
                 value, action, hidden, log_prob, entropy = self.policy.action(
@@ -283,22 +285,19 @@ class PPO:
                     advantage_targets = sample
 
             values, hiddens, log_probs, entropy = self.policy.evaluate(
-                observations_batch.detach(),
-                hiddens_batch.detach(),
-                masks_batch.detach(),
-                actions_batch.detach(),
+                observations_batch,
+                hiddens_batch,
+                masks_batch,
+                actions_batch,
             )
 
-            advantage_targets = advantage_targets.detach()
-            ratio = torch.exp(log_probs - log_probs_batch.detach())
+            ratio = torch.exp(log_probs - log_probs_batch)
 
             action_loss = -torch.min(
                 ratio * advantage_targets,
                 torch.clamp(ratio, 1.0 - self.ppo_clip, 1.0 + self.ppo_clip) * advantage_targets,
             ).mean()
-
             value_loss = (returns_batch.detach() - values).pow(2).mean()
-
             entropy_loss = -entropy.mean()
 
             self.optimizer.zero_grad()
@@ -357,72 +356,62 @@ class PPO:
 
         return self.running_reward
 
-    def run(self, step_callback):
+    def test(self, step_callback=None):
         self.policy.eval()
+
+        self.env = reinforce.Donkey(config)
+
+        observations = self.policy.input([self.env.reset()]).to(self.device)
+        hiddens = torch.zeros(1, self.hidden_size).to(self.device)
+        masks = torch.ones(1, 1).to(self.device)
 
         end = False
         final_reward = 0;
 
-        assert self.worker_count == 1
-        assert self.cuda == False
-
-        while not end:
-            for step in range(self.rollout_size):
-                with torch.no_grad():
-                    value, action, hidden, log_prob, entropy = self.policy.action(
-                        self.rollouts.observations[step].detach(),
-                        self.rollouts.hiddens[step].detach(),
-                        self.rollouts.masks[step].detach(),
-                        deterministic=True,
-                    )
+        with torch.no_grad():
+            while not end:
+                value, action, hiddens, log_prob, entropy = self.policy.action(
+                    observations.detach(),
+                    hiddens.detach(),
+                    masks.detach(),
+                    deterministic=True,
+                )
 
                 observation, reward, done = self.envs.step(
                     action.data.numpy(),
                 )
 
-                step_callback(observation, reward, done)
+                if step_callback is not None:
+                    step_callback(observation, reward, done)
 
-                if self.action_type == 'discrete':
-                    print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
-                        value.data[0][0],
-                        action.data[0][0],
-                        done[0],
-                        reward[0],
-                        observation[0].progress,
-                    ))
-                else:
-                    print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
-                        value.data[0][0],
-                        action.data[0][0],
-                        action.data[0][1],
-                        done[0],
-                        reward[0],
-                        observation[0].progress,
-                    ))
-                sys.stdout.flush()
+                # if self.action_type == 'discrete':
+                #     print("VALUE/CONTROLS/DONE/REWARD/PROGRESS: {:.2f} {} {} {:.2f} {:.2f}".format(
+                #         value.data[0][0],
+                #         action.data[0][0],
+                #         done[0],
+                #         reward[0],
+                #         observation[0].progress,
+                #     ))
+                # else:
+                #     print("VALUE/STEERING/THROTTLE/DONE/REWARD/PROGRESS: {:.2f} {:.2f} {:.2f} {} {:.2f} {:.2f}".format(
+                #         value.data[0][0],
+                #         action.data[0][0],
+                #         action.data[0][1],
+                #         done[0],
+                #         reward[0],
+                #         observation[0].progress,
+                #     ))
+                # sys.stdout.flush()
 
-                final_reward += reward[0]
-                end = done[0]
+                final_reward += reward
+                end = done
 
                 if end:
-                    print("REWARD: {}".format(final_reward))
-                    final_reward = 0.0
+                    print("TEST: final_reward={}".format(final_reward))
 
-                observation = self.policy.input(observation)
-                reward = torch.from_numpy(np.expand_dims(reward, 1)).float()
-                mask = torch.FloatTensor(
-                    [[0.0] if done_ else [1.0] for done_ in done]
-                )
+                observations = self.policy.input([observation]).to(self.device)
+                masks = torch.FloatTensor(
+                    [[0.0] if done else [1.0]]
+                ).to(self.device)
 
-                self.rollouts.insert(
-                    step,
-                    observation.to(self.device),
-                    hidden.data,
-                    action.data,
-                    log_prob.data,
-                    value.data,
-                    reward,
-                    mask.to(self.device),
-                )
-
-            self.rollouts.after_update()
+        return final_reward
