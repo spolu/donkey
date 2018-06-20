@@ -210,6 +210,8 @@ class PPO:
     def batch_train(self):
         self.policy.train()
 
+        batch_start = time.time()
+
         for step in range(self.rollout_size):
             with torch.no_grad():
                 value, action, hidden, log_prob, entropy = self.policy.action(
@@ -317,10 +319,10 @@ class PPO:
 
         self.rollouts.after_update()
 
-        end = time.time()
         total_num_steps = (
             (self.batch_count + 1) * self.worker_count * self.rollout_size
         )
+        batch_end = time.time()
 
         print(
             ("STEP {} timesteps {} FPS {} " + \
@@ -332,7 +334,7 @@ class PPO:
             format(
                 self.batch_count,
                 total_num_steps,
-                int(total_num_steps / (end - self.start)),
+                int(self.worker_count * self.rollout_size / (batch_end - batch_start)),
                 self.final_rewards.mean(),
                 self.final_rewards.median(),
                 self.final_rewards.min(),
@@ -342,7 +344,6 @@ class PPO:
                 action_loss.item(),
             ))
         sys.stdout.flush()
-
 
         if self.batch_count % 10 == 0 and self.save_dir:
             test_reward = self.test()
