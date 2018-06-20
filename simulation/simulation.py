@@ -103,7 +103,7 @@ def run_server():
     try:
         eventlet.wsgi.server(eventlet.listen(address), _app)
     except KeyboardInterrupt:
-        # print("Stopping shared server")
+        print("Stopping shared server")
 
 def init_server():
     global _inited
