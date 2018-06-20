@@ -130,7 +130,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
                     np.fromstring(o.camera_raw, np.uint8),
                     cv2.IMREAD_GRAYSCALE,
                 ), 50, 150, apertureSize = 3,
-            )[50:]
+            )[50:] / 127.5 - 1
             for o in observation
         ]
 
