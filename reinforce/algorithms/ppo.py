@@ -369,6 +369,8 @@ class PPO:
     def test(self, step_callback=None):
         self.policy.eval()
 
+        test_start = time.time()
+
         if self.test_env is None:
             self.test_env = reinforce.Donkey(self.config)
 
@@ -378,6 +380,7 @@ class PPO:
 
         end = False
         final_reward = 0;
+        episode_size = 0
 
         with torch.no_grad():
             while not end:
@@ -417,12 +420,19 @@ class PPO:
                 final_reward += reward
                 end = done
 
-                if end:
-                    print("TEST: final_reward={}".format(final_reward))
-
                 observations = self.policy.input([observation]).to(self.device)
                 masks = torch.FloatTensor(
                     [[0.0] if done else [1.0]]
                 ).to(self.device)
+
+                episode_size += 1
+
+
+        test_end = time.time()
+
+        print("TEST FPS {} final_reward {:.1f}".format(
+            int(episode_size / (test_end - test_start)),
+            final_reward
+        ))
 
         return final_reward
