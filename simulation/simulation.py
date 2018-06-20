@@ -1,5 +1,6 @@
 import time
 import socketio
+import sys
 import eventlet
 import eventlet.wsgi
 import collections
@@ -7,6 +8,7 @@ import os
 import signal
 import subprocess
 import socket
+import atexit
 
 from flask import Flask
 from eventlet.green import threading
@@ -15,32 +17,32 @@ from eventlet.green import threading
 Shared underlying socket.io server
 """
 
-sio = socketio.Server(logging=False, engineio_logger=False)
-app = Flask(__name__)
-port = 9093
-inited = False
+_sio = socketio.Server(logging=False, engineio_logger=False)
+_app = Flask(__name__)
+_port = 9093
+_inited = False
 
-clients = []
-lock = threading.Lock()
+_clients = []
+_lock = threading.Lock()
 
 def client_for_id(client_id):
-    global lock
-    global clients
-    with lock:
-        client = clients[client_id]
+    global _lock
+    global _clients
+    with _lock:
+        client = _clients[client_id]
     return client
 
-@sio.on('connect')
+@_sio.on('connect')
 def connect(sid, environ):
     # print("Received connect: sid={}".format(sid))
     pass
 
-@sio.on('disconnect')
+@_sio.on('disconnect')
 def disconnect(sid):
     # print("Received disconnect: sid={}".format(sid))
     pass
 
-@sio.on('telemetry')
+@_sio.on('telemetry')
 def telemetry(sid, data):
     # print("Received telemetry: sid={} client_id={}".format(sid, data['id']))
 
@@ -71,7 +73,7 @@ def telemetry(sid, data):
         client['callback'](client['telemetry'])
 
 
-@sio.on('hello')
+@_sio.on('hello')
 def hello(sid, data):
     # print("Received hello: sid={} id={}".format(sid, data['id']))
 
@@ -92,34 +94,34 @@ def get_free_tcp_port():
     return port
 
 def run_server():
-    global app
-    global sio
-    global port
-    print("Starting shared server: port=" + str(port))
-    address = ('0.0.0.0', port)
-    app = socketio.Middleware(sio, app)
+    global _app
+    global _sio
+    global _port
+    print("Starting shared server: port=" + str(_port))
+    address = ('0.0.0.0', _port)
+    _app = socketio.Middleware(_sio, _app)
     try:
-        eventlet.wsgi.server(eventlet.listen(address), app)
+        eventlet.wsgi.server(eventlet.listen(address), _app)
     except KeyboardInterrupt:
         print("Stopping shared server")
 
 def init_server():
-    global inited
-    global port
+    global _inited
+    global _port
 
-    if inited:
+    if _inited:
         return
 
-    port = get_free_tcp_port()
+    _port = get_free_tcp_port()
 
     env = os.environ.copy()
     if 'SIMULATION_PORT' in env:
-        port = int(env['SIMULATION_PORT'])
+        _port = int(env['SIMULATION_PORT'])
 
     # This threading call is imported from eventlet.green. Magic!
     # See http://eventlet.net/doc/patching.html#monkeypatching-the-standard-library
     threading.Thread(target = run_server).start()
-    inited = True
+    _inited = True
 
 """
 Simulation interface
@@ -142,8 +144,8 @@ class Simulation:
             capture_frame_rate,
             callback,
     ):
-        global lock
-        global clients
+        global _lock
+        global _clients
         self.launch = launch
         self.headless = headless
         self.time_scale = time_scale
@@ -155,22 +157,22 @@ class Simulation:
         if 'SIMULATION_PORT' in self.env:
             self.launch = False
 
-        with lock:
+        with _lock:
             self.client = {
-                'id': len(clients),
+                'id': len(_clients),
                 'condition': threading.Condition(),
                 'sid': "",
                 'callback': callback,
             }
-            clients.append(self.client)
+            _clients.append(self.client)
 
     def start(self, track):
-        global lock
-        global sio
-        global port
+        global _lock
+        global _sio
+        global _port
 
         # Lazily init the shared socket.IO server.
-        with lock:
+        with _lock:
             init_server()
 
         self.client['condition'].acquire()
@@ -202,7 +204,7 @@ class Simulation:
                 "-simulationCaptureFrameRate",
                 str(self.capture_frame_rate),
                 "-socketIOPort",
-                str(port),
+                str(_port),
             ]
             if self.headless:
                 cmd.append('-batchmode')
@@ -210,6 +212,7 @@ class Simulation:
             print(cmd)
 
             self.process = subprocess.Popen(cmd, env=self.env)
+            self.client['process'] = self.process
 
         self.client['condition'].wait()
 
@@ -220,8 +223,8 @@ class Simulation:
 
         self.client['condition'].acquire()
 
-        with lock:
-            sio.emit('reset', data={
+        with _lock:
+            _sio.emit('reset', data={
                 'track_path': track.serialize(),
                 'track_width': str(track.width()),
             }, room=self.client['sid'])
@@ -243,8 +246,8 @@ class Simulation:
     def reset(self, track):
         self.client['condition'].acquire()
 
-        with lock:
-            sio.emit('reset', data={
+        with _lock:
+            _sio.emit('reset', data={
                 'track_path': track.serialize(),
                 'track_width': str(track.width()),
             }, room=self.client['sid'])
@@ -256,14 +259,14 @@ class Simulation:
         # ))
 
     def step(self, command):
-        global lock
-        global sio
+        global _lock
+        global _sio
 
         self.client['condition'].acquire()
 
         # Send command.
-        with lock:
-            sio.emit('step', data={
+        with _lock:
+            _sio.emit('step', data={
                 'steering': str(command.steering),
                 'throttle': str(command.throttle),
                 'brake': str(command.brake),
@@ -278,3 +281,13 @@ class Simulation:
         telemetry = self.client['telemetry']
         self.client['condition'].release()
         return telemetry
+
+def cleanup():
+    for c in _clients:
+        if 'process' in c:
+            print("Simulation cleaned up: id={} sid={}".format(
+                c['id'], ['sid'],
+            ))
+            c['process'].terminate()
+
+atexit.register(cleanup)
