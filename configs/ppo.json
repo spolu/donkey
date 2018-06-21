@@ -14,7 +14,7 @@
   "hidden_size": 128,
   "recurring_cell": "gru",
 
-  "rollout_size": 128,
+  "rollout_size": 32,
   "worker_count": 64,
   "mini_batch_count": 16,
 
