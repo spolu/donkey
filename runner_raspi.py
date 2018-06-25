@@ -57,13 +57,13 @@ def drive(args):
         lclzr = Localizer(cfg, cfg, args.load_dir)
         V.add(lclzr,
           inputs=['cam/image_array'],
-          outputs=['track_progress', 'track_position', 'track_angle'],
+          outputs=['track_coordinates'],
           threaded=False)
 
     if cfg is not None:
         plnr = Planner(cfg)
         V.add(plnr,
-            inputs=['track_progress', 'track_position', 'track_angle'],
+            inputs=['track_coordinates'],
             outputs=['angle', 'throttle'],
             threaded=False)
 

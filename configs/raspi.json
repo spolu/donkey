@@ -1,6 +1,5 @@
 {
   "track_name": "stationfxl",
-  "capture_model": "resnet",
   "cuda": false,
 
   "hidden_size": 128,

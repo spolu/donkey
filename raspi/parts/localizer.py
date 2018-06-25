@@ -8,13 +8,16 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim as optim
 
+from track import Track
 from capture.models import ConvNet
 
 class Localizer:
     def __init__(self, cfg, policy, load_dir):
+        self.track_name = config.get('track_name')
         self.device = torch.device('cpu')
-        self.model = ConvNet(cfg, 3, 3).to(self.device)
-        self.stack = None
+
+        self.model = ConvNet(cfg).to(self.device)
+        self.track = Track(self.track_name)
 
         if not load_dir:
             raise Exception("Required argument: --load_dir")
@@ -37,12 +40,12 @@ class Localizer:
 
         output = self.model(tensor.unsqueeze(0))
 
-        track_progress = output[0][0].item()
-        track_position = output[0][1].item()
-        track_angle = output[0][2].item()
+        track_coordinates = output[0].data
 
-        print(">> LOCALIZER {:.2f} {:.2f} {:.2f}".format(
-            track_progress, track_position, track_angle,
+        print(">> LOCALIZER {} {:.2f} {:.2f}".format(
+            track_coordinates,
+            track.progress(track_coordinates),
+            track.position(track_progress),
         ))
 
-        return track_progress, track_position, track_angle
+        return track_coordinates

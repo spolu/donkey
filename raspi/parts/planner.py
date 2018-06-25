@@ -5,8 +5,6 @@ class Planner:
     def __init__(self, config):
         self.planner = Planr(config)
 
-    def run(self, track_progress, track_position, track_angle):
-        return self.planner.plan(
-            track_progress, track_position, track_angle,
-        )
+    def run(self, track_coordinates):
+        return self.planner.plan(track_coordinates)
 
