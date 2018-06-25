@@ -8,3 +8,5 @@ class Planner:
     def run(self, track_coordinates):
         return self.planner.plan(track_coordinates)
 
+    def shutdown(self):
+        pass

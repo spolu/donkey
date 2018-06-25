@@ -73,12 +73,12 @@ def drive(args):
         threaded=True,
     )
 
-    pozyxr = Pozyxer()
-    V.add(
-        pozyxr,
-        outputs=['pozyx/position', 'pozyx/stack'],
-        threaded=True,
-    )
+    # pozyxr = Pozyxer()
+    # V.add(
+    #     pozyxr,
+    #     outputs=['pozyx/position', 'pozyx/stack'],
+    #     threaded=True,
+    # )
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)

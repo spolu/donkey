@@ -1,7 +1,9 @@
 {
   "track_name": "stationfxl",
+  "action_type": "continuous",
+  "policy": "ppo_pixels_cnn_cropped_edges",
   "cuda": false,
-
+  "fixed_action_std": 0.0,
   "hidden_size": 128,
-  "stack_size": 3
+  "recurring_cell": "gru"
 }

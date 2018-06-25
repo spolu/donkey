@@ -18,6 +18,7 @@ from raspi.parts.camera import PiCamera
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.localizer import Localizer
 from raspi.parts.planner import Planner
+from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 
 # VEHICLE
@@ -53,19 +54,26 @@ def drive(args):
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
-    if args.load_dir is not None:
-        lclzr = Localizer(cfg, cfg, args.load_dir)
-        V.add(lclzr,
-          inputs=['cam/image_array'],
-          outputs=['track_coordinates'],
-          threaded=False)
+    # if cfg is not None:
+    #     if args.load_dir is not None:
+    #         lclzr = Localizer(cfg, args.load_dir)
+    #         V.add(lclzr,
+    #           inputs=['cam/image_array'],
+    #           outputs=['track_coordinates'],
+    #           threaded=False)
 
-    if cfg is not None:
-        plnr = Planner(cfg)
-        V.add(plnr,
-            inputs=['track_coordinates'],
-            outputs=['angle', 'throttle'],
-            threaded=False)
+    #     plnr = Planner(cfg)
+    #     V.add(plnr,
+    #         inputs=['track_coordinates'],
+    #         outputs=['angle', 'throttle'],
+    #         threaded=False)
+
+    if args.load_dir is not None and cfg is not None:
+        driver = Driver(cfg, args.load_dir)
+        V.add(driver,
+          inputs=['cam/image_array'],
+          outputs=['angle', 'throttle'],
+          threaded=False)
 
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)

@@ -12,8 +12,8 @@ from track import Track
 from capture.models import ConvNet
 
 class Localizer:
-    def __init__(self, cfg, policy, load_dir):
-        self.track_name = config.get('track_name')
+    def __init__(self, cfg, load_dir):
+        self.track_name = cfg.get('track_name')
         self.device = torch.device('cpu')
 
         self.model = ConvNet(cfg).to(self.device)
@@ -40,12 +40,15 @@ class Localizer:
 
         output = self.model(tensor.unsqueeze(0))
 
-        track_coordinates = output[0].data
+        track_coordinates = output[0].detach().numpy()
 
-        print(">> LOCALIZER {} {:.2f} {:.2f}".format(
-            track_coordinates,
-            track.progress(track_coordinates),
-            track.position(track_progress),
-        ))
+        # print(">> LOCALIZER {} {:.2f} {:.2f}".format(
+        #     track_coordinates,
+        #     self.track.progress(track_coordinates),
+        #     self.track.position(track_coordinates),
+        # ))
 
         return track_coordinates
+
+    def shutdown(self):
+        pass

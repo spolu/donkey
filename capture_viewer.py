@@ -1,5 +1,6 @@
 import sys
 import io
+import cv2
 import os
 import argparse
 import eventlet
@@ -55,8 +56,20 @@ def camera(track, capture, index):
 
     ib = capture.get_item(index)['camera']
 
+    camera = cv2.imdecode(
+        np.fromstring(ib, np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    ).astype(np.float)[50:]
+    edges = cv2.Canny(
+        camera.astype(np.uint8), 50, 150, apertureSize = 3,
+    )
+    _, encoded = cv2.imencode('.jpeg', edges)
+
+    print("ENCODED!")
+    # import pdb; pdb.set_trace()
+
     return send_file(
-        io.BytesIO(ib),
+        io.BytesIO(encoded.tobytes()),
         attachment_filename='%d.jpeg' % index,
         mimetype='image/jpeg',
     )
