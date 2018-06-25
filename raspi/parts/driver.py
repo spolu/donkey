@@ -57,6 +57,12 @@ class Driver:
             self.masks.detach(),
             deterministic=True,
         )
+        steering = action[0][0].item()
+        throttle = 0.58
 
-        return action[0][0].item(), 0.55
+        print(">>> COMMANDS: {:.2f} {:.2f}".format(
+            steering, throttle
+        ))
+
+        return steering, throttle
 

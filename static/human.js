@@ -19,7 +19,7 @@ var command = () => {
   }
 
   if (keypressed['w']) {
-    c['throttle'] = 1.0
+    c['throttle'] = 0.6
   }
   if (keypressed['a']) {
     c['steering'] = -1.0

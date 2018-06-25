@@ -38,6 +38,8 @@ public class SimulationController : MonoBehaviour
 	private float fpsValue = 0.0f;
 	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
+	private bool doPause = false;
+
 	private float carStartY = 0.001f;
 
     private Vector3 prevVelocity = Vector3.zero;
@@ -109,7 +111,9 @@ public class SimulationController : MonoBehaviour
 	{
 		// Debug.Log ("Pause: time=" + Time.time);
 		lastPause = Time.time;
-		Time.timeScale = 0.0f;
+		if (doPause) {
+			Time.timeScale = 0.0f;
+		}
 	}
 	void Resume()
 	{
