@@ -22,7 +22,7 @@ from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 
 # VEHICLE
-DRIVE_LOOP_HZ = 10
+DRIVE_LOOP_HZ = 30
 MAX_LOOPS = 100000
 
 # CAMERA

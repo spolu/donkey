@@ -2,7 +2,7 @@
   "track_name": "stationfxl",
   "track_randomized": false,
   "reward_type": "speed",
-  "action_type": "continuous",
+  "action_type": "discrete_throttle",
   "speed_limit": 0.0,
 
   "algorithm": "ppo",
@@ -33,6 +33,6 @@
 
   "simulation_headless": true,
   "simulation_time_scale": 4.0,
-  "simulation_step_interval": 0.19,
-  "simulation_capture_frame_rate": 200
+  "simulation_step_interval": 0.030,
+  "simulation_capture_frame_rate": 30
 }

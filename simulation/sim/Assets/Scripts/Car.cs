@@ -11,7 +11,7 @@ public class Car : MonoBehaviour, ICar {
 	public float maxMotorTorque = 2f;
 	public float maxSpeed = 3f;
 	public float maxSteer = 44.0f;
-	public float wheelDampingRate = 0.001f;
+	public float wheelDampingRate = 0.002f;
 
 	public Transform centrOfMass;
 
