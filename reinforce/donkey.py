@@ -15,7 +15,7 @@ MAX_SPEED = 10.0
 STALL_SPEED = 0.1
 MAX_STALL_TIME = 10
 
-MAX_OUTTRACK_TIME = 10
+MAX_OUTTRACK_TIME = 0
 
 LAP_COUNT = 3
 PROGRESS_INCREMENT = 0.01
@@ -26,7 +26,6 @@ CAMERA_HEIGHT = 120
 CAMERA_WIDTH = 160
 
 CONTINUOUS_CONTROL_SIZE = 2
-DISCRETE_THROTTLE_CONTROL_COUNT = 2
 DISCRETE_THROTTLE_SLOW = 0.6
 DISCRETE_CONTROL_COUNT = 9
 
@@ -344,11 +343,11 @@ class Donkey:
                 throttle = 0.0
                 brake = 0.0
                 steering = -1.0
-        if self.action_type == 'discrete_throttle':
+        if self.action_type == 'semi_discrete_throttle':
             steering = controls[0]
             throttle= 0.0
             brake = 0.0
-            if controls[1] == 1:
+            if controls[1] > 0.0:
                 throttle = DISCRETE_THROTTLE_SLOW
         else:
             steering = controls[0]

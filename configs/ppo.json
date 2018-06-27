@@ -2,7 +2,7 @@
   "track_name": "stationfxl",
   "track_randomized": false,
   "reward_type": "speed",
-  "action_type": "discrete_throttle",
+  "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
 
   "algorithm": "ppo",
@@ -11,7 +11,7 @@
   "seed": 1,
 
   "fixed_action_std": 0.0,
-  "hidden_size": 128,
+  "hidden_size": 64,
   "recurring_cell": "gru",
 
   "rollout_size": 16,
@@ -34,5 +34,5 @@
   "simulation_headless": true,
   "simulation_time_scale": 4.0,
   "simulation_step_interval": 0.030,
-  "simulation_capture_frame_rate": 30
+  "simulation_capture_frame_rate": 120
 }
