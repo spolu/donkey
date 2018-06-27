@@ -38,6 +38,10 @@ public class SimulationController : MonoBehaviour
 	private float fpsValue = 0.0f;
 	private string socketIOUrl = "ws://127.0.0.1:9999/socket.io/?EIO=4&transport=websocket";
 
+	private float lastRequestedSteering = 0.0f;
+	private float lastRequestedThrottle = 0.0f;
+	private float lastRequestedBrake = 0.0f;
+
 	private bool doPause = false;
 
 	private float carStartY = 0.001f;
@@ -253,9 +257,15 @@ public class SimulationController : MonoBehaviour
 	{
 		// Debug.Log ("Received: type=step sid=" + _socket.sid + " data=" + ev.data);
 
-		car.RequestSteering (float.Parse(ev.data.GetField("steering").str));
-		car.RequestThrottle (float.Parse(ev.data.GetField("throttle").str));
-		car.RequestBrake (float.Parse(ev.data.GetField("brake").str));
+        // Apply controls from last step to simulate the delay incurred by running our predictions.
+
+		car.RequestSteering (lastRequestedSteering);
+		car.RequestThrottle (lastRequestedThrottle);
+		car.RequestBrake (lastRequestedBrake);
+
+		lastRequestedThrottle = float.Parse(ev.data.GetField("throttle").str);
+		lastRequestedSteering = float.Parse(ev.data.GetField("steering").str);
+		lastRequestedBrake = float.Parse(ev.data.GetField("brake").str);
         
 		Resume ();
 	}
