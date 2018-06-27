@@ -16,31 +16,43 @@ class Sense:
         self.orientation = { 'p:' : 0., 'r' : 0., 'y' : 0. }
         self.on = True
         self.poll_delay = poll_delay
-        
-        self.angle = 0.0
-        self.throttle = 0.0
+        self.position = 0.0
+
 
     def update(self):
         while self.on:
             self.poll()
-            self.show_direction()
             time.sleep(self.poll_delay)
 
     def poll(self):
-        self.orientation= self.sense.get_orientation_radians()
+        self.show_position()
 
-    def run_threaded(self, angle = None, throttle = None):
-        self.throttle = throttle
-        self.angle = angle
-        # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.orientation
+    def run_threaded(self, track_position = None):
+        self.position = track_position
+        return 
 
-    def run(self, angle = None, throttle = None):
-        self.poll()
-        self.throttle = throttle
-        self.angle = angle
-        # return self.accel['x'], self.accel['y'], self.accel['z'], self.gyro['x'], self.gyro['y'], self.gyro['z'], self.temp
-        return self.orientation
+    def run(self, track_position = None):
+        self.position = track_position
+        self.show_position()
+        return 
+
+    def show_position(self):
+        X = [255, 0,  0]
+        if self.position < 0.0:
+            X = [0, 255,  0]
+        pixels = [
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            X, X, X, X, X, X, X, X,
+            ]
+        self.sense.set_pixels(pixels)
+
+
 
     def show_direction(self):
         green = int(127*self.throttle)
