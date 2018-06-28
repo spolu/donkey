@@ -42,7 +42,7 @@ public class SimulationController : MonoBehaviour
 	private float lastRequestedThrottle = 0.0f;
 	private float lastRequestedBrake = 0.0f;
 
-	private bool doPause = false;
+	private bool doPause = true;
 
 	private float carStartY = 0.001f;
 
