@@ -55,19 +55,20 @@ class Track:
     def length(self):
         return self.track_length
 
-    def randomize(self):
+    def randomize(self, symmetry=False):
         """
         Randomize track by randomly applying symetry to the track and picking
         translating such that the starting location is picked randomly.
         """
         self.points = self.script.points()
 
-        if random.randint(0, 1) == 1:
-            for i in range(len(self.points)):
-                self.points[i][0] = -self.points[i][0]
-        if random.randint(0, 1) == 1:
-            for i in range(len(self.points)):
-                self.points[i][2] = -self.points[i][2]
+        if symmetry:
+            if random.randint(0, 1) == 1:
+                for i in range(len(self.points)):
+                    self.points[i][0] = -self.points[i][0]
+            if random.randint(0, 1) == 1:
+                for i in range(len(self.points)):
+                    self.points[i][2] = -self.points[i][2]
 
         position = random.randint(0, len(self.points)-1)
         for i in range(position):

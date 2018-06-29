@@ -1,6 +1,6 @@
 {
   "track_name": "stationfxl",
-  "track_randomized": false,
+  "track_randomized": true,
   "action_type": "continuous",
   "speed_limit": 0.0,
 
