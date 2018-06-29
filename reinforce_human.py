@@ -25,13 +25,15 @@ _done = None
 _track = None
 
 def transition():
-    # camera = cv2.imdecode(
-    #     np.fromstring(_observations.camera_raw, np.uint8),
-    #     cv2.IMREAD_GRAYSCALE,
-    # ).astype(np.float)
-    # edges = cv2.Canny(
-    #     camera.astype(np.uint8), 50, 150, apertureSize = 3,
-    # )
+    camera = cv2.imdecode(
+        np.fromstring(_observations.camera_raw, np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    ).astype(np.float)
+    # camera = camera / 127.5 - 1
+    edges = cv2.Canny(
+        camera.astype(np.uint8), 50, 150, apertureSize = 3,
+    )
+    edges = edges / 127.5 - 1
 
     return {
         'done': _done,
@@ -40,7 +42,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            # 'camera': edges.tolist(),
+            'camera': edges.tolist(),
             'position': _track.invert(
                 _observations.track_coordinates,
             ).tolist(),
