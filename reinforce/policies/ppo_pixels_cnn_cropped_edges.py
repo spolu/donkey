@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.autograd as autograd
 
 from torch.distributions import Normal, Categorical
 
@@ -169,7 +168,6 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
                     self.fixed_action_std *
                     torch.ones(action_mean.size()).float()
                 ).to(self.device)
-                action_std = autograd.Variable(action_std)
                 action_logstd = action_std.log()
 
             m = Normal(action_mean, action_std)
@@ -213,7 +211,6 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
                     self.fixed_action_std *
                     torch.ones(action_mean.size()).float()
                 ).to(self.device)
-                action_std = autograd.Variable(action_std)
                 action_logstd = action_std.log()
 
             m = Normal(action_mean, action_std)
