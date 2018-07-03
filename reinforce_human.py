@@ -13,7 +13,8 @@ from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from track import Track
-from reinforce import Donkey
+
+import reinforce
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -31,7 +32,15 @@ def transition():
     ).astype(np.float)
     # camera = camera / 127.5 - 1
     edges = cv2.Canny(
-        camera.astype(np.uint8), 50, 150, apertureSize = 3,
+        cv2.resize(
+            camera.astype(np.uint8),
+            (
+                int(reinforce.CAMERA_WIDTH/2),
+                int(reinforce.CAMERA_HEIGHT/2),
+            ),
+            interpolation=cv2.INTER_CUBIC,
+        ),
+        50, 150, apertureSize = 3,
     )
     edges = edges / 127.5 - 1
 
@@ -112,7 +121,7 @@ if __name__ == "__main__":
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
-    _d = Donkey(cfg)
+    _d = reinforce.Donkey(cfg)
     _observations = _d.reset()
     _track = Track(cfg.get('track_name'))
 
