@@ -47,7 +47,7 @@ class Driver:
                 np.fromstring(camera_raw, np.uint8),
                 cv2.IMREAD_GRAYSCALE,
             ), 50, 150, apertureSize = 3,
-        )[50:] / 127.5 - 1
+        )[25:] / 127.5 - 1
 
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
 
