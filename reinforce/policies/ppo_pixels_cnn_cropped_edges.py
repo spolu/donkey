@@ -26,15 +26,15 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             'cuda:0' if config.get('cuda') else 'cpu'
         )
 
-        self.cv1 = nn.Conv2d(1, 24, 5, stride=3)
-        self.cv2 = nn.Conv2d(24, 32, 5, stride=3)
+        self.cv1 = nn.Conv2d(1, 24, 5, stride=2)
+        self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
         # self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
         # self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
 
         self.dp1 = nn.Dropout(p=0.1)
 
-        self.fc1 = nn.Linear(768, self.hidden_size)
+        self.fc1 = nn.Linear(3264, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -86,7 +86,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         # x = F.elu(self.cv5(x))
         x = self.dp1(x)
 
-        x = x.view(-1, 768)
+        x = x.view(-1, 3264)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":
