@@ -15,7 +15,7 @@
   "recurring_cell": "gru",
 
   "rollout_size": 16,
-  "worker_count": 32,
+  "worker_count": 24,
   "mini_batch_count": 4,
 
   "learning_rate": 0.0001,
