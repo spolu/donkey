@@ -47,7 +47,11 @@ class VAECroppedEdges(nn.Module):
         return self.fc1(x), self.fc2(x)
 
     def reconstruct(self, z):
-        x = self.fc3(z).view(-1, 32, CONV_OUT_WIDTH, CONV_OUT_HEIGHT)
+        x = self.fc3(z)
+
+        # import pdb; pdb.set_trace()
+        x = x.view(-1, 32, CONV_OUT_WIDTH, CONV_OUT_HEIGHT)
+
         x = F.relu(self.dcv1(x))
         x = F.relu(self.dcv2(x))
         x = F.sigmoid(x)

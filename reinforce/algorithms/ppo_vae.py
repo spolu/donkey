@@ -35,7 +35,7 @@ class Storage:
         ).to(self.device)
         self.latents = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.latent_size,
-        )
+        ).to(self.device)
         self.hiddens = torch.zeros(
             self.rollout_size + 1, self.worker_count, self.latent_size,
         ).to(self.device)
@@ -387,21 +387,20 @@ class PPOVAE:
                 observations_batch.detach(),
             )
 
-            batch_size = observations_batch.size(0)
+            # batch_size = observations_batch.size(0)
 
-            like_loss = F.binary_cross_entropy(
+            bce_loss = F.binary_cross_entropy(
                 reconstructs, observations_batch.detach(), size_average=False,
             )
-            like_loss /= batch_size
 
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            kld_loss /= batch_size
+            # kld_loss /= batch_size
 
             self.vae_optimizer.zero_grad()
 
-            (like_loss + self.vae_beta * kld_loss).backward()
+            (bce_loss + self.vae_beta * kld_loss).backward()
 
             if self.grad_norm_max > 0.0:
                 nn.utils.clip_grad_norm(
@@ -425,7 +424,7 @@ class PPOVAE:
              "entropy_loss {:.5f} " + \
              "value_loss {:.5f} " + \
              "action_loss {:.5f} " + \
-             "like_loss {:.5f} " + \
+             "bce_loss {:.5f} " + \
              "kld_loss {:.5f}").
             format(
                 self.batch_count,
@@ -438,7 +437,7 @@ class PPOVAE:
                 entropy_loss.item(),
                 value_loss.item(),
                 action_loss.item(),
-                like_loss.item(),
+                bce_loss.item(),
                 kld_loss.item(),
             ))
         sys.stdout.flush()
