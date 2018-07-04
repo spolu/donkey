@@ -14,8 +14,8 @@ def run(args):
 
     if args.worker_count != None:
         cfg.override('worker_count', args.worker_count)
-    if args.cuda != None:
-        cfg.override('cuda', args.cuda)
+    if args.device != None:
+        cfg.override('device', args.device)
     if args.simulation_headless != None:
         cfg.override('simulation_headless', args.simulation_headless)
     if args.simulation_time_scale != None:
@@ -28,7 +28,7 @@ def run(args):
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
 
-    if cfg.get('cuda'):
+    if cfg.get('device') != 'cpu':
         torch.cuda.manual_seed(cfg.get('seed'))
 
     if cfg.get('algorithm') == 'ppo':
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_dir', type=str, help="directory to save policies to")
     parser.add_argument('--load_dir', type=str, help="path to saved policies directory")
 
-    parser.add_argument('--cuda', type=str2bool, help="config override")
+    parser.add_argument('--device', type=str, help="config override")
     parser.add_argument('--worker_count', type=int, help="config override")
 
     parser.add_argument('--simulation_headless', type=str2bool, help="config override")

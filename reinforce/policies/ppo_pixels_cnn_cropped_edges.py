@@ -22,19 +22,17 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         self.action_type = config.get('action_type')
         self.fixed_action_std = config.get('fixed_action_std')
 
-        self.device = torch.device(
-            'cuda:0' if config.get('cuda') else 'cpu'
-        )
+        self.device = torch.device(config.get('device'))
 
         self.cv1 = nn.Conv2d(1, 12, 5, stride=2)
-        self.cv2 = nn.Conv2d(12, 16, 5, stride=2)
+        self.cv2 = nn.Conv2d(12, 16, 5, stride=3)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
         # self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
         # self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
 
         self.dp1 = nn.Dropout(p=0.1)
 
-        self.fc1 = nn.Linear(8880, self.hidden_size)
+        self.fc1 = nn.Linear(4000, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -87,7 +85,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         x = self.dp1(x)
 
         # import pdb; pdb.set_trace()
-        x = x.view(-1, 8880)
+        x = x.view(-1, 4000)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":

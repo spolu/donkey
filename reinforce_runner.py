@@ -62,7 +62,7 @@ def run(args):
     cfg = Config(args.config_path)
 
     cfg.override('worker_count', 1)
-    cfg.override('cuda', False)
+    cfg.override('device', 'cpu')
 
     if args.simulation_headless != None:
         cfg.override('simulation_headless', args.simulation_headless)

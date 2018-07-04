@@ -161,7 +161,7 @@ class PPO:
         self.action_type = config.get('action_type')
         self.config = config
 
-        self.device = torch.device('cuda:0' if config.get('cuda') else 'cpu')
+        self.device = torch.device(config.get('device'))
 
         if config.get('policy') == 'ppo_pixels_cnn_cropped_edges':
             self.policy = PPOPixelsCNNCroppedEdges(config).to(self.device)
@@ -178,7 +178,7 @@ class PPO:
         self.rollouts = PPOStorage(config, self.policy, self.device)
 
         if self.load_dir:
-            if config.get('cuda'):
+            if config.get('device') != 'cpu':
                 self.policy.load_state_dict(
                     torch.load(self.load_dir + "/policy.pt"),
                 )
