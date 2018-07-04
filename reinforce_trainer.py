@@ -8,6 +8,7 @@ import torch
 from utils import Config, str2bool
 
 from reinforce.algorithms import PPO
+from reinforce.algorithms import PPOVAE
 
 def run(args):
     cfg = Config(args.config_path)
@@ -33,6 +34,8 @@ def run(args):
 
     if cfg.get('algorithm') == 'ppo':
         algorithm = PPO(cfg, args.save_dir, args.load_dir)
+    if cfg.get('algorithm') == 'ppo_vae':
+        algorithm = PPOVAE(cfg, args.save_dir, args.load_dir)
     assert algorithm is not None
 
     episode = 0

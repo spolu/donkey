@@ -1,1 +1,3 @@
 from reinforce.policies.ppo_pixels_cnn_cropped_edges import PPOPixelsCNNCroppedEdges
+from reinforce.policies.vae_cropped_edges import VAECroppedEdges
+from reinforce.policies.ppo_controller import PPOController
