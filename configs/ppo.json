@@ -18,7 +18,7 @@
   "worker_count": 24,
   "mini_batch_count": 4,
 
-  "learning_rate": 0.0001,
+  "learning_rate": 0.0005,
   "gamma": 0.99,
   "tau": 0.95,
 

@@ -26,15 +26,15 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             'cuda:0' if config.get('cuda') else 'cpu'
         )
 
-        self.cv1 = nn.Conv2d(1, 24, 5, stride=2)
-        self.cv2 = nn.Conv2d(24, 32, 5, stride=2)
+        self.cv1 = nn.Conv2d(1, 12, 5, stride=2)
+        self.cv2 = nn.Conv2d(12, 16, 5, stride=2)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
         # self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
         # self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
 
         self.dp1 = nn.Dropout(p=0.1)
 
-        self.fc1 = nn.Linear(3264, self.hidden_size)
+        self.fc1 = nn.Linear(8880, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -86,7 +86,8 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         # x = F.elu(self.cv5(x))
         x = self.dp1(x)
 
-        x = x.view(-1, 3264)
+        # import pdb; pdb.set_trace()
+        x = x.view(-1, 8880)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":
@@ -118,26 +119,19 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
     def input_shape(self):
         return (
             1,
-            int(reinforce.CAMERA_HEIGHT/2 - 25),
-            int(reinforce.CAMERA_WIDTH/2),
+            int(reinforce.CAMERA_HEIGHT - 50),
+            int(reinforce.CAMERA_WIDTH),
         )
 
     def input(self, observation):
         cameras = [
             cv2.Canny(
-                cv2.resize(
-                    cv2.imdecode(
-                        np.fromstring(o.camera_raw, np.uint8),
-                        cv2.IMREAD_GRAYSCALE,
-                    ),
-                    (
-                        int(reinforce.CAMERA_WIDTH/2),
-                        int(reinforce.CAMERA_HEIGHT/2),
-                    ),
-                    interpolation=cv2.INTER_CUBIC,
+                cv2.imdecode(
+                    np.fromstring(o.camera_raw, np.uint8),
+                    cv2.IMREAD_GRAYSCALE,
                 ),
                 50, 150, apertureSize = 3,
-            )[25:] / 127.5 - 1
+            )[50:] / 127.5 - 1
             for o in observation
         ]
 
