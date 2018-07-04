@@ -288,13 +288,11 @@ class PPO:
                     log_probs_batch, \
                     advantage_targets = sample
 
-            # All tensors were inserted in the memory as .data and are therefor
-            # detached from any graph as they are spewed by the generator.
             values, hiddens, log_probs, entropy = self.policy.evaluate(
-                observations_batch,
-                hiddens_batch,
-                masks_batch,
-                actions_batch,
+                observations_batch.detach(),
+                hiddens_batch.detach(),
+                masks_batch.detach(),
+                actions_batch.detach(),
             )
 
             ratio = torch.exp(log_probs - log_probs_batch)
