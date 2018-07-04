@@ -11,7 +11,7 @@
   "seed": 1,
 
   "fixed_action_std": 0.0,
-  "hidden_size": 64,
+  "hidden_size": 128,
   "recurring_cell": "gru",
 
   "rollout_size": 16,
