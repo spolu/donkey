@@ -37,16 +37,7 @@ class VAECroppedEdges(nn.Module):
         self.dcv1 = nn.ConvTranspose2d(32, 24, (5, 6), stride=2)
         self.dcv2 = nn.ConvTranspose2d(24, 1, 6, stride=2)
 
-    def forward(self, inputs):
-        x = F.relu(self.cv1(inputs))
-        x = F.relu(self.cv2(x))
-
-        # import pdb; pdb.set_trace()
-        x = x.view(-1, 32*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
-
-        return self.fc1(x), self.fc2(x)
-
-    def reconstruct(self, z):
+    def decode(self, z):
         x = self.fc3(z)
 
         # import pdb; pdb.set_trace()
@@ -59,17 +50,29 @@ class VAECroppedEdges(nn.Module):
         return x
 
     def encode(self, inputs):
-        mu, _ = self.forward(inputs)
-        return mu
+        x = F.relu(self.cv1(inputs))
+        x = F.relu(self.cv2(x))
 
-    def decode(self, inputs):
-        mu, logvar = self.forward(inputs)
+        # import pdb; pdb.set_trace()
+        x = x.view(-1, 32*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        z = eps * std + mu
+        return self.fc1(x), self.fc2(x)
 
-        return self.reconstruct(z), mu, logvar
+    def forward(self, x, encode=False, deterministic=False):
+        mean, logvar = self.encode(x)
+
+        z = None
+        if deterministic:
+            z = mean
+        else:
+            std = torch.exp(0.5 * logvar)
+            eps = torch.randn_like(std)
+            z = eps * std + mean
+
+        if encode:
+            return z
+        else:
+            return self.decode(z), mean, logvar
 
     def input_shape(self):
         return (

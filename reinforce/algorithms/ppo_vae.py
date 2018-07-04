@@ -245,8 +245,10 @@ class PPOVAE:
         observation = self.envs.reset()
         observation = self.vae_policy.input(observation)
         self.rollouts.observations[0].copy_(observation.to(self.device))
-        latent = self.vae_policy.encode(
+        latent = self.vae_policy(
             self.rollouts.observations[0].detach(),
+            encode=True,
+            deterministic=True,
         )
         self.rollouts.latents[0].copy_(latent)
 
@@ -299,8 +301,10 @@ class PPOVAE:
 
 
             observation = observation.to(self.device)
-            latent = self.vae_policy.encode(
+            latent = self.vae_policy(
                 observation.detach(),
+                encode=True,
+                deterministic=True,
             )
 
             self.rollouts.insert(
@@ -383,7 +387,7 @@ class PPOVAE:
                 _, \
                 _ = sample
 
-            reconstructs, means, logvars = self.vae_policy.decode(
+            reconstructs, means, logvars = self.vae_policy(
                 observations_batch.detach(),
             )
 
