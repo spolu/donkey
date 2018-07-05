@@ -73,25 +73,24 @@ def process_telemetry(telemetry):
     ])
 
     time = telemetry['time']
-    track_progress = _track.progress(position)
-    track_position = _track.position(position)
-    track_angle = _track.angle(position, velocity)
-    track_linear_speed = _track.linear_speed(position, velocity)
+    track_coordinates = _track.coordinates(position)
+    track_progress = _track.progress(track_coordinates)
+    track_position = _track.position(track_coordinates)
+    # track_angle = _track.angle(position, velocity)
+    # track_linear_speed = _track.linear_speed(position, velocity)
 
     data = {
         'time': time,
         'simulation_angular_velocity': angular_velocity.tolist(),
         'simulation_acceleration': acceleration.tolist(),
-        'reference_progress': track_progress,
-        'reference_track_position': track_position,
-        'reference_track_angle': track_angle,
+        'reference_coordinates': track_coordinates,
     }
 
     # Annotate every ANNOTATION_FREQUENCY the capture with the reference value
     # while in simulation.
-    if _capture.size() % ANNOTATION_FREQUENCY == 0:
-        data['annotated_progress'] = track_progress
-        data['annotated_track_position'] = track_position
+    # if _capture.size() % ANNOTATION_FREQUENCY == 0:
+    #     data['annotated_progress'] = track_progress
+    #     data['annotated_track_position'] = track_position
 
     _capture.add_item(camera_raw, data)
 
@@ -99,9 +98,9 @@ def process_telemetry(telemetry):
         'progress': track_progress,
         'track_position': track_position,
         'time': time,
-        'track_linear_speed': track_linear_speed,
+        # 'track_linear_speed': track_linear_speed,
         'camera': camera.tolist(),
-        'position': _track.invert(track_progress, track_position).tolist(),
+        'position': _track.invert(track_coordinates).tolist(),
     }
 
 def transition():
@@ -112,7 +111,7 @@ def transition():
             'progress': _observation['progress'],
             'track_position': _observation['track_position'],
             'time': _observation['time'],
-            'track_linear_speed': _observation['track_linear_speed'],
+            # 'track_linear_speed': _observation['track_linear_speed'],
             'camera': _observation['camera'],
             'position': _observation['position'],
         },
