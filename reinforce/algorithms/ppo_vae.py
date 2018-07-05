@@ -424,10 +424,10 @@ class PPOVAE:
 
             self.vae_optimizer.step()
 
-            cv2.imwrite('observation.jpg', (255 * observations_batch[0][0]).detach().numpy())
-            cv2.imwrite('reconstruct.jpg', (255 * reconstructs[0][0]).detach().numpy())
-            print("ORIGINAL    {}".format(observations_batch[0][0][0]))
-            print("RECONSTRUCT {}".format(reconstructs[0][0][0]))
+            # cv2.imwrite('observation.jpg', (255 * observations_batch[0][0]).detach().numpy())
+            # cv2.imwrite('reconstruct.jpg', (255 * reconstructs[0][0]).detach().numpy())
+            # print("ORIGINAL    {}".format(observations_batch[0][0][0]))
+            # print("RECONSTRUCT {}".format(reconstructs[0][0][0]))
 
 
         # Final update for rollouts.
