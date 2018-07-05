@@ -26,8 +26,8 @@
   "ppo_clip": 0.2,
 
   "action_loss_coeff": 1.0,
-  "value_loss_coeff": 0.7,
-  "entropy_loss_coeff": 0.02,
+  "value_loss_coeff": 0.6,
+  "entropy_loss_coeff": 0.01,
 
   "grad_norm_max": 0.0,
 
