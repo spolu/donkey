@@ -2,4 +2,5 @@
 .DS_Store
 build
 experiments
+vae_*.jpg
 __pycache__

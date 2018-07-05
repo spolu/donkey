@@ -170,6 +170,7 @@ class PPOVAE:
         self.rollout_size = config.get('rollout_size')
         self.hidden_size = config.get('hidden_size')
         self.latent_size = config.get('latent_size')
+        self.vae_epoch_count = config.get('vae_epoch_count')
         self.vae_beta = config.get('vae_beta')
         self.ppo_epoch_count = config.get('ppo_epoch_count')
         self.ppo_clip = config.get('ppo_clip')
@@ -376,59 +377,57 @@ class PPOVAE:
             self.ppo_optimizer.step()
 
         # VAE training on rollouts.
-        generator = self.rollouts.feed_forward_generator(advantages)
+        for e in range(self.vae_epoch_count):
+            generator = self.rollouts.feed_forward_generator(advantages)
 
-        for sample in generator:
-            observations_batch, \
-                _, \
-                _, \
-                _, \
-                _, \
-                _, \
-                _, \
-                _ = sample
+            for sample in generator:
+                observations_batch, \
+                    _, \
+                    _, \
+                    _, \
+                    _, \
+                    _, \
+                    _, \
+                    _ = sample
 
-            self.vae_optimizer.zero_grad()
+                self.vae_optimizer.zero_grad()
 
-            reconstructs, means, logvars = self.vae_policy(
-                observations_batch.detach(),
-            )
-
-            batch_size = observations_batch.size(0)
-
-            bce_loss = F.binary_cross_entropy(
-                reconstructs, observations_batch,
-            )
-            # bce_loss /= batch_size
-
-            mse_loss = F.mse_loss(
-                reconstructs, observations_batch,
-            )
-
-
-            kld_loss = -0.5 * torch.sum(
-                1 + logvars - means.pow(2) - logvars.exp()
-            )
-            kld_loss /= batch_size
-
-            # import pdb; pdb.set_trace()
-
-            # mse_loss.backward()
-            bce_loss.backward()
-            # (bce_loss + self.vae_beta * kld_loss).backward()
-
-            if self.grad_norm_max > 0.0:
-                nn.utils.clip_grad_norm(
-                    self.vae_policy.parameters(), self.grad_norm_max,
+                reconstructs, means, logvars = self.vae_policy(
+                    observations_batch.detach(),
                 )
 
-            self.vae_optimizer.step()
+                batch_size = observations_batch.size(0)
 
-            # cv2.imwrite('observation.jpg', (255 * observations_batch[0][0]).detach().numpy())
-            # cv2.imwrite('reconstruct.jpg', (255 * reconstructs[0][0]).detach().numpy())
-            # print("ORIGINAL    {}".format(observations_batch[0][0][0]))
-            # print("RECONSTRUCT {}".format(reconstructs[0][0][0]))
+                bce_loss = F.binary_cross_entropy(
+                    reconstructs, observations_batch,
+                )
+                # bce_loss /= batch_size
 
+                mse_loss = F.mse_loss(
+                    reconstructs, observations_batch,
+                )
+
+
+                kld_loss = -0.5 * torch.sum(
+                    1 + logvars - means.pow(2) - logvars.exp()
+                )
+                kld_loss /= batch_size
+
+                # import pdb; pdb.set_trace()
+
+                # mse_loss.backward()
+                bce_loss.backward()
+                # (bce_loss + self.vae_beta * kld_loss).backward()
+
+                if self.grad_norm_max > 0.0:
+                    nn.utils.clip_grad_norm(
+                        self.vae_policy.parameters(), self.grad_norm_max,
+                    )
+
+                self.vae_optimizer.step()
+
+                cv2.imwrite('vae_observation.jpg', (255 * observations_batch[0][0]).detach().numpy())
+                cv2.imwrite('vae_reconstruct.jpg', (255 * reconstructs[0][0]).detach().numpy())
 
         # Final update for rollouts.
         self.rollouts.after_update()
