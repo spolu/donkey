@@ -37,6 +37,25 @@ class VAECroppedEdges(nn.Module):
         self.dcv1 = nn.ConvTranspose2d(32, 24, (5, 6), stride=2)
         self.dcv2 = nn.ConvTranspose2d(24, 1, 6, stride=2)
 
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.bias.data.fill_(0)
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
+                m.bias.data.fill_(0)
+
+
+    def encode(self, inputs):
+        x = F.relu(self.cv1(inputs))
+        x = F.relu(self.cv2(x))
+
+        # import pdb; pdb.set_trace()
+        x = x.view(-1, 32*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
+
+        return self.fc1(x), self.fc2(x)
+
     def decode(self, z):
         x = self.fc3(z)
 
@@ -49,25 +68,17 @@ class VAECroppedEdges(nn.Module):
 
         return x
 
-    def encode(self, inputs):
-        x = F.relu(self.cv1(inputs))
-        x = F.relu(self.cv2(x))
-
-        # import pdb; pdb.set_trace()
-        x = x.view(-1, 32*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
-
-        return self.fc1(x), self.fc2(x)
+    def reparameterize(self, mean, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return eps * std + mean
 
     def forward(self, x, encode=False, deterministic=False):
         mean, logvar = self.encode(x)
+        z = self.reparameterize(mean, logvar)
 
-        z = None
         if deterministic:
             z = mean
-        else:
-            std = torch.exp(0.5 * logvar)
-            eps = torch.randn_like(std)
-            z = eps * std + mean
 
         if encode:
             return z

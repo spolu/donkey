@@ -387,24 +387,34 @@ class PPOVAE:
                 _, \
                 _ = sample
 
+            self.vae_optimizer.zero_grad()
+
             reconstructs, means, logvars = self.vae_policy(
                 observations_batch.detach(),
             )
 
-            # batch_size = observations_batch.size(0)
+            batch_size = observations_batch.size(0)
 
             bce_loss = F.binary_cross_entropy(
-                reconstructs, observations_batch.detach(), size_average=False,
+                reconstructs, observations_batch,
             )
+            # bce_loss /= batch_size
+
+            mse_loss = F.mse_loss(
+                reconstructs, observations_batch,
+            )
+
 
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            # kld_loss /= batch_size
+            kld_loss /= batch_size
 
-            self.vae_optimizer.zero_grad()
+            # import pdb; pdb.set_trace()
 
-            (bce_loss + self.vae_beta * kld_loss).backward()
+            mse_loss.backward()
+            # bce_loss.backward()
+            # (bce_loss + self.vae_beta * kld_loss).backward()
 
             if self.grad_norm_max > 0.0:
                 nn.utils.clip_grad_norm(
@@ -429,6 +439,7 @@ class PPOVAE:
              "value_loss {:.5f} " + \
              "action_loss {:.5f} " + \
              "bce_loss {:.5f} " + \
+             "mse_loss {:.5f} " + \
              "kld_loss {:.5f}").
             format(
                 self.batch_count,
@@ -442,6 +453,7 @@ class PPOVAE:
                 value_loss.item(),
                 action_loss.item(),
                 bce_loss.item(),
+                mse_loss.item(),
                 kld_loss.item(),
             ))
         sys.stdout.flush()
@@ -485,7 +497,11 @@ class PPOVAE:
             self.test_env = reinforce.Donkey(self.config)
 
         observations = self.vae_policy.input([self.test_env.reset()]).to(self.device)
-        latents = self.vae_policy.encode(observations).to(self.device)
+        latents = self.vae_policy(
+            observations,
+            encode=True,
+            deterministic=True
+        ).to(self.device)
         hiddens = torch.zeros(1, self.hidden_size).to(self.device)
         masks = torch.ones(1, 1).to(self.device)
 
@@ -533,7 +549,11 @@ class PPOVAE:
                 end = done
 
                 observations = self.vae_policy.input([observation]).to(self.device)
-                latents = self.vae_policy.encode(observations).to(self.device)
+                latents = self.vae_policy(
+                    observations,
+                    encode=True,
+                    deterministic=True
+                ).to(self.device)
                 masks = torch.FloatTensor(
                     [[0.0] if done else [1.0]]
                 ).to(self.device)
