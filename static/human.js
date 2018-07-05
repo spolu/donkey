@@ -51,20 +51,20 @@ socket.on('transition', (message) => {
   if (message['observation']['camera']) {
     var c = document.getElementById("camera");
     var ctxCamera = c.getContext("2d");
-    var imgData = ctxCamera.createImageData(80,60);
-    for (var w = 0; w < 60; w++) {
-      var alpha = (w > 25) ? 1.0 : 0.1;
-      for (var h = 0; h < 80; h++) {
-        imgData.data[((w * (80 * 4)) + (h * 4)) + 0] = Math.floor(
+    var imgData = ctxCamera.createImageData(160,120);
+    for (var w = 0; w < 120; w++) {
+      var alpha = (w > 50) ? 1.0 : 0.1;
+      for (var h = 0; h < 160; h++) {
+        imgData.data[((w * (160 * 4)) + (h * 4)) + 0] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (80 * 4)) + (h * 4)) + 1] = Math.floor(
+        imgData.data[((w * (160 * 4)) + (h * 4)) + 1] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (80 * 4)) + (h * 4)) + 2] = Math.floor(
+        imgData.data[((w * (160 * 4)) + (h * 4)) + 2] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (80 * 4)) + (h * 4)) + 3] = 255 * alpha
+        imgData.data[((w * (160 * 4)) + (h * 4)) + 3] = 255 * alpha
       }
     }
     ctxCamera.putImageData(imgData,0,0);

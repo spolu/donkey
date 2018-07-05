@@ -35,8 +35,8 @@ def transition():
         cv2.resize(
             camera.astype(np.uint8),
             (
-                int(reinforce.CAMERA_WIDTH/2),
-                int(reinforce.CAMERA_HEIGHT/2),
+                int(reinforce.CAMERA_WIDTH),
+                int(reinforce.CAMERA_HEIGHT),
             ),
             interpolation=cv2.INTER_CUBIC,
         ),
