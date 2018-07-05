@@ -1,3 +1,4 @@
+import cv2
 import sys
 import time
 
@@ -412,8 +413,8 @@ class PPOVAE:
 
             # import pdb; pdb.set_trace()
 
-            mse_loss.backward()
-            # bce_loss.backward()
+            # mse_loss.backward()
+            bce_loss.backward()
             # (bce_loss + self.vae_beta * kld_loss).backward()
 
             if self.grad_norm_max > 0.0:
@@ -422,6 +423,12 @@ class PPOVAE:
                 )
 
             self.vae_optimizer.step()
+
+            cv2.imwrite('observation.jpg', (255 * observations_batch[0][0]).detach().numpy())
+            cv2.imwrite('reconstruct.jpg', (255 * reconstructs[0][0]).detach().numpy())
+            print("ORIGINAL    {}".format(observations_batch[0][0][0]))
+            print("RECONSTRUCT {}".format(reconstructs[0][0][0]))
+
 
         # Final update for rollouts.
         self.rollouts.after_update()

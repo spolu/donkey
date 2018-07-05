@@ -38,9 +38,11 @@ class VAECroppedEdges(nn.Module):
         self.dcv2 = nn.ConvTranspose2d(24, 1, 6, stride=2)
 
         for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+            if isinstance(m, nn.Conv2d):
+                m.weight.data.normal_(0, 0.02)
+                m.bias.data.fill_(0)
+            if isinstance(m, nn.ConvTranspose2d):
+                m.weight.data.normal_(0, 0.02)
                 m.bias.data.fill_(0)
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
@@ -59,12 +61,10 @@ class VAECroppedEdges(nn.Module):
     def decode(self, z):
         x = self.fc3(z)
 
-        # import pdb; pdb.set_trace()
         x = x.view(-1, 32, CONV_OUT_WIDTH, CONV_OUT_HEIGHT)
 
-        x = F.relu(self.dcv1(x))
-        x = F.relu(self.dcv2(x))
-        x = F.sigmoid(x)
+        x = F.tanh(self.dcv1(x))
+        x = F.sigmoid(self.dcv2(x))
 
         return x
 
@@ -83,7 +83,8 @@ class VAECroppedEdges(nn.Module):
         if encode:
             return z
         else:
-            return self.decode(z), mean, logvar
+            reconstruct = self.decode(z)
+            return reconstruct, mean, logvar
 
     def input_shape(self):
         return (
@@ -100,7 +101,7 @@ class VAECroppedEdges(nn.Module):
                     cv2.IMREAD_GRAYSCALE,
                 ),
                 50, 150, apertureSize = 3,
-            )[50:] / 127.5 - 1
+            )[50:] / 255.0
             for o in observation
         ]
 
