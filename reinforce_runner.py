@@ -18,6 +18,7 @@ from track import Track
 from reinforce import Donkey
 
 from reinforce.algorithms import PPO
+from reinforce.algorithms import PPOVAE
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -81,6 +82,8 @@ def run(args):
 
     if cfg.get('algorithm') == 'ppo':
         algorithm = PPO(cfg, None, args.load_dir)
+    if cfg.get('algorithm') == 'ppo_vae':
+        algorithm = PPOVAE(cfg, None, args.load_dir)
     assert algorithm is not None
 
     episode = 0
