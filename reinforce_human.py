@@ -9,12 +9,18 @@ import simulation
 
 import numpy as np
 
+import torch
+
 from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
 from track import Track
 
 import reinforce
+
+from reinforce.policies import PPOPixelsCNNCroppedEdges
+from reinforce.policies import VAECroppedEdges
+
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -24,25 +30,11 @@ _observations = None
 _reward = None
 _done = None
 _track = None
+_policy = None
 
 def transition():
-    camera = cv2.imdecode(
-        np.fromstring(_observations.camera_raw, np.uint8),
-        cv2.IMREAD_GRAYSCALE,
-    ).astype(np.float)
-    # camera = camera / 127.5 - 1
-    edges = cv2.Canny(
-        cv2.resize(
-            camera.astype(np.uint8),
-            (
-                int(reinforce.CAMERA_WIDTH),
-                int(reinforce.CAMERA_HEIGHT),
-            ),
-            interpolation=cv2.INTER_CUBIC,
-        ),
-        50, 150, apertureSize = 3,
-    )
-    edges = edges / 127.5 - 1
+    inputs = _policy.input([_observations])
+    camera = inputs[0][0].numpy()
 
     return {
         'done': _done,
@@ -51,7 +43,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': edges.tolist(),
+            'camera': camera.tolist(),
             'position': _track.invert(
                 _observations.track_coordinates,
             ).tolist(),
@@ -120,6 +112,12 @@ if __name__ == "__main__":
         cfg.override('simulation_step_interval', args.simulation_step_interval)
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
+
+    if cfg.get('policy') == 'ppo_pixels_cnn_cropped_edges':
+        _policy = PPOPixelsCNNCroppedEdges(cfg).to(torch.device('cpu'))
+    if cfg.get('policy') == 'vae_cropped_edges':
+        _policy = VAECroppedEdges(cfg).to(torch.device('cpu'))
+    assert _policy is not None
 
     _d = reinforce.Donkey(cfg)
     _observations = _d.reset()

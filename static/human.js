@@ -3,6 +3,8 @@ var socket = io.connect("ws://127.0.0.1:9091")
 var SCALE = 80
 var DX = 450;
 var DY = 450;
+var INPUT_WIDTH = 160
+var INPUT_HEIGHT = 70
 
 var keypressed = {
   w: false,
@@ -51,20 +53,19 @@ socket.on('transition', (message) => {
   if (message['observation']['camera']) {
     var c = document.getElementById("camera");
     var ctxCamera = c.getContext("2d");
-    var imgData = ctxCamera.createImageData(160,120);
-    for (var w = 0; w < 120; w++) {
-      var alpha = (w > 50) ? 1.0 : 0.1;
-      for (var h = 0; h < 160; h++) {
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 0] = Math.floor(
+    var imgData = ctxCamera.createImageData(INPUT_WIDTH,INPUT_HEIGHT);
+    for (var w = 0; w < INPUT_HEIGHT; w++) {
+      for (var h = 0; h < INPUT_WIDTH; h++) {
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 0] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 1] = Math.floor(
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 1] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 2] = Math.floor(
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 2] = Math.floor(
           (message['observation']['camera'][w][h] + 1) * 127.5
         )
-        imgData.data[((w * (160 * 4)) + (h * 4)) + 3] = 255 * alpha
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 3] = 255
       }
     }
     ctxCamera.putImageData(imgData,0,0);
