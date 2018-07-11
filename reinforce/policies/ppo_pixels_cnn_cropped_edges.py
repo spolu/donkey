@@ -132,6 +132,19 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
             for o in observation
         ]
 
+        kernel = np.array([[-1]*8 + [1]*10 + [-1]*8])
+
+        cameras = [
+            cv2.filter2D(
+                cv2.imdecode(
+                    np.fromstring(o.camera_raw, np.uint8),
+                    cv2.IMREAD_GRAYSCALE,
+                ),
+                -1, kernel
+            )[50:] / 127.5 - 1
+            for o in observation
+        ]
+
         observation = np.concatenate(
             (
                 np.stack(cameras),
