@@ -410,6 +410,16 @@ class Donkey:
             if self.last_track_linear_speed > self.speed_limit:
                 throttle = 0.0
 
+        if self.do_capture:
+            self.capture.update_item(
+                self.capture.size()-1,
+                {
+                    'simulation_steering': float(steering),
+                    'simulation_throttle': float(throttle),
+                    'simulation_brake': float(brake),
+                },
+            )
+
         command = simulation.Command(steering, throttle, brake)
 
         self.simulation.step(command)
