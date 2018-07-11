@@ -47,7 +47,7 @@ class Driver:
                 np.fromstring(camera_raw, np.uint8),
                 cv2.IMREAD_GRAYSCALE,
             ), 50, 150, apertureSize = 3,
-        )[25:] / 127.5 - 1
+        )[50:] / 127.5 - 1
 
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
 
@@ -58,7 +58,7 @@ class Driver:
             deterministic=True,
         )
         steering = action[0][0].item()
-        throttle = 0.58
+        throttle = 0.62
 
         print(">>> COMMANDS: {:.2f} {:.2f}".format(
             steering, throttle

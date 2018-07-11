@@ -20,13 +20,14 @@ from raspi.parts.localizer import Localizer
 from raspi.parts.planner import Planner
 from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
+from raspi.parts.capturer import Capturer
 
 # VEHICLE
 DRIVE_LOOP_HZ = 30
 MAX_LOOPS = 100000
 
 # CAMERA
-CAMERA_RESOLUTION = (60, 80) #(height, width)
+CAMERA_RESOLUTION = (120, 160) #(height, width)
 CAMERA_FRAMERATE = DRIVE_LOOP_HZ
 
 # STEERING
@@ -75,6 +76,17 @@ def drive(args):
           outputs=['angle', 'throttle'],
           threaded=False)
 
+    if args.capture_dir is not None:
+        capturer = Capturer(args.capture_dir)
+        V.add(
+            capturer,
+            inputs=[
+                'angle',
+                'throttle',
+                'cam/image_array',
+            ],
+            threaded=False,
+        )
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
@@ -100,6 +112,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--config_path', type=str, help="path to the config file")
     parser.add_argument('--load_dir', type=str, help="path to saved models directory")
+    parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()
 

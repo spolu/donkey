@@ -79,33 +79,34 @@ class Capturer:
 
         items = []
 
-        for r in imu_stack:
-            acceleration = np.array([
-                r['accel']['y'],
-                r['accel']['z'],
-                r['accel']['x'],
-            ])
-            angular_velocity = np.array([
-                r['gyro']['y'],
-                r['gyro']['z'],
-                r['gyro']['x'],
-            ])
-            items.append({
-                'time': r['time'] - self.start_time,
-                'raspi_imu_angular_velocity': angular_velocity.tolist(),
-                'raspi_imu_acceleration': acceleration.tolist(),
-            })
-
-        for r in pozyx_stack:
-            position = np.array([
-                r['position']['x'],
-                r['position']['y'],
-                r['position']['z'],
-            ])
-            items.append({
-                'time': r['time'] - self.start_time,
-                'raspi_pozyx_position': position.tolist(),
-            })
+        if imu_stack is not None:
+            for r in imu_stack:
+                acceleration = np.array([
+                    r['accel']['y'],
+                    r['accel']['z'],
+                    r['accel']['x'],
+                ])
+                angular_velocity = np.array([
+                    r['gyro']['y'],
+                    r['gyro']['z'],
+                    r['gyro']['x'],
+                ])
+                items.append({
+                    'time': r['time'] - self.start_time,
+                    'raspi_imu_angular_velocity': angular_velocity.tolist(),
+                    'raspi_imu_acceleration': acceleration.tolist(),
+                })
+        if pozyx_stack is not None:
+            for r in pozyx_stack:
+                position = np.array([
+                    r['position']['x'],
+                    r['position']['y'],
+                    r['position']['z'],
+                ])
+                items.append({
+                    'time': r['time'] - self.start_time,
+                    'raspi_pozyx_position': position.tolist(),
+                })
 
         items.sort(key=lambda it: it['time'])
 
