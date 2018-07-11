@@ -202,7 +202,7 @@ class PPO:
         self.test_env = None
 
     def initialize(self):
-        self.envs = reinforce.Envs(self.config)
+        self.envs = reinforce.Envs(self.config, save_dir=self.save_dir)
         observation = self.envs.reset()
         observation = self.policy.input(observation)
         self.rollouts.observations[0].copy_(observation.to(self.device))

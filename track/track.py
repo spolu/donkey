@@ -71,6 +71,8 @@ class Track:
                     self.points[i][2] = -self.points[i][2]
 
         position = random.randint(0, len(self.points)-1)
+        self.randomization = float(position) / len(self.points)
+
         for i in range(position):
             v = self.points[1] - self.points[0]
             for j in range(len(self.points)):

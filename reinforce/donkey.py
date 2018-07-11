@@ -4,12 +4,14 @@ import collections
 import cv2
 import random
 import math
+import os
 
 import numpy as np
 
 from eventlet.green import threading
 from track import Track
 from simulation import Simulation
+from capture import Capture
 
 MAX_SPEED = 10.0
 STALL_SPEED = 0.1
@@ -39,14 +41,14 @@ Observation = collections.namedtuple(
      'track_linear_speed '
      'position '
      'velocity '
-     'acceleration '
+     'angular_velocity '
      'camera '
      'camera_stack '
      'camera_raw'),
 )
 
 class Donkey:
-    def __init__(self, config):
+    def __init__(self, config, save_dir=None, worker_index=0):
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
         self.reward_type = config.get('reward_type')
@@ -57,6 +59,23 @@ class Donkey:
         self.simulation_time_scale = config.get('simulation_time_scale')
         self.simulation_step_interval = config.get('simulation_step_interval')
         self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
+
+        self.worker_index = worker_index
+        self.do_capture = save_dir != None and config.get('do_capture')
+
+        if self.do_capture:
+            self.capture_set_dir = os.path.join(save_dir, 'capture_set')
+            if not os.path.isdir(self.capture_set_dir):
+                os.mkdir(self.capture_set_dir)
+
+            self.capture_index = 0
+            self.capture = Capture(
+                os.path.join(
+                    self.capture_set_dir,
+                    str(self.worker_index) + '-' + str(self.capture_index),
+                ),
+                load=False,
+            )
 
         self.started = False
 
@@ -121,10 +140,10 @@ class Donkey:
             telemetry['velocity']['y'],
             telemetry['velocity']['z'],
         ])
-        acceleration = np.array([
-            telemetry['acceleration']['x'],
-            telemetry['acceleration']['y'],
-            telemetry['acceleration']['z'],
+        angular_velocity = np.array([
+            telemetry['angular_velocity']['x'],
+            telemetry['angular_velocity']['y'],
+            telemetry['angular_velocity']['z'],
         ])
 
         track_angles = []
@@ -145,7 +164,7 @@ class Donkey:
             track_linear_speed,
             position,
             velocity,
-            acceleration,
+            angular_velocity,
             np.copy(camera),
             np.copy(self.camera_stack),
             camera_raw,
@@ -271,6 +290,16 @@ class Donkey:
         if self.track_randomized:
             self.track.randomize()
 
+        if self.do_capture:
+            self.capture_index += 1
+            self.capture = Capture(
+                os.path.join(
+                    self.capture_set_dir,
+                    str(self.worker_index) + '-' + str(self.capture_index),
+                ),
+                load=False,
+            )
+
         if not self.started:
             self.started = True
             self.simulation.start(self.track)
@@ -295,6 +324,20 @@ class Donkey:
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
+
+        if self.do_capture:
+            self.capture.add_item(
+                observation.camera_raw,
+                {
+                    'time': observation.time,
+                    'simulation_track_randomization': self.track.randomization,
+                    'simulation_position': observation.position.tolist(),
+                    'simulation_velocity': observation.velocity.tolist(),
+                    'simulation_angular_velocity': observation.angular_velocity.tolist(),
+                    'simulation_track_coordinates': observation.track_coordinates.tolist(),
+                    'simulation_track_angle': observation.track_angles[0],
+                },
+            )
 
         return observation
 
@@ -378,6 +421,20 @@ class Donkey:
 
         self.step_count += 1
 
+        if not done and self.do_capture:
+            self.capture.add_item(
+                observation.camera_raw,
+                {
+                    'time': observation.time,
+                    'simulation_track_randomization': self.track.randomization,
+                    'simulation_position': observation.position.tolist(),
+                    'simulation_velocity': observation.velocity.tolist(),
+                    'simulation_angular_velocity': observation.angular_velocity.tolist(),
+                    'simulation_track_coordinates': observation.track_coordinates.tolist(),
+                    'simulation_track_angle': observation.track_angles[0],
+                },
+            )
+
         if done:
             self.reset()
             # If we're done we read the new observations post reset.
@@ -391,13 +448,13 @@ _recv_condition = threading.Condition()
 _recv_count = 0
 
 class Worker(threading.Thread):
-    def __init__(self, config):
+    def __init__(self, config, index, save_dir=None):
         self.condition = threading.Condition()
         self.controls = None
         self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = Donkey(config)
+        self.donkey = Donkey(config, save_dir=save_dir, worker_index=index)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -431,9 +488,11 @@ class Worker(threading.Thread):
             _recv_condition.release()
 
 class Envs:
-    def __init__(self, config):
+    def __init__(self, config, save_dir=None):
         self.worker_count = config.get('worker_count')
-        self.workers = [Worker(config) for _ in range(self.worker_count)]
+        self.workers = [
+            Worker(config, i, save_dir) for i in range(self.worker_count)
+        ]
         for w in self.workers:
             w.start()
 
