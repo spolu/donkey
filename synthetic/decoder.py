@@ -24,12 +24,12 @@ class Decoder(nn.Module):
         self.fc5_mean = nn.Linear(256, 256)
         self.fc5_logvar = nn.Linear(256, 256)
 
-        self.dcv1 = nn.ConvTranspose2d(128, 64, 2, stride=2, output_padding=(0,1)) # 1,2+1
-        self.dcv2 = nn.ConvTranspose2d(64, 32, 2, stride=2, output_padding=(0,0)) # 2,5
-        self.dcv3 = nn.ConvTranspose2d(32, 16, 3, stride=2, output_padding=(0,1), padding=(0,1)) # 4,10
-        self.dcv4 = nn.ConvTranspose2d(16, 8, 4, stride=2, output_padding=(0,0), padding=(1,1)) # 8+1,20
-        self.dcv5 = nn.ConvTranspose2d(8, 4, 3, stride=2, output_padding=(0,1), padding=(1,1)) # 17+1,40
-        self.dcv6 = nn.ConvTranspose2d(4, 1, 4, stride=2, padding=(1,1)) # 35,80
+        self.dcv1 = nn.ConvTranspose2d(128, 64, 3, stride=2)
+        self.dcv2 = nn.ConvTranspose2d(64, 32, 3, stride=2)
+        self.dcv3 = nn.ConvTranspose2d(32, 16, 4, stride=2)
+        self.dcv4 = nn.ConvTranspose2d(16, 8, 4, stride=2)
+        self.dcv5 = nn.ConvTranspose2d(8, 4, 5, stride=2)
+        self.dcv6 = nn.ConvTranspose2d(4, 1, 5, stride=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -76,6 +76,6 @@ class Decoder(nn.Module):
         z = F.sigmoid(self.dcv6(z))
         # print("dcv6 {}".format(z.size()))
 
-        z = z.squeeze(1)
+        z = z[:,:,35:105,20:180].squeeze(1)
 
         return z, mean, logvar
