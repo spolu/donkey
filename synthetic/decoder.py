@@ -18,16 +18,18 @@ class Decoder(nn.Module):
         self.device = torch.device(config.get('device'))
 
         self.fc1 = nn.Linear(State.size(), 256)
-        self.fc2_mean = nn.Linear(256, 256)
-        self.fc2_logvar = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 256*1*2)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, 256)
+        self.fc4 = nn.Linear(256, 256)
+        self.fc5_mean = nn.Linear(256, 256)
+        self.fc5_logvar = nn.Linear(256, 256)
 
-        self.dcv1 = nn.ConvTranspose2d(256, 128, 2, stride=2, output_padding=(0,1)) # 1,2+1
-        self.dcv2 = nn.ConvTranspose2d(128, 64, 2, stride=2, output_padding=(0,0)) # 2,5
-        self.dcv3 = nn.ConvTranspose2d(64, 32, 3, stride=2, output_padding=(0,1), padding=(0,1)) # 4,10
-        self.dcv4 = nn.ConvTranspose2d(32, 16, 4, stride=2, output_padding=(0,0), padding=(1,1)) # 8+1,20
-        self.dcv5 = nn.ConvTranspose2d(16, 8, 3, stride=2, output_padding=(0,1), padding=(1,1)) # 17+1,40
-        self.dcv6 = nn.ConvTranspose2d(8, 1, 4, stride=2, padding=(1,1)) # 35,80
+        self.dcv1 = nn.ConvTranspose2d(128, 64, 2, stride=2, output_padding=(0,1)) # 1,2+1
+        self.dcv2 = nn.ConvTranspose2d(64, 32, 2, stride=2, output_padding=(0,0)) # 2,5
+        self.dcv3 = nn.ConvTranspose2d(32, 16, 3, stride=2, output_padding=(0,1), padding=(0,1)) # 4,10
+        self.dcv4 = nn.ConvTranspose2d(16, 8, 4, stride=2, output_padding=(0,0), padding=(1,1)) # 8+1,20
+        self.dcv5 = nn.ConvTranspose2d(8, 4, 3, stride=2, output_padding=(0,1), padding=(1,1)) # 17+1,40
+        self.dcv6 = nn.ConvTranspose2d(4, 1, 4, stride=2, padding=(1,1)) # 35,80
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -39,7 +41,7 @@ class Decoder(nn.Module):
                 m.weight.data.normal_(0, math.sqrt(2. / n))
                 m.bias.data.fill_(0)
             if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
+                nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('relu'))
                 m.bias.data.fill_(0)
 
     def reparameterize(self, mean, logvar):
@@ -49,14 +51,16 @@ class Decoder(nn.Module):
 
     def forward(self, state, deterministic=False):
         x = F.relu(self.fc1(state))
-        mean, logvar = self.fc2_mean(x), self.fc2_logvar(x)
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = F.relu(self.fc4(x))
+        mean, logvar = self.fc5_mean(x), self.fc5_logvar(x)
 
         z = mean
         if not deterministic:
             z = self.reparameterize(mean, logvar)
 
-        z = F.relu(self.fc3(z))
-        z = z.view(-1, 256, 1, 2)
+        z = z.view(-1, 128, 1, 2)
 
         # print("z {}".format(z.size()))
         z = F.relu(self.dcv1(z))
