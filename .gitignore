@@ -3,4 +3,5 @@
 build
 experiments
 vae_*.jpg
+*_*.jpg
 __pycache__
