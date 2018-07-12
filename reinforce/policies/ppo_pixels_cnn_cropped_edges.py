@@ -13,6 +13,65 @@ from torch.distributions import Normal, Categorical
 import reinforce
 
 # import pdb; pdb.set_trace()
+class InputFiler():
+    def __init__(self, config):
+        # self.input_filter = config.get('input_filter')
+        self.input_filter = 'warp_line_detector'
+
+    def apply(self, camera_raw):
+        img = cv2.imdecode(
+                        np.fromstring(camera_raw, np.uint8),
+                        cv2.IMREAD_GRAYSCALE,)[50:]
+
+        if self.input_filter == 'warp_line_detector':
+
+            pts1 = np.float32([[13,33],[54,8],[147,33],[107,8]])
+            pts2 = np.float32([[60,80],[60,20],[120,80],[120,20]])
+
+            M = cv2.getPerspectiveTransform(pts1,pts2)
+            h_base = np.array([-1,-1,-1,-1,2,2,2,2,-1,-1,-1,-1])
+            arrays = [h_base for _ in range(12)]
+            h_kernel = np.stack(arrays, axis=0)
+            v_kernel = h_kernel.T
+            d1_kernel = [[ 2, 2, -1, -1, -1 , -1, -1, -1, -1 , -1, -1, -1],
+                                [ 2, 2,  2, -1, -1 , -1, -1, -1, -1 , -1, -1, -1],
+                                [-1, 2,  2,  2, -1 , -1, -1, -1, -1 , -1, -1, -1],
+                                [-1,-1,  2,  2,  2 , -1, -1, -1, -1 , -1, -1, -1],
+                                [-1,-1, -1,  2,  2 ,  2, -1, -1, -1 , -1, -1, -1],
+                                [-1,-1, -1, -1,  2 ,  2,  2, -1, -1 , -1, -1, -1],
+                                [-1,-1, -1, -1, -1 ,  2,  2,  2, -1 , -1, -1, -1],
+                                [-1,-1, -1, -1, -1 , -1,  2,  2,  2 , -1, -1, -1],
+                                [-1,-1, -1, -1, -1 , -1, -1,  2,  2 ,  2, -1, -1],
+                                [-1,-1, -1, -1, -1 , -1, -1, -1,  2 ,  2,  2,  2],
+                                [-1,-1, -1, -1, -1 , -1, -1, -1, -1 ,  2,  2,  2],
+                                [-1,-1, -1, -1, -1 , -1, -1, -1, -1 , -1,  2,  2]]
+
+            d2_kernel = [[ -1, -1, -1, -1, -1 , -1, -1, -1, -1, -1,  2,  2],
+                                 [ -1, -1, -1, -1, -1 , -1, -1, -1, -1,  2,  2,  2],
+                                 [ -1, -1, -1, -1, -1 , -1, -1, -1,  2,  2,  2, -1],
+                                 [ -1, -1, -1, -1, -1 , -1, -1,  2,  2,  2, -1, -1],
+                                 [ -1, -1, -1, -1, -1 , -1,  2,  2,  2, -1, -1, -1],
+                                 [ -1, -1, -1, -1, -1 ,  2,  2,  2, -1, -1, -1, -1],
+                                 [ -1, -1, -1, -1,  2 ,  2,  2, -1, -1, -1, -1, -1],
+                                 [ -1, -1, -1,  2,  2 ,  2, -1, -1, -1, -1, -1, -1],
+                                 [ -1, -1,  2,  2,  2 , -1, -1, -1, -1, -1, -1, -1],
+                                 [ -1,  2,  2,  2, -1 , -1, -1, -1, -1, -1, -1, -1],
+                                 [  2,  2,  2, -1, -1 , -1, -1, -1, -1, -1, -1, -1],
+                                 [  2,  2, -1, -1, -1 , -1, -1, -1, -1, -1, -1, -1]]
+
+            average_kernel = (v_kernel + h_kernel + d1_kernel+0.25 + d2_kernel+0.25)/(6.0)
+            img = cv2.filter2D(
+                cv2.warpPerspective( 
+                    img
+                    ,M,(160,90))
+                , -1, average_kernel)
+        elif self.input_filter == 'line_detector':
+            kernel = np.array([[-1]*8 + [1]*10 + [-1]*8])
+            cv2.filter2D(img, -1, kernel)
+        elif self.input_filter == 'canny':
+            img = cv2.Canny(img, 50, 150, apertureSize = 3,)
+        return img/127.5 - 1
+
 
 class PPOPixelsCNNCroppedEdges(nn.Module):
     def __init__(self, config):
@@ -21,9 +80,8 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         self.recurring_cell = config.get('recurring_cell')
         self.action_type = config.get('action_type')
         self.fixed_action_std = config.get('fixed_action_std')
-
         self.device = torch.device(config.get('device'))
-
+        self.input_filter = InputFiler(config)
         self.cv1 = nn.Conv2d(1, 12, 5, stride=2)
         self.cv2 = nn.Conv2d(12, 16, 5, stride=3)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
@@ -121,27 +179,9 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         )
 
     def input(self, observation):
-        cameras = [
-            cv2.Canny(
-                cv2.imdecode(
-                    np.fromstring(o.camera_raw, np.uint8),
-                    cv2.IMREAD_GRAYSCALE,
-                ),
-                50, 150, apertureSize = 3,
-            )[50:] / 127.5 - 1
-            for o in observation
-        ]
-
-        kernel = np.array([[-1]*8 + [1]*10 + [-1]*8])
 
         cameras = [
-            cv2.filter2D(
-                cv2.imdecode(
-                    np.fromstring(o.camera_raw, np.uint8),
-                    cv2.IMREAD_GRAYSCALE,
-                ),
-                -1, kernel
-            )[50:] / 127.5 - 1
+            self.input_filter.apply(o.camera_raw)
             for o in observation
         ]
 
