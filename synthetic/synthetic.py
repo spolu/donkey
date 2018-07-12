@@ -125,9 +125,9 @@ class Synthetic:
 
             self.decoder_optimizer.step()
 
-            if i % 100 == 0:
-                cv2.imwrite('{}_vae_camera.jpg'.format(i), (255 * cameras[0].to('cpu')).detach().numpy())
-                cv2.imwrite('{}_vae_reconstruct.jpg'.format(i), (255 * reconstructs[0].to('cpu')).detach().numpy())
+            if i % 1000 == 0:
+                cv2.imwrite('{}_decoder_camera.jpg'.format(i), (255 * cameras[0].to('cpu')).detach().numpy())
+                cv2.imwrite('{}_decoder_reconstruct.jpg'.format(i), (255 * reconstructs[0].to('cpu')).detach().numpy())
 
             print(
                 ("TRAIN {} batch {} " + \
