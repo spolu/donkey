@@ -44,6 +44,15 @@ def run(args):
         ))
         sys.stdout.flush()
 
+        loss = synthetic.decoder_batch_test()
+        print("BATCH_TEST {} {:.5f} {:.5f} {:.5f}".format(
+            episode,
+            loss.avg,
+            loss.min,
+            loss.max,
+        ))
+        sys.stdout.flush()
+
         episode += 1
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'

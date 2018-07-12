@@ -25,11 +25,11 @@ class Synthetic:
 
         if self.load_dir:
             if config.get('device') != 'cpu':
-                self.policy.load_state_dict(
+                self.decoder.load_state_dict(
                     torch.load(self.load_dir + "/decoder.pt"),
                 )
             else:
-                self.policy.load_state_dict(
+                self.decoder.load_state_dict(
                     torch.load(self.load_dir + "/decoder.pt", map_location='cpu'),
                 )
 
@@ -85,7 +85,7 @@ class Synthetic:
             self.train_capture_set,
             batch_size=self.config.get('batch_size'),
             shuffle=True,
-            num_workers=4,
+            num_workers=0,
         )
 
         self.test_loader = torch.utils.data.DataLoader(
@@ -181,6 +181,15 @@ class Synthetic:
                 ))
             sys.stdout.flush()
 
-            # TODO store policy if we beated the test
+        # Store policy if it did better.
+        if loss_meter.avg < self.best_test_loss:
+            self.best_test_loss = loss_meter.avg
+            if self.save_dir:
+                print("Saving models and optimizer: save_dir={} test_loss={}".format(
+                    self.save_dir,
+                    self.best_test_loss,
+                ))
+                torch.save(self.decoder.state_dict(), self.save_dir + "/decoder.pt")
+                torch.save(self.decoder_optimizer.state_dict(), self.save_dir + "/decoder_optimizer.pt")
 
         return loss_meter
