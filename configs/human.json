@@ -6,6 +6,7 @@
   "speed_limit": 0.0,
 
   "policy": "ppo_pixels_cnn_cropped_edges",
+  "input_filter": "warp_line_detector",
   "hidden_size": 128,
   "recurring_cell": "gru",
   "fixed_action_std": 0.0,

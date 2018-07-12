@@ -8,6 +8,7 @@
 
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn_cropped_edges",
+  "input_filter": "warp_line_detector",
   "device": "cuda:0",
   "seed": 1,
 
