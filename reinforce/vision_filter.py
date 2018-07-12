@@ -8,8 +8,8 @@ import numpy as np
 
 class InputFilter():
     def __init__(self, config):
-        # self.input_filter = config.get('input_filter')
-        self.input_filter = None
+        self.input_filter = config.get('input_filter')
+        # self.input_filter = None
     def apply(self, camera_raw):
         img = cv2.imdecode(
                         np.fromstring(camera_raw, np.uint8),
