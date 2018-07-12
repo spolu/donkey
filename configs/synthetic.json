@@ -3,5 +3,5 @@
   "seed": 1,
 
   "learning_rate": 0.001,
-  "batch_size": 64
+  "batch_size": 128
 }

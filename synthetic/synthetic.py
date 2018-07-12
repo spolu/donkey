@@ -169,7 +169,7 @@ class Synthetic:
             loss_meter.update(bce_loss.item())
 
             print(
-                ("TEST {} batch {}" + \
+                ("TEST {} batch {} " + \
                  "bce_loss {:.5f} " + \
                  "mse_loss {:.5f} " + \
                  "kld_loss {:.5f}").
