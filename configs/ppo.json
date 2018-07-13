@@ -4,7 +4,7 @@
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
-  "do_capture": true,
+  "do_capture": false,
 
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn_cropped_edges",

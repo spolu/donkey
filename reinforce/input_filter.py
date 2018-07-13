@@ -4,11 +4,21 @@ import random
 
 import numpy as np
 
+import reinforce
+
 # import pdb; pdb.set_trace()
 
 class InputFilter():
     def __init__(self, config):
         self.input_filter = config.get('input_filter')
+
+    def shape(self):
+        if self.input_filter == 'warp_line_detector':
+            return (90, 160)
+        return (
+            int(reinforce.CAMERA_HEIGHT - 50),
+            int(reinforce.CAMERA_WIDTH),
+        )
 
     def apply(self, camera_raw):
         img = cv2.imdecode(
