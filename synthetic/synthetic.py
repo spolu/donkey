@@ -118,9 +118,9 @@ class Synthetic:
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            kld_loss /= states.size(0)
+            kld_loss /= reconstructs.size(0) * reconstructs.size(1) * reconstructs.size(2)
 
-            mse_loss.backward()
+            (mse_loss).backward()
             loss_meter.update(mse_loss.item())
 
             self.decoder_optimizer.step()
