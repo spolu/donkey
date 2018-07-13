@@ -6,3 +6,5 @@ from reinforce.donkey import DISCRETE_CONTROL_COUNT
 from reinforce.donkey import CONTINUOUS_CONTROL_SIZE
 from reinforce.donkey import CAMERA_HEIGHT
 from reinforce.donkey import CAMERA_WIDTH
+
+from reinforce.input_filter import InputFilter

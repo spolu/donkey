@@ -1,6 +1,7 @@
 {
   "device": "cuda:0",
   "seed": 1,
+  "input_filter": "canny",
 
   "learning_rate": 0.001,
   "batch_size": 128

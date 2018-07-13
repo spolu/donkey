@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from synthetic import Decoder, State
 from capture import CaptureSet
 from utils import Meter
+from reinforce import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -17,6 +18,7 @@ class Synthetic:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.config = config
         self.device = torch.device(config.get('device'))
+        self.input_filter = InputFilter(config)
 
         self.decoder = Decoder(config).to(self.device)
 
@@ -53,10 +55,7 @@ class Synthetic:
         ).vector()).float().to(self.device)
 
         camera = torch.from_numpy(
-            cv2.imdecode(
-                np.fromstring(item['camera'], np.uint8),
-                cv2.IMREAD_GRAYSCALE,
-            )[50:] / 255.0
+            self.input_filter.apply(item['camera']) / 255.0
         ).float().to(self.device)
 
         return state, camera
@@ -180,7 +179,7 @@ class Synthetic:
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            kld_loss /= reconstructs.size(0) * reconstructs.size(1) * reconstructs.size(2)
+            kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
 
             loss_meter.update(mse_loss.item())
 
