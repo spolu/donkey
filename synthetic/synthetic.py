@@ -164,7 +164,7 @@ class Synthetic:
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            kld_loss /= states.size(0)
+            kld_loss /= reconstructs.size(0) * reconstructs.size(1) * reconstructs.size(2)
 
             loss_meter.update(mse_loss.item())
 
