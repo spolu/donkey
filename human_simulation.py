@@ -21,6 +21,7 @@ import reinforce
 from reinforce.policies import PPOPixelsCNNCroppedEdges
 from reinforce.policies import VAECroppedEdges
 
+from synthetic import Synthetic, State
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -31,10 +32,28 @@ _reward = None
 _done = None
 _track = None
 _policy = None
+_synthetic = None
 
 def transition():
-    inputs = _policy.input([_observations])
-    camera = inputs[0][0].numpy()
+    camera = cv2.imdecode(
+        np.fromstring(_observations.camera_raw, np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    )[50:] / 255.0
+
+    processed = _policy.input([_observations])[0][0].numpy()
+
+    state = State(
+        _d.track.randomization,
+        _observations.position,
+        _observations.velocity,
+        _observations.angular_velocity,
+        _observations.track_coordinates,
+        _observations.track_angles[0],
+    )
+
+    generated = None
+    if _synthetic is not None:
+        generated = _synthetic.generate(state)[0]
 
     return {
         'done': _done,
@@ -43,7 +62,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': camera.tolist(),
+            'camera': processed.tolist(),
             'position': _track.invert(
                 _observations.track_coordinates,
             ).tolist(),
@@ -95,6 +114,8 @@ if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
 
     parser = argparse.ArgumentParser(description="")
+    parser.add_argument('--synthetic_load_dir', type=str, help="path to saved synthetic decoder models")
+
     parser.add_argument('--simulation_headless', type=str2bool, help="config override")
     parser.add_argument('--simulation_time_scale', type=float, help="config override")
     parser.add_argument('--simulation_step_interval', type=float, help="config override")
@@ -122,6 +143,9 @@ if __name__ == "__main__":
     _d = reinforce.Donkey(cfg)
     _observations = _d.reset()
     _track = Track(cfg.get('track_name'))
+
+    if args.synthetic_load_dir:
+        _synthetic = Synthetic(cfg, None, args.synthetic_load_dir)
 
     run_server()
 

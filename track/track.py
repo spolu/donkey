@@ -45,6 +45,7 @@ class Track:
             self.track_length += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
             )
+        self.randomization = 0
 
     def width(self):
         return self.track_width

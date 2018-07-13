@@ -33,6 +33,15 @@ class Synthetic:
                     torch.load(self.load_dir + "/decoder.pt", map_location='cpu'),
                 )
 
+    def generate(self, state):
+        generated, _, _ = self.decoder(
+            torch.from_numpy(
+                state.vector()
+            ).float().to(self.device).unsqueeze(0).detach(),
+            deterministic=True,
+        )
+        return generated
+
     def _decoder_capture_loader(self, item):
         state = torch.from_numpy(State(
             item['simulation_track_randomization'],
@@ -103,24 +112,24 @@ class Synthetic:
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.train_loader):
-            reconstructs, means, logvars = self.decoder(
-                states.detach(), deterministic=True,
+            generated, means, logvars = self.decoder(
+                states.detach(),
             )
 
             self.decoder_optimizer.zero_grad()
 
             bce_loss = F.binary_cross_entropy(
-                reconstructs, cameras,
+                generated, cameras,
             )
             mse_loss = F.mse_loss(
-                reconstructs, cameras,
+                generated, cameras,
             )
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
             )
-            kld_loss /= reconstructs.size(0) * reconstructs.size(1) * reconstructs.size(2)
+            kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
 
-            (mse_loss).backward()
+            (mse_loss + kld_loss).backward()
             loss_meter.update(mse_loss.item())
 
             self.decoder_optimizer.step()
@@ -132,8 +141,8 @@ class Synthetic:
                         (255 * cameras[0].to('cpu')).detach().numpy(),
                     )
                     cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_decoder_reconstruct.jpg'.format(i)),
-                        (255 * reconstructs[0].to('cpu')).detach().numpy(),
+                        os.path.join(self.save_dir, '{}_decoder_generated.jpg'.format(i)),
+                        (255 * generated[0].to('cpu')).detach().numpy(),
                     )
 
             print(
@@ -158,15 +167,15 @@ class Synthetic:
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.test_loader):
-            reconstructs, means, logvars = self.decoder(
+            generated, means, logvars = self.decoder(
                 states.detach(), deterministic=True,
             )
 
             bce_loss = F.binary_cross_entropy(
-                reconstructs, cameras,
+                generated, cameras,
             )
             mse_loss = F.mse_loss(
-                reconstructs, cameras,
+                generated, cameras,
             )
             kld_loss = -0.5 * torch.sum(
                 1 + logvars - means.pow(2) - logvars.exp()
