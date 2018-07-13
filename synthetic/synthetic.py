@@ -120,8 +120,8 @@ class Synthetic:
             )
             kld_loss /= states.size(0)
 
-            bce_loss.backward()
-            loss_meter.update(bce_loss.item())
+            mse_loss.backward()
+            loss_meter.update(mse_loss.item())
 
             self.decoder_optimizer.step()
 
@@ -166,7 +166,7 @@ class Synthetic:
             )
             kld_loss /= states.size(0)
 
-            loss_meter.update(bce_loss.item())
+            loss_meter.update(mse_loss.item())
 
             print(
                 ("TEST {} batch {} " + \
