@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
 
 import reinforce
-from reinforce.vision_filter import InputFilter
+from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
