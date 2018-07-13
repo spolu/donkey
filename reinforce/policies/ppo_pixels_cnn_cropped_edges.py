@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
 
 import reinforce
-
 from reinforce.vision_filter import InputFilter
 
 # import pdb; pdb.set_trace()
@@ -124,7 +123,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
     def input(self, observation):
 
         cameras = [
-            self.input_filter.apply(o.camera_raw)
+            self.input_filter.apply(o.camera_raw) / 127.5 - 1
             for o in observation
         ]
 

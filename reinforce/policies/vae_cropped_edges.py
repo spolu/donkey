@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
 
 import reinforce
+from reinforce.vision_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -23,6 +24,8 @@ class VAECroppedEdges(nn.Module):
         self.latent_size = config.get('latent_size')
 
         self.device = torch.device(config.get('device'))
+
+        self.input_filter = InputFilter(config)
 
         ## Encoder
         self.cv1 = nn.Conv2d(1, 32, 4, stride=2)
@@ -113,13 +116,7 @@ class VAECroppedEdges(nn.Module):
 
     def input(self, observation):
         cameras = [
-            cv2.Canny(
-                cv2.imdecode(
-                    np.fromstring(o.camera_raw, np.uint8),
-                    cv2.IMREAD_GRAYSCALE,
-                ),
-                50, 150, apertureSize = 3,
-            )[50:] / 255.0
+            self.input_filter.apply(o.camera_raw) / 255.0
             for o in observation
         ]
 

@@ -8,6 +8,7 @@
   "algorithm": "ppo_vae",
   "ppo_policy": "ppo_controller",
   "vae_policy": "vae_cropped_edges",
+  "input_filter": "canny",
   "device": "cuda:0",
   "seed": 1,
 
