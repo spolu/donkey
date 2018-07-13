@@ -104,7 +104,7 @@ class Synthetic:
 
         for i, (states, cameras) in enumerate(self.train_loader):
             reconstructs, means, logvars = self.decoder(
-                states.detach(),
+                states.detach(), deterministic=True,
             )
 
             self.decoder_optimizer.zero_grad()
@@ -126,8 +126,15 @@ class Synthetic:
             self.decoder_optimizer.step()
 
             if i % 1000 == 0:
-                cv2.imwrite('{}_decoder_camera.jpg'.format(i), (255 * cameras[0].to('cpu')).detach().numpy())
-                cv2.imwrite('{}_decoder_reconstruct.jpg'.format(i), (255 * reconstructs[0].to('cpu')).detach().numpy())
+                if self.save_dir:
+                    cv2.imwrite(
+                        os.path.join(self.save_dir, '{}_decoder_camera.jpg'.format(i)),
+                        (255 * cameras[0].to('cpu')).detach().numpy(),
+                    )
+                    cv2.imwrite(
+                        os.path.join(self.save_dir, '{}_decoder_reconstruct.jpg'.format(i)),
+                        (255 * reconstructs[0].to('cpu')).detach().numpy(),
+                    )
 
             print(
                 ("TRAIN {} batch {} " + \
