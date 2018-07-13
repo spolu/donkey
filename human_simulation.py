@@ -18,8 +18,7 @@ from track import Track
 
 import reinforce
 
-from reinforce.policies import PPOPixelsCNNCroppedEdges
-from reinforce.policies import VAECroppedEdges
+from reinforce.input_filter import InputFilter
 
 from synthetic import Synthetic, State
 
@@ -31,16 +30,11 @@ _observations = None
 _reward = None
 _done = None
 _track = None
-_policy = None
+_input_filter = None
 _synthetic = None
 
 def transition():
-    camera = cv2.imdecode(
-        np.fromstring(_observations.camera_raw, np.uint8),
-        cv2.IMREAD_GRAYSCALE,
-    )[50:] / 255.0
-
-    processed = _policy.input([_observations])[0][0].numpy()
+    processed = _input_filter.apply(_observations.camera_raw)
 
     state = State(
         _d.track.randomization,
@@ -134,12 +128,7 @@ if __name__ == "__main__":
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
-    if cfg.get('policy') == 'ppo_pixels_cnn_cropped_edges':
-        _policy = PPOPixelsCNNCroppedEdges(cfg).to(torch.device('cpu'))
-    if cfg.get('policy') == 'vae_cropped_edges':
-        _policy = VAECroppedEdges(cfg).to(torch.device('cpu'))
-    assert _policy is not None
-
+    _input_filter = InputFilter(cfg)
     _d = reinforce.Donkey(cfg)
     _observations = _d.reset()
     _track = Track(cfg.get('track_name'))

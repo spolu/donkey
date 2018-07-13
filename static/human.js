@@ -57,13 +57,13 @@ socket.on('transition', (message) => {
     for (var w = 0; w < INPUT_HEIGHT; w++) {
       for (var h = 0; h < INPUT_WIDTH; h++) {
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 0] = Math.floor(
-          (message['observation']['camera'][w][h] + 1) * 127.5
+          (message['observation']['camera'][w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 1] = Math.floor(
-          (message['observation']['camera'][w][h] + 1) * 127.5
+          (message['observation']['camera'][w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 2] = Math.floor(
-          (message['observation']['camera'][w][h] + 1) * 127.5
+          (message['observation']['camera'][w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 3] = 255
       }

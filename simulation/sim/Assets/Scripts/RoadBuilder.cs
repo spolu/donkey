@@ -29,9 +29,6 @@ public class RoadBuilder : MonoBehaviour {
 
 		foreach(GameObject g in prev)
 			Destroy(g);
-
-		//advance road index into texture list.
-		iRoadTexture += 1;
 	}
 
 	public void SetRoadVariation(int iVariation)
