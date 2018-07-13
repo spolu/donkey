@@ -76,6 +76,6 @@ class Decoder(nn.Module):
         z = F.sigmoid(self.dcv6(z))
         # print("dcv6 {}".format(z.size()))
 
-        z = z[:,:,35:105,20:180].squeeze(1)
+        z = z[:,:,25:115,20:180].squeeze(1)
 
         return z, mean, logvar
