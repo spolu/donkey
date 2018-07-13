@@ -43,7 +43,7 @@ class Synthetic:
             ).float().to(self.device).unsqueeze(0).detach(),
             deterministic=True,
         )
-        return generated
+        return generated * 255.0
 
     def _decoder_capture_loader(self, item):
         state = torch.from_numpy(State(

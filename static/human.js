@@ -51,19 +51,42 @@ socket.on('transition', (message) => {
   document.getElementById('linear_speed').innerText = message['observation']['track_linear_speed']
 
   if (message['observation']['camera']) {
+    camera = message['observation']['camera']
     var c = document.getElementById("camera");
     var ctxCamera = c.getContext("2d");
     var imgData = ctxCamera.createImageData(INPUT_WIDTH,INPUT_HEIGHT);
-    for (var w = 0; w < INPUT_HEIGHT; w++) {
-      for (var h = 0; h < INPUT_WIDTH; h++) {
+    for (var w = 0; w < camera.length; w++) {
+      for (var h = 0; h < camera[w].length; h++) {
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 0] = Math.floor(
-          (message['observation']['camera'][w][h] + 1)
+          (camera[w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 1] = Math.floor(
-          (message['observation']['camera'][w][h] + 1)
+          (camera[w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 2] = Math.floor(
-          (message['observation']['camera'][w][h] + 1)
+          (camera[w][h] + 1)
+        )
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 3] = 255
+      }
+    }
+    ctxCamera.putImageData(imgData,0,0);
+  }
+
+  if (message['observation']['generated']) {
+    generated = message['observation']['generated']
+    var c = document.getElementById("generated");
+    var ctxCamera = c.getContext("2d");
+    var imgData = ctxCamera.createImageData(INPUT_WIDTH,INPUT_HEIGHT);
+    for (var w = 0; w < generated.length; w++) {
+      for (var h = 0; h < generated[w].length; h++) {
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 0] = Math.floor(
+          (generated[w][h] + 1)
+        )
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 1] = Math.floor(
+          (generated[w][h] + 1)
+        )
+        imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 2] = Math.floor(
+          (generated[w][h] + 1)
         )
         imgData.data[((w * (INPUT_WIDTH * 4)) + (h * 4)) + 3] = 255
       }

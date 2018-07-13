@@ -45,11 +45,11 @@ def transition():
         _observations.track_angles[0],
     )
 
-    generated = None
+    generated = [[]]
     if _synthetic is not None:
-        generated = _synthetic.generate(state)[0]
+        generated = _synthetic.generate(state)[0].tolist()
 
-    return {
+    message =  {
         'done': _done,
         'reward': _reward,
         'observation': {
@@ -57,11 +57,17 @@ def transition():
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
             'camera': processed.tolist(),
+            'generated': generated,
             'position': _track.invert(
                 _observations.track_coordinates,
             ).tolist(),
         },
     }
+
+    if generated is not None:
+        message['observation']['generated'] = generated
+
+    return message
 
 def run_server():
     global _app
