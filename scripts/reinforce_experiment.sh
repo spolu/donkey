@@ -28,7 +28,7 @@ echo "[Start] experiment=reinforce_$EXPERIMENT config=$CONFIG tempdir=$TEMP"
 
 mkdir -p $TEMP
 cp $CONFIG $TEMP/config.json
-./scripts/update_experiment.sh $$ $EXPERIMENT $TEMP &
+./scripts/reinforce_update.sh $$ $EXPERIMENT $TEMP &
 
 touch $TEMP/out.log
 $PYTHON reinforce_trainer.py $CONFIG $ARGS >> $TEMP/out.log 2>&1
