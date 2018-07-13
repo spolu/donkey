@@ -5,7 +5,7 @@
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
 
-  "input_filter": "line_detector",
+  "input_filter": "warp_line_detector",
   "device": "cpu",
 
   "simulation_headless": false,
