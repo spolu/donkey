@@ -8,9 +8,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch.distributions import Normal, Categorical
-
 from synthetic import State
+
+# import pdb; pdb.set_trace()
+
+OUT_HEIGHT = 90
+OUT_WIDTH = 160
 
 class Generator(nn.Module):
     def __init__(self, config):
@@ -19,41 +22,41 @@ class Generator(nn.Module):
 
         self.fc1 = nn.Linear(State.size(), 256, bias=False)
         self.fc_bn1 = nn.BatchNorm1d(256)
+
         self.fc2 = nn.Linear(256, 256, bias=False)
         self.fc_bn2 = nn.BatchNorm1d(256)
 
         self.fc_mean = nn.Linear(256, 256)
         self.fc_logvar = nn.Linear(256, 256)
 
-        self.dcv1 = nn.ConvTranspose2d(128, 64, 4, stride=2, bias=False)
+        self.dcv1 = nn.ConvTranspose2d(128, 64, 4, stride=2, padding=0, bias=False)
         self.dcv_bn1 = nn.BatchNorm2d(64)
 
-        self.dcv2 = nn.ConvTranspose2d(64, 32, 4, stride=2, bias=False)
-        self.dcv_bn2 = nn.BatchNorm1d(32)
+        self.dcv2 = nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1, bias=False)
+        self.dcv_bn2 = nn.BatchNorm2d(32)
 
-        self.dcv3 = nn.ConvTranspose2d(32, 16, 4, stride=2, bias=False)
-        self.dcv_bn3 = nn.BatchNorm1d(16)
+        self.dcv3 = nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1, bias=False)
+        self.dcv_bn3 = nn.BatchNorm2d(16)
 
-        self.dcv4 = nn.ConvTranspose2d(16, 8, 4, stride=2, bias=False)
-        self.dcv_bn4 = nn.BatchNorm1d(8)
+        self.dcv4 = nn.ConvTranspose2d(16, 8, 4, stride=2, padding=1, bias=False)
+        self.dcv_bn4 = nn.BatchNorm2d(8)
 
-        self.dcv5 = nn.ConvTranspose2d(8, 4, 4, stride=2, bias=False)
-        self.dcv_bn5 = nn.BatchNorm1d(4)
+        self.dcv5 = nn.ConvTranspose2d(8, 4, 4, stride=2, padding=1, bias=False)
+        self.dcv_bn5 = nn.BatchNorm2d(4)
 
-        self.dcv6 = nn.ConvTranspose2d(4, 1, 4, stride=2)
+        self.dcv6 = nn.ConvTranspose2d(4, 1, 4, stride=2, padding=1)
 
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-                m.bias.data.fill_(0)
             if isinstance(m, nn.ConvTranspose2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 m.weight.data.normal_(0, math.sqrt(2. / n))
-                m.bias.data.fill_(0)
+                if m.bias is not None:
+                    m.bias.data.fill_(0)
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('relu'))
-                m.bias.data.fill_(0)
+                if m.bias is not None:
+                    nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
+                    m.bias.data.fill_(0)
 
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5 * logvar)
@@ -80,11 +83,14 @@ class Generator(nn.Module):
         # print("dcv3 {}".format(z.size()))
         z = F.relu(self.dcv_bn4(self.dcv4(z)))
         # print("dcv4 {}".format(z.size()))
-        z = F.relu(self.dcv_bn4(self.dcv5(z)))
+        z = F.relu(self.dcv_bn5(self.dcv5(z)))
         # print("dcv5 {}".format(z.size()))
         z = F.sigmoid(self.dcv6(z))
         # print("dcv6 {}".format(z.size()))
 
-        z = z[:,:,25:115,20:180].squeeze(1)
+        padh = int((z.size(2) - OUT_HEIGHT) / 2)
+        padw = int((z.size(3) - OUT_WIDTH) / 2)
+
+        z = z[:,:,padh:OUT_HEIGHT+padh,padw:OUT_WIDTH+padw].squeeze(1)
 
         return z, mean, logvar
