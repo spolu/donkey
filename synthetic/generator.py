@@ -12,7 +12,7 @@ from synthetic import State
 
 # import pdb; pdb.set_trace()
 
-OUT_HEIGHT = 90
+OUT_HEIGHT = 70
 OUT_WIDTH = 160
 
 class Generator(nn.Module):
