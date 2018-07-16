@@ -22,7 +22,6 @@ class Synthetic:
         self.input_filter = InputFilter(config)
 
         self.generator = Generator(config).to(self.device)
-        self.discriminator = Discriminator(config).to(self.device)
 
         self.save_dir = save_dir
         self.load_dir = load_dir
@@ -32,15 +31,9 @@ class Synthetic:
                 self.generator.load_state_dict(
                     torch.load(self.load_dir + "/generator.pt"),
                 )
-                self.discriminator.load_state_dict(
-                    torch.load(self.load_dir + "/discriminator.pt"),
-                )
             else:
                 self.generator.load_state_dict(
                     torch.load(self.load_dir + "/generator.pt", map_location='cpu'),
-                )
-                self.discriminator.load_state_dict(
-                    torch.load(self.load_dir + "/discriminator.pt", map_location='cpu'),
                 )
 
     def generate(self, state):
@@ -73,6 +66,8 @@ class Synthetic:
             train_capture_set_dir,
             test_capture_set_dir,
     ):
+        self.discriminator = Discriminator(self.config).to(self.device)
+
         self.generator_optimizer = optim.Adam(
             self.generator.parameters(),
             self.config.get('learning_rate'),
@@ -90,12 +85,18 @@ class Synthetic:
                 self.generator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/generator_optimizer.pt"),
                 )
+                self.discriminator.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator.pt"),
+                )
                 self.discriminator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/discriminator_optimizer.pt"),
                 )
             else:
                 self.generator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/generator_optimizer.pt", map_location='cpu'),
+                )
+                self.discriminator.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator.pt", map_location='cpu'),
                 )
                 self.discriminator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/discriminator_optimizer.pt", map_location='cpu'),
@@ -168,7 +169,7 @@ class Synthetic:
 
         for i, (states, cameras) in enumerate(self.train_loader):
             generated, means, logvars = self.generator(
-                states.detach(),
+                states.detach(), deterministic=True,
             )
 
             # Discriminator pass.
@@ -193,7 +194,7 @@ class Synthetic:
             )
 
             loss = (l1_loss * self.l1_loss_coeff +
-                    kld_loss * self.kld_loss_coeff +
+                    # kld_loss * self.kld_loss_coeff +
                     gan_loss * self.gan_loss_coeff)
             loss.backward()
 
