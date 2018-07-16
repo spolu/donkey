@@ -8,7 +8,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from synthetic import Generator, State
+from synthetic import Generator, Discriminator, State
 from capture import CaptureSet
 from utils import Meter
 from reinforce import InputFilter
@@ -22,6 +22,7 @@ class Synthetic:
         self.input_filter = InputFilter(config)
 
         self.generator = Generator(config).to(self.device)
+        self.discriminator = Discriminator(config).to(self.device)
 
         self.save_dir = save_dir
         self.load_dir = load_dir
@@ -31,9 +32,15 @@ class Synthetic:
                 self.generator.load_state_dict(
                     torch.load(self.load_dir + "/generator.pt"),
                 )
+                self.discriminator.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator.pt"),
+                )
             else:
                 self.generator.load_state_dict(
                     torch.load(self.load_dir + "/generator.pt", map_location='cpu'),
+                )
+                self.discriminator.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator.pt", map_location='cpu'),
                 )
 
     def generate(self, state):
@@ -57,11 +64,11 @@ class Synthetic:
 
         camera = torch.from_numpy(
             self.input_filter.apply(item['camera']) / 255.0
-        ).float().to(self.device)
+        ).float().to(self.device).unsqueeze(0)
 
         return state, camera
 
-    def generator_initialize_training(
+    def initialize_training(
             self,
             train_capture_set_dir,
             test_capture_set_dir,
@@ -70,15 +77,28 @@ class Synthetic:
             self.generator.parameters(),
             self.config.get('learning_rate'),
         )
+        self.discriminator_optimizer = optim.Adam(
+            self.discriminator.parameters(),
+            self.config.get('learning_rate'),
+        )
+        self.l1_loss_coeff = self.config.get('l1_loss_coeff')
+        self.kld_loss_coeff = self.config.get('kld_loss_coeff')
+        self.gan_loss_coeff = self.config.get('gan_loss_coeff')
 
         if self.load_dir:
             if self.config.get('device') != 'cpu':
                 self.generator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/generator_optimizer.pt"),
                 )
+                self.discriminator_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator_optimizer.pt"),
+                )
             else:
                 self.generator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/generator_optimizer.pt", map_location='cpu'),
+                )
+                self.discriminator_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/discriminator_optimizer.pt", map_location='cpu'),
                 )
 
         self.train_capture_set = CaptureSet(
@@ -107,8 +127,43 @@ class Synthetic:
         self.batch_count = 0
         self.best_test_loss = 9999.0
 
-    def generator_batch_train(self):
+    def _discriminator_loss(self, cameras, generated):
+        pred_fake = self.discriminator(generated.detach())
+        fake_loss = F.binary_cross_entropy(
+            pred_fake,
+            torch.zeros(*pred_fake.size()),
+        )
+
+        pred_real = self.discriminator(cameras.detach())
+        real_loss = F.binary_cross_entropy(
+            pred_real,
+            torch.ones(*pred_real.size()),
+        )
+
+        return fake_loss, real_loss
+
+    def _generator_loss(self, cameras, generated, means, logvars):
+        # Do not detach as we want the gradients to flow from D to G.
+        pred_gan = self.discriminator(generated)
+        gan_loss = F.binary_cross_entropy(
+            pred_gan,
+            torch.ones(*pred_gan.size()),
+        )
+
+        l1_loss = F.l1_loss(
+            generated, cameras,
+        )
+
+        kld_loss = -0.5 * torch.sum(
+            1 + logvars - means.pow(2) - logvars.exp()
+        )
+        kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
+
+        return l1_loss, kld_loss, gan_loss
+
+    def batch_train(self):
         self.generator.train()
+        self.discriminator.train()
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.train_loader):
@@ -116,23 +171,35 @@ class Synthetic:
                 states.detach(),
             )
 
+            # Discriminator pass.
+            self.discriminator.set_requires_grad(True)
+            self.discriminator_optimizer.zero_grad()
+
+            fake_loss, real_loss = self._discriminator_loss(
+                cameras, generated,
+            )
+
+            (fake_loss * 0.5 +
+             real_loss * 0.5).backward()
+
+            self.discriminator_optimizer.step()
+
+            # Generator pass.
+            self.discriminator.set_requires_grad(False)
             self.generator_optimizer.zero_grad()
 
-            bce_loss = F.binary_cross_entropy(
-                generated, cameras,
+            l1_loss, kld_loss, gan_loss = self._generator_loss(
+                cameras, generated, means, logvars,
             )
-            mse_loss = F.mse_loss(
-                generated, cameras,
-            )
-            kld_loss = -0.5 * torch.sum(
-                1 + logvars - means.pow(2) - logvars.exp()
-            )
-            kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
 
-            (mse_loss + kld_loss).backward()
-            loss_meter.update(mse_loss.item())
+            loss = (l1_loss * self.l1_loss_coeff +
+                    kld_loss * self.kld_loss_coeff +
+                    gan_loss * self.gan_loss_coeff)
+            loss.backward()
 
             self.generator_optimizer.step()
+
+            loss_meter.update(loss.item())
 
             if i % 1000 == 0:
                 if self.save_dir:
@@ -147,23 +214,28 @@ class Synthetic:
 
             print(
                 ("TRAIN {} batch {} " + \
-                 "bce_loss {:.5f} " + \
-                 "mse_loss {:.5f} " + \
-                 "kld_loss {:.5f}").
+                 "fake_loss {:.5f} " + \
+                 "real_loss {:.5f} " + \
+                 "l1_loss {:.5f} " + \
+                 "kld_loss {:.5f} " + \
+                 "gan_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
-                    bce_loss.item(),
-                    mse_loss.item(),
+                    fake_loss.item(),
+                    real_loss.item(),
+                    l1_loss.item(),
                     kld_loss.item(),
+                    gan_loss.item(),
                 ))
             sys.stdout.flush()
 
         self.batch_count += 1
         return loss_meter
 
-    def generator_batch_test(self):
+    def batch_test(self):
         self.generator.eval()
+        self.discriminator.eval()
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.test_loader):
@@ -171,30 +243,27 @@ class Synthetic:
                 states.detach(), deterministic=True,
             )
 
-            bce_loss = F.binary_cross_entropy(
-                generated, cameras,
+            l1_loss, kld_loss, gan_loss = self._generator_loss(
+                cameras, generated, means, logvars,
             )
-            mse_loss = F.mse_loss(
-                generated, cameras,
-            )
-            kld_loss = -0.5 * torch.sum(
-                1 + logvars - means.pow(2) - logvars.exp()
-            )
-            kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
 
-            loss_meter.update(mse_loss.item())
+            loss = (l1_loss * self.l1_loss_coeff +
+                    kld_loss * self.kld_loss_coeff +
+                    gan_loss * self.gan_loss_coeff)
+
+            loss_meter.update(loss.item())
 
             print(
                 ("TEST {} batch {} " + \
-                 "bce_loss {:.5f} " + \
-                 "mse_loss {:.5f} " + \
-                 "kld_loss {:.5f}").
+                 "l1_loss {:.5f} " + \
+                 "kld_loss {:.5f} " + \
+                 "gan_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
-                    bce_loss.item(),
-                    mse_loss.item(),
+                    l1_loss.item(),
                     kld_loss.item(),
+                    gan_loss.item(),
                 ))
             sys.stdout.flush()
 
@@ -208,5 +277,7 @@ class Synthetic:
                 ))
                 torch.save(self.generator.state_dict(), self.save_dir + "/generator.pt")
                 torch.save(self.generator_optimizer.state_dict(), self.save_dir + "/generator_optimizer.pt")
+                torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
+                torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
         return loss_meter

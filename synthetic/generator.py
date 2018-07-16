@@ -91,6 +91,6 @@ class Generator(nn.Module):
         padh = int((z.size(2) - OUT_HEIGHT) / 2)
         padw = int((z.size(3) - OUT_WIDTH) / 2)
 
-        z = z[:,:,padh:OUT_HEIGHT+padh,padw:OUT_WIDTH+padw].squeeze(1)
+        z = z[:,:,padh:OUT_HEIGHT+padh,padw:OUT_WIDTH+padw]
 
         return z, mean, logvar

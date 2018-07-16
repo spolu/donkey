@@ -3,6 +3,10 @@
   "seed": 1,
   "input_filter": "warp_line_detector",
 
-  "learning_rate": 0.001,
-  "batch_size": 128
+  "learning_rate": 0.0005,
+  "batch_size": 32,
+
+  "l1_loss_coeff": 100.0,
+  "kld_loss_coeff": 50.0,
+  "gan_loss_coeff": 1.0
 }

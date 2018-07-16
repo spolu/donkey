@@ -29,12 +29,12 @@ def run(args):
 
     episode = 0
 
-    synthetic.generator_initialize_training(
+    synthetic.initialize_training(
         args.train_capture_set_dir, args.test_capture_set_dir,
     )
 
     while True:
-        loss = synthetic.generator_batch_train()
+        loss = synthetic.batch_train()
 
         print("BATCH_TRAIN {} {:.5f} {:.5f} {:.5f}".format(
             episode,
@@ -44,7 +44,7 @@ def run(args):
         ))
         sys.stdout.flush()
 
-        loss = synthetic.generator_batch_test()
+        loss = synthetic.batch_test()
         print("BATCH_TEST {} {:.5f} {:.5f} {:.5f}".format(
             episode,
             loss.avg,
