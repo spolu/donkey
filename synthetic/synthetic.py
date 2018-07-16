@@ -131,13 +131,13 @@ class Synthetic:
         pred_fake = self.discriminator(generated.detach())
         fake_loss = F.binary_cross_entropy(
             pred_fake,
-            torch.zeros(*pred_fake.size()),
+            torch.zeros(*pred_fake.size()).to(self.device),
         )
 
         pred_real = self.discriminator(cameras.detach())
         real_loss = F.binary_cross_entropy(
             pred_real,
-            torch.ones(*pred_real.size()),
+            torch.ones(*pred_real.size()).to(self.device),
         )
 
         return fake_loss, real_loss
@@ -147,7 +147,7 @@ class Synthetic:
         pred_gan = self.discriminator(generated)
         gan_loss = F.binary_cross_entropy(
             pred_gan,
-            torch.ones(*pred_gan.size()),
+            torch.ones(*pred_gan.size()).to(self.device),
         )
 
         l1_loss = F.l1_loss(
