@@ -32,7 +32,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
 
         self.dp1 = nn.Dropout(p=0.1)
 
-        self.fc1 = nn.Linear(4000, self.hidden_size)
+        self.fc1 = nn.Linear(5200, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -84,7 +84,7 @@ class PPOPixelsCNNCroppedEdges(nn.Module):
         # x = F.elu(self.cv5(x))
         x = self.dp1(x)
 
-        x = x.view(-1, 4000)
+        x = x.view(-1, 5200)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":
