@@ -206,11 +206,11 @@ class Synthetic:
                 if self.save_dir:
                     cv2.imwrite(
                         os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
-                        (255 * cameras[0].to('cpu')).detach().numpy(),
+                        (255 * cameras[0].squeeze(0).to('cpu')).detach().numpy(),
                     )
                     cv2.imwrite(
                         os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
-                        (255 * generated[0].to('cpu')).detach().numpy(),
+                        (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
                     )
 
             print(
