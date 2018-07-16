@@ -8,7 +8,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from synthetic import Decoder, State
+from synthetic import Generator, State
 from capture import CaptureSet
 from utils import Meter
 from reinforce import InputFilter
@@ -21,23 +21,23 @@ class Synthetic:
         self.device = torch.device(config.get('device'))
         self.input_filter = InputFilter(config)
 
-        self.decoder = Decoder(config).to(self.device)
+        self.generator = Generator(config).to(self.device)
 
         self.save_dir = save_dir
         self.load_dir = load_dir
 
         if self.load_dir:
             if config.get('device') != 'cpu':
-                self.decoder.load_state_dict(
-                    torch.load(self.load_dir + "/decoder.pt"),
+                self.generator.load_state_dict(
+                    torch.load(self.load_dir + "/generator.pt"),
                 )
             else:
-                self.decoder.load_state_dict(
-                    torch.load(self.load_dir + "/decoder.pt", map_location='cpu'),
+                self.generator.load_state_dict(
+                    torch.load(self.load_dir + "/generator.pt", map_location='cpu'),
                 )
 
     def generate(self, state):
-        generated, _, _ = self.decoder(
+        generated, _, _ = self.generator(
             torch.from_numpy(
                 state.vector()
             ).float().to(self.device).unsqueeze(0).detach(),
@@ -45,7 +45,7 @@ class Synthetic:
         )
         return generated * 255.0
 
-    def _decoder_capture_loader(self, item):
+    def _generator_capture_loader(self, item):
         state = torch.from_numpy(State(
             item['simulation_track_randomization'],
             item['simulation_position'],
@@ -61,33 +61,33 @@ class Synthetic:
 
         return state, camera
 
-    def decoder_initialize_training(
+    def generator_initialize_training(
             self,
             train_capture_set_dir,
             test_capture_set_dir,
     ):
-        self.decoder_optimizer = optim.Adam(
-            self.decoder.parameters(),
+        self.generator_optimizer = optim.Adam(
+            self.generator.parameters(),
             self.config.get('learning_rate'),
         )
 
         if self.load_dir:
             if self.config.get('device') != 'cpu':
-                self.decoder_optimizer.load_state_dict(
-                    torch.load(self.load_dir + "/decoder_optimizer.pt"),
+                self.generator_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/generator_optimizer.pt"),
                 )
             else:
-                self.decoder_optimizer.load_state_dict(
-                    torch.load(self.load_dir + "/decoder_optimizer.pt", map_location='cpu'),
+                self.generator_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/generator_optimizer.pt", map_location='cpu'),
                 )
 
         self.train_capture_set = CaptureSet(
             train_capture_set_dir,
-            loader=self._decoder_capture_loader
+            loader=self._generator_capture_loader
         )
         self.test_capture_set = CaptureSet(
             test_capture_set_dir,
-            loader=self._decoder_capture_loader
+            loader=self._generator_capture_loader
         )
 
         self.train_loader = torch.utils.data.DataLoader(
@@ -107,16 +107,16 @@ class Synthetic:
         self.batch_count = 0
         self.best_test_loss = 9999.0
 
-    def decoder_batch_train(self):
-        self.decoder.train()
+    def generator_batch_train(self):
+        self.generator.train()
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.train_loader):
-            generated, means, logvars = self.decoder(
+            generated, means, logvars = self.generator(
                 states.detach(),
             )
 
-            self.decoder_optimizer.zero_grad()
+            self.generator_optimizer.zero_grad()
 
             bce_loss = F.binary_cross_entropy(
                 generated, cameras,
@@ -132,16 +132,16 @@ class Synthetic:
             (mse_loss + kld_loss).backward()
             loss_meter.update(mse_loss.item())
 
-            self.decoder_optimizer.step()
+            self.generator_optimizer.step()
 
             if i % 1000 == 0:
                 if self.save_dir:
                     cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_decoder_camera.jpg'.format(i)),
+                        os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
                         (255 * cameras[0].to('cpu')).detach().numpy(),
                     )
                     cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_decoder_generated.jpg'.format(i)),
+                        os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
                         (255 * generated[0].to('cpu')).detach().numpy(),
                     )
 
@@ -162,12 +162,12 @@ class Synthetic:
         self.batch_count += 1
         return loss_meter
 
-    def decoder_batch_test(self):
-        self.decoder.eval()
+    def generator_batch_test(self):
+        self.generator.eval()
         loss_meter = Meter()
 
         for i, (states, cameras) in enumerate(self.test_loader):
-            generated, means, logvars = self.decoder(
+            generated, means, logvars = self.generator(
                 states.detach(), deterministic=True,
             )
 
@@ -206,7 +206,7 @@ class Synthetic:
                     self.save_dir,
                     self.best_test_loss,
                 ))
-                torch.save(self.decoder.state_dict(), self.save_dir + "/decoder.pt")
-                torch.save(self.decoder_optimizer.state_dict(), self.save_dir + "/decoder_optimizer.pt")
+                torch.save(self.generator.state_dict(), self.save_dir + "/generator.pt")
+                torch.save(self.generator_optimizer.state_dict(), self.save_dir + "/generator_optimizer.pt")
 
         return loss_meter

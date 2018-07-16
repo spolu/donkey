@@ -1,3 +1,3 @@
 from synthetic.state import State
-from synthetic.decoder import Decoder
+from synthetic.generator import Generator
 from synthetic.synthetic import Synthetic
