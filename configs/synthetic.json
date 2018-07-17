@@ -6,7 +6,8 @@
   "learning_rate": 0.0002,
   "batch_size": 64,
 
-  "l1_loss_coeff": 400.0,
+  "l1_loss_coeff": 200.0,
+  "mse_loss_coeff": 200.0,
   "kld_loss_coeff": 0.0,
   "gan_loss_coeff": 1.0
 }

@@ -77,6 +77,7 @@ class Synthetic:
             self.config.get('learning_rate'),
         )
         self.l1_loss_coeff = self.config.get('l1_loss_coeff')
+        self.mse_loss_coeff = self.config.get('mse_loss_coeff')
         self.kld_loss_coeff = self.config.get('kld_loss_coeff')
         self.gan_loss_coeff = self.config.get('gan_loss_coeff')
 
@@ -154,13 +155,15 @@ class Synthetic:
         l1_loss = F.l1_loss(
             generated, cameras,
         )
-
+        mse_loss = F.mse_loss(
+            generated, cameras,
+        )
         kld_loss = -0.5 * torch.sum(
             1 + logvars - means.pow(2) - logvars.exp()
         )
         kld_loss /= generated.size(0) * generated.size(1) * generated.size(2)
 
-        return l1_loss, kld_loss, gan_loss
+        return l1_loss, mse_loss, kld_loss, gan_loss
 
     def batch_train(self):
         self.generator.train()
@@ -189,13 +192,16 @@ class Synthetic:
             self.discriminator.set_requires_grad(False)
             self.generator_optimizer.zero_grad()
 
-            l1_loss, kld_loss, gan_loss = self._generator_loss(
+            l1_loss, mse_loss, kld_loss, gan_loss = self._generator_loss(
                 cameras, generated, means, logvars,
             )
 
-            loss = (l1_loss * self.l1_loss_coeff +
-                    # kld_loss * self.kld_loss_coeff +
-                    gan_loss * self.gan_loss_coeff)
+            loss = (
+                # l1_loss * self.l1_loss_coeff +
+                mse_loss * self.mse_loss_coeff +
+                # kld_loss * self.kld_loss_coeff +
+                gan_loss * self.gan_loss_coeff
+            )
             loss.backward()
 
             self.generator_optimizer.step()
@@ -218,6 +224,7 @@ class Synthetic:
                  "fake_loss {:.5f} " + \
                  "real_loss {:.5f} " + \
                  "l1_loss {:.5f} " + \
+                 "mse_loss {:.5f} " + \
                  "kld_loss {:.5f} " + \
                  "gan_loss {:.5f}").
                 format(
@@ -226,6 +233,7 @@ class Synthetic:
                     fake_loss.item(),
                     real_loss.item(),
                     l1_loss.item(),
+                    mse_loss.item(),
                     kld_loss.item(),
                     gan_loss.item(),
                 ))
@@ -244,25 +252,30 @@ class Synthetic:
                 states.detach(), deterministic=True,
             )
 
-            l1_loss, kld_loss, gan_loss = self._generator_loss(
+            l1_loss, mse_loss, kld_loss, gan_loss = self._generator_loss(
                 cameras, generated, means, logvars,
             )
 
-            loss = (l1_loss * self.l1_loss_coeff +
-                    kld_loss * self.kld_loss_coeff +
-                    gan_loss * self.gan_loss_coeff)
+            loss = (
+                # l1_loss * self.l1_loss_coeff +
+                mse_loss * self.l1_loss_coeff
+                # kld_loss * self.kld_loss_coeff +
+                # gan_loss * self.gan_loss_coeff
+            )
 
             loss_meter.update(loss.item())
 
             print(
                 ("TEST {} batch {} " + \
                  "l1_loss {:.5f} " + \
+                 "mse_loss {:.5f} " + \
                  "kld_loss {:.5f} " + \
                  "gan_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
                     l1_loss.item(),
+                    mse_loss.item(),
                     kld_loss.item(),
                     gan_loss.item(),
                 ))
