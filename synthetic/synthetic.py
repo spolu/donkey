@@ -37,6 +37,7 @@ class Synthetic:
                 )
 
     def generate(self, state):
+        self.generator.eval()
         generated, _, _ = self.generator(
             torch.from_numpy(
                 state.vector()
