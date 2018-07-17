@@ -199,10 +199,10 @@ class Synthetic:
             )
 
             loss = (
-                l1_loss * self.l1_loss_coeff
+                l1_loss * self.l1_loss_coeff +
                 # mse_loss * self.mse_loss_coeff +
                 # kld_loss * self.kld_loss_coeff +
-                # gan_loss * self.gan_loss_coeff
+                gan_loss * self.gan_loss_coeff
             )
             loss.backward()
 
