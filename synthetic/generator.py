@@ -48,8 +48,7 @@ class Generator(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.ConvTranspose2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, 0.02)
                 if m.bias is not None:
                     m.bias.data.fill_(0)
             if isinstance(m, nn.Linear):
@@ -57,6 +56,9 @@ class Generator(nn.Module):
                 if m.bias is not None:
                     nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
                     m.bias.data.fill_(0)
+            if isinstance(m, nn.BatchNorm2d):
+                m.weight.data.normal_(1.0, 0.02)
+                m.bias.data.fill_(0)
 
     def reparameterize(self, mean, logvar):
         std = torch.exp(0.5 * logvar)

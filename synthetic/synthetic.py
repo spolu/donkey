@@ -153,10 +153,10 @@ class Synthetic:
         )
 
         l1_loss = F.l1_loss(
-            generated, cameras,
+            generated, cameras.detach(),
         )
         mse_loss = F.mse_loss(
-            generated, cameras,
+            generated, cameras.detach(),
         )
         kld_loss = -0.5 * torch.sum(
             1 + logvars - means.pow(2) - logvars.exp()
@@ -183,8 +183,10 @@ class Synthetic:
                 cameras, generated,
             )
 
-            (fake_loss * 0.5 +
-             real_loss * 0.5).backward()
+            (
+                fake_loss * 0.5 +
+                real_loss * 0.5
+            ).backward()
 
             self.discriminator_optimizer.step()
 
@@ -197,10 +199,10 @@ class Synthetic:
             )
 
             loss = (
-                # l1_loss * self.l1_loss_coeff +
-                mse_loss * self.mse_loss_coeff +
+                l1_loss * self.l1_loss_coeff
+                # mse_loss * self.mse_loss_coeff +
                 # kld_loss * self.kld_loss_coeff +
-                gan_loss * self.gan_loss_coeff
+                # gan_loss * self.gan_loss_coeff
             )
             loss.backward()
 
