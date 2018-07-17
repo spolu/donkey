@@ -12,7 +12,7 @@ from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 import reinforce
 
-from reinforce.policies import PPOPixelsCNNCroppedEdges
+from reinforce.policies import PPOPixelsCNN
 
 # import pdb; pdb.set_trace()
 
@@ -163,8 +163,8 @@ class PPO:
 
         self.device = torch.device(config.get('device'))
 
-        if config.get('policy') == 'ppo_pixels_cnn_cropped_edges':
-            self.policy = PPOPixelsCNNCroppedEdges(config).to(self.device)
+        if config.get('policy') == 'ppo_pixels_cnn':
+            self.policy = PPOPixelsCNN(config).to(self.device)
         assert self.policy is not None
 
         self.save_dir = save_dir

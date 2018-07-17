@@ -15,12 +15,12 @@ from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
-CONV_OUT_WIDTH = 2
+CONV_OUT_WIDTH = 3
 CONV_OUT_HEIGHT = 8
 
-class VAECroppedEdges(nn.Module):
+class VAE(nn.Module):
     def __init__(self, config):
-        super(VAECroppedEdges, self).__init__()
+        super(VAE, self).__init__()
         self.latent_size = config.get('latent_size')
 
         self.device = torch.device(config.get('device'))
@@ -39,10 +39,10 @@ class VAECroppedEdges(nn.Module):
         self.fc3 = nn.Linear(self.latent_size, 256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
         ## Decoder
-        self.dcv1 = nn.ConvTranspose2d(256, 128, 4, stride=2, output_padding=(1,0))
-        self.dcv2 = nn.ConvTranspose2d(128, 64, 4, stride=2)
-        self.dcv3 = nn.ConvTranspose2d(64, 32, 4, stride=2, output_padding=(0,1))
-        self.dcv4 = nn.ConvTranspose2d(32, 1, 5, stride=2, output_padding=1, padding=1)
+        self.dcv1 = nn.ConvTranspose2d(256, 128, 5, stride=2)
+        self.dcv2 = nn.ConvTranspose2d(128, 64, 5, stride=2)
+        self.dcv3 = nn.ConvTranspose2d(64, 32, 5, stride=2)
+        self.dcv4 = nn.ConvTranspose2d(32, 1, 5, stride=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -66,7 +66,6 @@ class VAECroppedEdges(nn.Module):
         x = F.relu(self.cv4(x))
         # print("cv4 {}".format(x.size()))
 
-        # import pdb; pdb.set_trace()
         x = x.view(-1, 256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
         return self.fc1(x), self.fc2(x)
@@ -85,6 +84,13 @@ class VAECroppedEdges(nn.Module):
         x = F.sigmoid(self.dcv4(x))
         # print("dcv4 {}".format(x.size()))
 
+        out_height = self.input_shape()[1]
+        out_width = self.input_shape()[2]
+
+        padh = int((x.size(2) - out_height) / 2)
+        padw = int((x.size(3) - out_width) / 2)
+
+        x = x[:,:,padh:out_height+padh,padw:out_width+padw]
         # import pdb; pdb.set_trace()
 
         return x
@@ -110,8 +116,7 @@ class VAECroppedEdges(nn.Module):
     def input_shape(self):
         return (
             1,
-            int(reinforce.CAMERA_HEIGHT - 50),
-            int(reinforce.CAMERA_WIDTH),
+            *(self.input_filter.shape())
         )
 
     def input(self, observation):

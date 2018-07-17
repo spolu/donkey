@@ -15,9 +15,9 @@ from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
-class PPOPixelsCNNCroppedEdges(nn.Module):
+class PPOPixelsCNN(nn.Module):
     def __init__(self, config):
-        super(PPOPixelsCNNCroppedEdges, self).__init__()
+        super(PPOPixelsCNN, self).__init__()
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
         self.action_type = config.get('action_type')

@@ -4,11 +4,12 @@
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
+  "do_capture": false,
 
   "algorithm": "ppo_vae",
-  "ppo_policy": "ppo_controller",
-  "vae_policy": "vae_cropped_edges",
-  "input_filter": "canny",
+  "ppo_policy": "ppo_vae_controller",
+  "vae_policy": "vae",
+  "input_filter": "warp_line_detector",
   "device": "cuda:0",
   "seed": 1,
 

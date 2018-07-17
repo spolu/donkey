@@ -11,7 +11,7 @@ import torch.optim as optim
 from track import Track
 from capture.models import ConvNet
 
-from reinforce.policies import PPOPixelsCNNCroppedEdges
+from reinforce.policies import PPOPixelsCNN
 
 # import pdb; pdb.set_trace()
 
@@ -21,8 +21,8 @@ class Driver:
         self.hidden_size = cfg.get('hidden_size')
         self.device = torch.device('cpu')
 
-        if cfg.get('policy') == 'ppo_pixels_cnn_cropped_edges':
-            self.policy = PPOPixelsCNNCroppedEdges(cfg).to(self.device)
+        if cfg.get('policy') == 'ppo_pixels_cnn':
+            self.policy = PPOPixelsCNN(cfg).to(self.device)
         assert self.policy is not None
         self.track = Track(self.track_name)
 

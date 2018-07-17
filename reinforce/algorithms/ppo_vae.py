@@ -14,8 +14,8 @@ from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 import reinforce
 
-from reinforce.policies import PPOController
-from reinforce.policies import VAECroppedEdges
+from reinforce.policies import PPOVAEController
+from reinforce.policies import VAE
 
 # import pdb; pdb.set_trace()
 
@@ -183,11 +183,11 @@ class PPOVAE:
 
         self.device = torch.device(config.get('device'))
 
-        if config.get('ppo_policy') == 'ppo_controller':
-            self.ppo_policy = PPOController(config).to(self.device)
+        if config.get('ppo_policy') == 'ppo_vae_controller':
+            self.ppo_policy = PPOVAEController(config).to(self.device)
         assert self.ppo_policy is not None
-        if config.get('vae_policy') == 'vae_cropped_edges':
-            self.vae_policy = VAECroppedEdges(config).to(self.device)
+        if config.get('vae_policy') == 'vae':
+            self.vae_policy = VAE(config).to(self.device)
         assert self.vae_policy is not None
 
         self.save_dir = save_dir

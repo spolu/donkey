@@ -14,9 +14,9 @@ import reinforce
 
 # import pdb; pdb.set_trace()
 
-class PPOController(nn.Module):
+class PPOVAEController(nn.Module):
     def __init__(self, config):
-        super(PPOController, self).__init__()
+        super(PPOVAEController, self).__init__()
         self.latent_size = config.get('latent_size')
         self.hidden_size = config.get('hidden_size')
         self.recurring_cell = config.get('recurring_cell')
