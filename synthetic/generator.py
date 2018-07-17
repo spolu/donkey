@@ -23,9 +23,6 @@ class Generator(nn.Module):
         self.fc1 = nn.Linear(State.size(), 256, bias=False)
         self.fc_bn1 = nn.BatchNorm1d(256)
 
-        self.fc2 = nn.Linear(256, 256, bias=False)
-        self.fc_bn2 = nn.BatchNorm1d(256)
-
         self.fc_mean = nn.Linear(256, 256)
         self.fc_logvar = nn.Linear(256, 256)
 
@@ -67,7 +64,6 @@ class Generator(nn.Module):
 
     def forward(self, state, deterministic=False):
         x = F.relu(self.fc_bn1(self.fc1(state)))
-        x = F.relu(self.fc_bn2(self.fc2(x)))
         mean, logvar = self.fc_mean(x), self.fc_logvar(x)
 
         z = mean
