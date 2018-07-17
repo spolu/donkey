@@ -9,5 +9,5 @@
   "l1_loss_coeff": 100.0,
   "mse_loss_coeff": 100.0,
   "kld_loss_coeff": 0.0,
-  "gan_loss_coeff": 0.1
+  "gan_loss_coeff": 0.2
 }
