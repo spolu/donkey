@@ -209,7 +209,6 @@ class Synthetic:
             vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                 camera.detach(), deterministic=True,
             )
-
             stl_latent, stl_mean, stl_logvar = self.stl(
                 state.detach(), deterministic=True,
             )
@@ -263,6 +262,9 @@ class Synthetic:
 
             self.stl_optimizer.step()
 
+            # Compute generated.
+            generated = self.vae.decode(stl_latent)
+
             if i % 1000 == 0:
                 if self.save_dir:
                     cv2.imwrite(
@@ -272,6 +274,10 @@ class Synthetic:
                     cv2.imwrite(
                         os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
                         (255 * encoded[0].squeeze(0).to('cpu')).detach().numpy(),
+                    )
+                    cv2.imwrite(
+                        os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
+                        (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
                     )
 
             print(
@@ -311,6 +317,9 @@ class Synthetic:
         for i, (state, camera) in enumerate(self.test_loader):
             vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                 camera.detach(), deterministic=True,
+            )
+            stl_latent, stl_mean, stl_logvar = self.stl(
+                state.detach(), deterministic=True,
             )
 
             vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
