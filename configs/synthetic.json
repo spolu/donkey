@@ -3,14 +3,19 @@
   "seed": 1,
   "input_filter": "none",
 
-  "vae_learning_rate": 0.001,
-  "latent_size": 128,
-  "discriminator_learning_rate": 0.0002,
   "batch_size": 16,
 
-  "l1_loss_coeff": 0.0,
-  "mse_loss_coeff": 1.0,
-  "bce_loss_coeff": 0.0,
-  "kld_loss_coeff": 0.0,
-  "gan_loss_coeff": 0.0
+  "latent_size": 128,
+  "vae_learning_rate": 0.001,
+  "stl_learning_rate": 0.001,
+  "discriminator_learning_rate": 0.0002,
+
+  "vae_l1_loss_coeff": 0.0,
+  "vae_mse_loss_coeff": 1.0,
+  "vae_bce_loss_coeff": 0.0,
+  "vae_kld_loss_coeff": 0.0,
+  "vae_gan_loss_coeff": 0.0,
+
+  "stl_mse_loss_coeff": 1.0,
+  "stl_kld_loss_coeff": 0.0
 }

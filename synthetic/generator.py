@@ -31,9 +31,9 @@ class VAE(nn.Module):
         self.cv4 = nn.Conv2d(128, 256, 4, stride=2)
 
         ## Latent representation of mean and std
-        self.fc1 = nn.Linear(256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
-        self.fc2 = nn.Linear(256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
-        self.fc3 = nn.Linear(self.latent_size, 256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
+        self.fc_mean = nn.Linear(256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
+        self.fc_logvar = nn.Linear(256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
+        self.fc_latent = nn.Linear(self.latent_size, 256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
         ## Decoder
         self.dcv1 = nn.ConvTranspose2d(256, 128, 5, stride=2)
@@ -65,10 +65,10 @@ class VAE(nn.Module):
         # import pdb; pdb.set_trace()
         x = x.view(-1, 256*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
-        return self.fc1(x), self.fc2(x)
+        return self.fc_mean(x), self.fc_logvar(x)
 
     def decode(self, z):
-        x = self.fc3(z)
+        x = self.fc_latent(z)
 
         x = x.view(-1, 256, CONV_OUT_WIDTH, CONV_OUT_HEIGHT)
 
@@ -104,6 +104,43 @@ class VAE(nn.Module):
         encoded = self.decode(latent)
 
         return latent, encoded, mean, logvar
+
+class STL(nn.Module):
+    def __init__(self, config):
+        super(STL, self).__init__()
+        self.device = torch.device(config.get('device'))
+        self.latent_size = config.get('latent_size')
+
+        self.fc1 = nn.Linear(State.size(), 256)
+        self.fc2 = nn.Linear(256, 256)
+
+        self.fc_mean = nn.Linear(256, self.latent_size)
+        self.fc_logvar = nn.Linear(256, self.latent_size)
+
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
+                m.bias.data.fill_(0)
+
+    def encode(self, state):
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
+
+        return self.fc_mean(x), self.fc_logvar(x)
+
+    def forward(self, state, deterministic=False):
+        mean, logvar = self.encode(state)
+        latent = self.reparameterize(mean, logvar)
+
+        if deterministic:
+            latent = mean
+
+        return latent, mean, logvar
+
+    def reparameterize(self, mean, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return eps * std + mean
 
 
 class Generator(nn.Module):

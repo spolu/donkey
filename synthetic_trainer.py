@@ -34,17 +34,9 @@ def run(args):
     )
 
     while True:
-        loss = synthetic.batch_train()
+        synthetic.batch_train()
 
-        print("BATCH_TRAIN {} {:.5f} {:.5f} {:.5f}".format(
-            episode,
-            loss.avg,
-            loss.min,
-            loss.max,
-        ))
-        sys.stdout.flush()
-
-        loss = synthetic.batch_test()
+        vae_loss, stl_loss = synthetic.batch_test()
         print("BATCH_TEST {} {:.5f} {:.5f} {:.5f}".format(
             episode,
             loss.avg,

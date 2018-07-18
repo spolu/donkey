@@ -8,7 +8,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from synthetic import Generator, Discriminator, State, VAE
+from synthetic import Generator, Discriminator, State, VAE, STL
 from capture import CaptureSet
 from utils import Meter
 from reinforce import InputFilter
@@ -22,6 +22,7 @@ class Synthetic:
         self.input_filter = InputFilter(config)
 
         self.vae = VAE(config).to(self.device)
+        self.stl = STL(config).to(self.device)
 
         self.save_dir = save_dir
         self.load_dir = load_dir
@@ -31,9 +32,15 @@ class Synthetic:
                 self.vae.load_state_dict(
                     torch.load(self.load_dir + "/vae.pt"),
                 )
+                self.stl.load_state_dict(
+                    torch.load(self.load_dir + "/stl.pt"),
+                )
             else:
                 self.vae.load_state_dict(
                     torch.load(self.load_dir + "/vae.pt", map_location='cpu'),
+                )
+                self.stl.load_state_dict(
+                    torch.load(self.load_dir + "/stl.pt", map_location='cpu'),
                 )
 
     # def generate(self, state):
@@ -73,20 +80,30 @@ class Synthetic:
             self.vae.parameters(),
             self.config.get('vae_learning_rate'),
         )
+        self.stl_optimizer = optim.Adam(
+            self.stl.parameters(),
+            self.config.get('stl_learning_rate'),
+        )
         self.discriminator_optimizer = optim.Adam(
             self.discriminator.parameters(),
             self.config.get('discriminator_learning_rate'),
         )
-        self.l1_loss_coeff = self.config.get('l1_loss_coeff')
-        self.mse_loss_coeff = self.config.get('mse_loss_coeff')
-        self.bce_loss_coeff = self.config.get('bce_loss_coeff')
-        self.kld_loss_coeff = self.config.get('kld_loss_coeff')
-        self.gan_loss_coeff = self.config.get('gan_loss_coeff')
+        self.vae_l1_loss_coeff = self.config.get('vae_l1_loss_coeff')
+        self.vae_mse_loss_coeff = self.config.get('vae_mse_loss_coeff')
+        self.vae_bce_loss_coeff = self.config.get('vae_bce_loss_coeff')
+        self.vae_kld_loss_coeff = self.config.get('vae_kld_loss_coeff')
+        self.vae_gan_loss_coeff = self.config.get('vae_gan_loss_coeff')
+
+        self.stl_mse_loss_coeff = self.config.get('stl_mse_loss_coeff')
+        self.stl_kld_loss_coeff = self.config.get('stl_kld_loss_coeff')
 
         if self.load_dir:
             if self.config.get('device') != 'cpu':
                 self.vae_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/vae_optimizer.pt"),
+                )
+                self.stl_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/stl_optimizer.pt"),
                 )
                 self.discriminator.load_state_dict(
                     torch.load(self.load_dir + "/discriminator.pt"),
@@ -97,6 +114,9 @@ class Synthetic:
             else:
                 self.vae_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/vae_optimizer.pt", map_location='cpu'),
+                )
+                self.stl_optimizer.load_state_dict(
+                    torch.load(self.load_dir + "/stl_optimizer.pt", map_location='cpu'),
                 )
                 self.discriminator.load_state_dict(
                     torch.load(self.load_dir + "/discriminator.pt", map_location='cpu'),
@@ -146,7 +166,7 @@ class Synthetic:
 
         return fake_loss, real_loss
 
-    def _vae_loss(self, camera, encoded, mean, logvar):
+    def _vae_loss(self, camera, encoded, vae_mean, vae_logvar):
         # Do not detach as we want the gradients to flow from D to G.
         pred_gan = self.discriminator(encoded)
         gan_loss = F.binary_cross_entropy(
@@ -164,20 +184,34 @@ class Synthetic:
             encoded, camera.detach(),
         )
         kld_loss = -0.5 * torch.sum(
-            1 + logvar - mean.pow(2) - logvar.exp()
+            1 + vae_logvar - vae_mean.pow(2) - vae_logvar.exp()
         )
         kld_loss /= encoded.size(0) * encoded.size(1) * encoded.size(2)
 
         return l1_loss, mse_loss, bce_loss, kld_loss, gan_loss
 
+    def _stl_loss(self, vae_latent, stl_latent, stl_mean, stl_logvar):
+        mse_loss = F.mse_loss(
+            stl_latent, vae_latent.detach(),
+        )
+        kld_loss = -0.5 * torch.sum(
+            1 + stl_logvar - stl_mean.pow(2) - stl_logvar.exp()
+        )
+        kld_loss /= stl_latent.size(0) * stl_latent.size(1)
+
+        return mse_loss, kld_loss
+
     def batch_train(self):
         self.vae.train()
         self.discriminator.train()
-        loss_meter = Meter()
 
         for i, (state, camera) in enumerate(self.train_loader):
-            latent, encoded, mean, logvar = self.vae(
+            vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                 camera.detach(), deterministic=True,
+            )
+
+            stl_latent, stl_mean, stl_logvar = self.stl(
+                state.detach(), deterministic=True,
             )
 
             # Discriminator pass.
@@ -197,25 +231,37 @@ class Synthetic:
             self.discriminator_optimizer.step()
 
             # VAE pass.
-            self.discriminator.set_requires_grad(False)
             self.vae_optimizer.zero_grad()
 
-            l1_loss, mse_loss, bce_loss, kld_loss, gan_loss = self._vae_loss(
-                camera, encoded, mean, logvar,
+            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+                camera, encoded, vae_mean, vae_logvar,
             )
 
             vae_loss = (
-                l1_loss * self.l1_loss_coeff +
-                mse_loss * self.mse_loss_coeff +
-                bce_loss * self.bce_loss_coeff +
-                kld_loss * self.kld_loss_coeff +
-                gan_loss * self.gan_loss_coeff
+                vae_l1_loss * self.vae_l1_loss_coeff +
+                vae_mse_loss * self.vae_mse_loss_coeff +
+                vae_bce_loss * self.vae_bce_loss_coeff +
+                vae_kld_loss * self.vae_kld_loss_coeff +
+                vae_gan_loss * self.vae_gan_loss_coeff
             )
             vae_loss.backward()
 
             self.vae_optimizer.step()
 
-            loss_meter.update(vae_loss.item())
+            # STL pass.
+            self.stl_optimizer.zero_grad()
+
+            stl_mse_loss, stl_kld_loss = self._stl_loss(
+                vae_latent, stl_latent, stl_mean, stl_logvar,
+            )
+
+            stl_loss = (
+                stl_mse_loss * self.stl_mse_loss_coeff +
+                stl_kld_loss * self.stl_kld_loss_coeff
+            )
+            stl_loss.backward()
+
+            self.stl_optimizer.step()
 
             if i % 1000 == 0:
                 if self.save_dir:
@@ -232,65 +278,85 @@ class Synthetic:
                 ("TRAIN {} batch {} " + \
                  "fake_loss {:.5f} " + \
                  "real_loss {:.5f} " + \
-                 "l1_loss {:.5f} " + \
-                 "mse_loss {:.5f} " + \
-                 "bce_loss {:.5f} " + \
-                 "kld_loss {:.5f} " + \
-                 "gan_loss {:.5f}").
+                 "vae_l1_loss {:.5f} " + \
+                 "vae_mse_loss {:.5f} " + \
+                 "vae_bce_loss {:.5f} " + \
+                 "vae_kld_loss {:.5f} " + \
+                 "vae_gan_loss {:.5f} " + \
+                 "stl_mse_loss {:.5f} " + \
+                 "stl_kld_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
                     fake_loss.item(),
                     real_loss.item(),
-                    l1_loss.item(),
-                    mse_loss.item(),
-                    bce_loss.item(),
-                    kld_loss.item(),
-                    gan_loss.item(),
+                    vae_l1_loss.item(),
+                    vae_mse_loss.item(),
+                    vae_bce_loss.item(),
+                    vae_kld_loss.item(),
+                    vae_gan_loss.item(),
+                    stl_mse_loss.item(),
+                    stl_kld_loss.item(),
                 ))
             sys.stdout.flush()
 
         self.batch_count += 1
-        return loss_meter
 
     def batch_test(self):
         self.vae.eval()
         self.discriminator.eval()
-        loss_meter = Meter()
+        vae_loss_meter = Meter()
+        stl_loss_meter = Meter()
 
         for i, (state, camera) in enumerate(self.test_loader):
-            latent, encoded, mean, logvar = self.vae(
+            vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                 camera.detach(), deterministic=True,
             )
 
-            l1_loss, mse_loss, bce_loss, kld_loss, gan_loss = self._vae_loss(
-                camera, encoded, mean, logvar,
+            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+                camera, encoded, vae_mean, vae_logvar,
             )
 
-            loss = (
-                l1_loss * self.l1_loss_coeff +
-                mse_loss * self.mse_loss_coeff +
-                bce_loss * self.bce_loss_coeff +
-                kld_loss * self.kld_loss_coeff +
-                gan_loss * self.gan_loss_coeff
+            vae_loss = (
+                vae_l1_loss * self.vae_l1_loss_coeff +
+                vae_mse_loss * self.vae_mse_loss_coeff +
+                vae_bce_loss * self.vae_bce_loss_coeff +
+                vae_kld_loss * self.vae_kld_loss_coeff +
+                vae_gan_loss * self.vae_gan_loss_coeff
             )
 
-            loss_meter.update(loss.item())
+            vae_loss_meter.update(vae_loss.item())
+
+            stl_mse_loss, stl_kld_loss = self._stl_loss(
+                vae_latent, stl_latent, stl_mean, stl_logvar,
+            )
+
+            stl_loss = (
+                stl_mse_loss * self.stl_mse_loss_coeff +
+                stl_kld_loss * self.stl_kld_loss_coeff
+            )
+
+            stl_loss_meter.update(vae_loss.item())
 
             print(
                 ("TEST {} batch {} " + \
-                 "l1_loss {:.5f} " + \
-                 "mse_loss {:.5f} " + \
-                 "kld_loss {:.5f} " + \
-                 "gan_loss {:.5f}").
+                 "vae_l1_loss {:.5f} " + \
+                 "vae_mse_loss {:.5f} " + \
+                 "vae_bce_loss {:.5f} " + \
+                 "vae_kld_loss {:.5f} " + \
+                 "vae_gan_loss {:.5f} " + \
+                 "stl_mse_loss {:.5f} " + \
+                 "stl_kld_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
-                    l1_loss.item(),
-                    mse_loss.item(),
-                    bce_loss.item(),
-                    kld_loss.item(),
-                    gan_loss.item(),
+                    vae_l1_loss.item(),
+                    vae_mse_loss.item(),
+                    vae_bce_loss.item(),
+                    vae_kld_loss.item(),
+                    vae_gan_loss.item(),
+                    stl_mse_loss.item(),
+                    stl_kld_loss.item(),
                 ))
             sys.stdout.flush()
 
@@ -301,7 +367,9 @@ class Synthetic:
             ))
             torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
             torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
+            torch.save(self.vae.state_dict(), self.save_dir + "/stl.pt")
+            torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
             torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
             torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
-        return loss_meter
+        return vae_loss_meter, stl_loss_meter
