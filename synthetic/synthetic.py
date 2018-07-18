@@ -348,14 +348,16 @@ class Synthetic:
 
         # Store policy if it did better.
         if self.save_dir:
-            print("Saving models and optimizer: save_dir={}".format(
-                self.save_dir,
-            ))
-            torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
-            torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
-            torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
-            torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
-            torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
-            torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
+            if self.best_test_loss > loss_meter.avg:
+                self.best_test_loss = loss_meter.avg
+                print("Saving models and optimizer: save_dir={}".format(
+                    self.save_dir,
+                ))
+                torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
+                torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
+                torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
+                torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
+                torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
+                torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
         return loss_meter
