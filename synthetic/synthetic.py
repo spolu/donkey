@@ -225,7 +225,7 @@ class Synthetic:
                     )
                     cv2.imwrite(
                         os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
-                        (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
+                        (255 * encoded[0].squeeze(0).to('cpu')).detach().numpy(),
                     )
 
             print(
@@ -259,12 +259,12 @@ class Synthetic:
         loss_meter = Meter()
 
         for i, (state, camera) in enumerate(self.test_loader):
-            generated, mean, logvar = self.vae(
+            latent, encoded, mean, logvar = self.vae(
                 camera.detach(), deterministic=True,
             )
 
             l1_loss, mse_loss, bce_loss, kld_loss, gan_loss = self._vae_loss(
-                camera, generated, mean, logvar,
+                camera, encoded, mean, logvar,
             )
 
             loss = (
