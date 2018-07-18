@@ -43,15 +43,16 @@ class Synthetic:
                     torch.load(self.load_dir + "/stl.pt", map_location='cpu'),
                 )
 
-    # def generate(self, state):
-    #     self.generator.eval()
-    #     generated, _, _ = self.generator(
-    #         torch.from_numpy(
-    #             state.vector()
-    #         ).float().to(self.device).unsqueeze(0).detach(),
-    #         deterministic=True,
-    #     )
-    #     return generated * 255.0
+    def generate(self, state):
+        self.vae.eval()
+        self.stl.eval()
+
+        stl_latent, _, _ = self.stl(
+            state.detach(), deterministic=True,
+        )
+        generated = self.vae.decode(stl_latent)
+
+        return generated * 255.0
 
     def _generator_capture_loader(self, item):
         state = torch.from_numpy(State(
@@ -203,6 +204,7 @@ class Synthetic:
 
     def batch_train(self):
         self.vae.train()
+        self.stl.train()
         self.discriminator.train()
 
         for i, (state, camera) in enumerate(self.train_loader):
@@ -262,8 +264,11 @@ class Synthetic:
 
             self.stl_optimizer.step()
 
-            # Compute generated.
-            generated = self.vae.decode(stl_latent)
+            generated = self.vae.decode(stl_latent.detach())
+
+            e2e_mse_loss = F.mse_loss(
+                generated, camera.detach(),
+            )
 
             if i % 1000 == 0:
                 if self.save_dir:
@@ -290,7 +295,8 @@ class Synthetic:
                  "vae_kld_loss {:.5f} " + \
                  "vae_gan_loss {:.5f} " + \
                  "stl_mse_loss {:.5f} " + \
-                 "stl_kld_loss {:.5f}").
+                 "stl_kld_loss {:.5f} " + \
+                 "e2e_mse_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
@@ -303,6 +309,7 @@ class Synthetic:
                     vae_gan_loss.item(),
                     stl_mse_loss.item(),
                     stl_kld_loss.item(),
+                    e2e_mse_loss.item(),
                 ))
             sys.stdout.flush()
 
@@ -310,9 +317,9 @@ class Synthetic:
 
     def batch_test(self):
         self.vae.eval()
+        self.stl.eval()
         self.discriminator.eval()
-        vae_loss_meter = Meter()
-        stl_loss_meter = Meter()
+        loss_meter = Meter()
 
         for i, (state, camera) in enumerate(self.test_loader):
             vae_latent, encoded, vae_mean, vae_logvar = self.vae(
@@ -321,51 +328,21 @@ class Synthetic:
             stl_latent, stl_mean, stl_logvar = self.stl(
                 state.detach(), deterministic=True,
             )
+            generated = self.vae.decode(stl_latent.detach())
 
-            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
-                camera, encoded, vae_mean, vae_logvar,
+            e2e_mse_loss = F.mse_loss(
+                generated, camera.detach(),
             )
 
-            vae_loss = (
-                vae_l1_loss * self.vae_l1_loss_coeff +
-                vae_mse_loss * self.vae_mse_loss_coeff +
-                vae_bce_loss * self.vae_bce_loss_coeff +
-                vae_kld_loss * self.vae_kld_loss_coeff +
-                vae_gan_loss * self.vae_gan_loss_coeff
-            )
-
-            vae_loss_meter.update(vae_loss.item())
-
-            stl_mse_loss, stl_kld_loss = self._stl_loss(
-                vae_latent, stl_latent, stl_mean, stl_logvar,
-            )
-
-            stl_loss = (
-                stl_mse_loss * self.stl_mse_loss_coeff +
-                stl_kld_loss * self.stl_kld_loss_coeff
-            )
-
-            stl_loss_meter.update(vae_loss.item())
+            loss_meter.update(loss.item())
 
             print(
                 ("TEST {} batch {} " + \
-                 "vae_l1_loss {:.5f} " + \
-                 "vae_mse_loss {:.5f} " + \
-                 "vae_bce_loss {:.5f} " + \
-                 "vae_kld_loss {:.5f} " + \
-                 "vae_gan_loss {:.5f} " + \
-                 "stl_mse_loss {:.5f} " + \
-                 "stl_kld_loss {:.5f}").
+                 "e2e_mse_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
-                    vae_l1_loss.item(),
-                    vae_mse_loss.item(),
-                    vae_bce_loss.item(),
-                    vae_kld_loss.item(),
-                    vae_gan_loss.item(),
-                    stl_mse_loss.item(),
-                    stl_kld_loss.item(),
+                    e2e_mse_loss.item(),
                 ))
             sys.stdout.flush()
 
@@ -381,4 +358,4 @@ class Synthetic:
             torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
             torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
-        return vae_loss_meter, stl_loss_meter
+        return loss_meter
