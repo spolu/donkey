@@ -12,8 +12,8 @@ class State:
     ):
         self.track_randomization = track_randomization
         self.position = position
-        self.velicity = velocity
-        self.angular_velicity = angular_velocity
+        self.velocity = velocity
+        self.angular_velocity = angular_velocity
         self.track_coordinates = track_coordinates
         self.track_angle = track_angle
 
