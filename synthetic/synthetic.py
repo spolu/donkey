@@ -334,7 +334,7 @@ class Synthetic:
                 generated, camera.detach(),
             )
 
-            loss_meter.update(loss.item())
+            loss_meter.update(e2e_mse_loss.item())
 
             print(
                 ("TEST {} batch {} " + \
