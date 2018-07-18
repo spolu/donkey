@@ -22,7 +22,6 @@ class VAE(nn.Module):
     def __init__(self, config):
         super(VAE, self).__init__()
         self.latent_size = config.get('latent_size')
-
         self.device = torch.device(config.get('device'))
 
         self.input_filter = InputFilter(config)

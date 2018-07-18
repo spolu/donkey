@@ -3,11 +3,14 @@
   "seed": 1,
   "input_filter": "none",
 
-  "learning_rate": 0.0002,
+  "vae_learning_rate": 0.001,
+  "latent_size": 128,
+  "discriminator_learning_rate": 0.0002,
   "batch_size": 16,
 
-  "l1_loss_coeff": 100.0,
-  "mse_loss_coeff": 100.0,
+  "l1_loss_coeff": 0.0,
+  "mse_loss_coeff": 1.0,
+  "bce_loss_coeff": 0.0,
   "kld_loss_coeff": 0.0,
-  "gan_loss_coeff": 0.2
+  "gan_loss_coeff": 0.0
 }
