@@ -353,8 +353,8 @@ class Synthetic:
             ))
             torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
             torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
-            torch.save(self.vae.state_dict(), self.save_dir + "/stl.pt")
-            torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
+            torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
+            torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
             torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
             torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
