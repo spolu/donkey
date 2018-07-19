@@ -11,5 +11,4 @@ grep TRAIN $TEMP/out.log | cut -d' ' -f 14 | gnuplot -p -e 'set terminal png; se
 grep TRAIN $TEMP/out.log | cut -d' ' -f 16 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/vae_kld_loss.png"; plot "/dev/stdin";'
 grep TRAIN $TEMP/out.log | cut -d' ' -f 18 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/vae_gan_loss.png"; plot "/dev/stdin";'
 grep TRAIN $TEMP/out.log | cut -d' ' -f 20 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/stl_mse_loss.png"; plot "/dev/stdin";'
-grep TRAIN $TEMP/out.log | cut -d' ' -f 22 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/stl_kld_loss.png"; plot "/dev/stdin";'
-grep TRAIN $TEMP/out.log | cut -d' ' -f 24 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/e2e_mse_loss.png"; plot "/dev/stdin";'
+grep TRAIN $TEMP/out.log | cut -d' ' -f 22 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/e2e_mse_loss.png"; plot "/dev/stdin";'
