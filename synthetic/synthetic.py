@@ -8,7 +8,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from synthetic import Generator, Discriminator, State, VAE, STL
+from synthetic import Discriminator, State, VAE, STL
 from capture import CaptureSet
 from utils import Meter
 from reinforce import InputFilter
@@ -48,7 +48,8 @@ class Synthetic:
         self.stl.eval()
 
         stl_latent, _, _ = self.stl(
-            state.detach(), deterministic=True,
+            torch.from_numpy(state.vector()).float().to(self.device),
+            deterministic=True,
         )
         generated = self.vae.decode(stl_latent)
 

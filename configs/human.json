@@ -5,8 +5,10 @@
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
 
-  "input_filter": "warp_line_detector",
+  "input_filter": "none",
   "device": "cpu",
+
+  "latent_size": 128,
 
   "simulation_headless": false,
   "simulation_time_scale": 1.0,
