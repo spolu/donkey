@@ -49,7 +49,6 @@ class Synthetic:
 
         stl_latent = self.stl(
             torch.from_numpy(state.vector()).float().to(self.device),
-            deterministic=True,
         )
         generated = self.vae.decode(stl_latent)
 
