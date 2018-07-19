@@ -113,31 +113,17 @@ class STL(nn.Module):
 
         self.fc1 = nn.Linear(State.size(), 256)
         self.fc2 = nn.Linear(256, 256)
-
-        self.fc_mean = nn.Linear(256, self.latent_size)
-        self.fc_logvar = nn.Linear(256, self.latent_size)
+        self.fc3 = nn.Linear(256, self.latent_size)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
                 m.bias.data.fill_(0)
 
-    def encode(self, state):
+    def forward(self, state):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
+        x = self.fc3(x)
 
-        return self.fc_mean(x), self.fc_logvar(x)
+        return x
 
-    def forward(self, state, deterministic=False):
-        mean, logvar = self.encode(state)
-        latent = self.reparameterize(mean, logvar)
-
-        if deterministic:
-            latent = mean
-
-        return latent, mean, logvar
-
-    def reparameterize(self, mean, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return eps * std + mean
