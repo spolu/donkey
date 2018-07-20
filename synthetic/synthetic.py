@@ -69,7 +69,7 @@ class Synthetic:
             item['simulation_track_angle'],
         ).vector()).float().to(self.device)
 
-        torch.from_numpy(
+        camera = torch.from_numpy(
             cv2.imdecode(
                 np.fromstring(item['camera'], np.uint8),
                 cv2.IMREAD_GRAYSCALE,

@@ -10,8 +10,8 @@
 
   "latent_size": 128,
 
-  "simulation_headless": false,
-  "simulation_time_scale": 1.0,
-  "simulation_step_interval": 0.030,
-  "simulation_capture_frame_rate": 30
+  "unity_headless": false,
+  "unity_time_scale": 1.0,
+  "unity_step_interval": 0.030,
+  "unity_capture_frame_rate": 30
 }

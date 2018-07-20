@@ -126,10 +126,10 @@ def init_server():
     _inited = True
 
 """
-Simulation interface
+Unity interface
 """
 
-class Simulation:
+class Unity:
     def __init__(
             self,
             launch,
@@ -210,7 +210,7 @@ class Simulation:
         self.client['condition'].wait()
 
         self.client['condition'].release()
-        # print("Simulation started: id={} sid={}".format(
+        # print("Unity started: id={} sid={}".format(
         #     self.client['id'], self.client['sid'],
         # ))
 
@@ -232,7 +232,7 @@ class Simulation:
         if self.launch:
             self.process.terminate()
 
-        # print("Simulation stopped: id={} sid={}".format(
+        # print("Unity stopped: id={} sid={}".format(
         #     self.client['id'], self.client['sid'],
         # ))
 
@@ -297,7 +297,7 @@ class Simulation:
 def cleanup():
     for c in _clients:
         if 'process' in c:
-            print("Simulation cleaned up: id={} sid={}".format(
+            print("Unity cleaned up: id={} sid={}".format(
                 c['id'], ['sid'],
             ))
             c['process'].terminate()

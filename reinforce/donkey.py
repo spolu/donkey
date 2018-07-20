@@ -10,7 +10,7 @@ from eventlet.green import threading
 
 from simulation import Command, Observation, Telemetry
 from track import Track
-from unity import Simulation
+from unity import Unity
 from synthetic import Engine
 from capture import Capture
 
@@ -43,10 +43,10 @@ class Donkey:
         self.action_type = config.get('action_type')
         self.speed_limit = config.get('speed_limit')
 
-        self.simulation_headless = config.get('simulation_headless')
-        self.simulation_time_scale = config.get('simulation_time_scale')
-        self.simulation_step_interval = config.get('simulation_step_interval')
-        self.simulation_capture_frame_rate = config.get('simulation_capture_frame_rate')
+        self.unity_headless = config.get('unity_headless')
+        self.unity_time_scale = config.get('unity_time_scale')
+        self.unity_step_interval = config.get('unity_step_interval')
+        self.unity_capture_frame_rate = config.get('unity_capture_frame_rate')
 
         self.worker_index = worker_index
         self.do_capture = save_dir != None and config.get('do_capture')
@@ -71,12 +71,12 @@ class Donkey:
         if self.track_randomized:
             self.track.randomize()
 
-        self.simulation = Simulation(
+        self.simulation = Unity(
             True,
-            self.simulation_headless,
-            self.simulation_time_scale,
-            self.simulation_step_interval,
-            self.simulation_capture_frame_rate,
+            self.unity_headless,
+            self.unity_time_scale,
+            self.unity_step_interval,
+            self.unity_capture_frame_rate,
             None,
         )
 
