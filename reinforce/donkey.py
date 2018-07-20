@@ -36,17 +36,14 @@ DISCRETE_CONTROL_COUNT = 9
 ANGLES_WINDOW = 5
 
 class Donkey:
-    def __init__(self, config, save_dir=None, worker_index=0):
+    def __init__(self, config, load_dir=None, save_dir=None, worker_index=0):
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
         self.reward_type = config.get('reward_type')
         self.action_type = config.get('action_type')
         self.speed_limit = config.get('speed_limit')
 
-        self.unity_headless = config.get('unity_headless')
-        self.unity_time_scale = config.get('unity_time_scale')
-        self.unity_step_interval = config.get('unity_step_interval')
-        self.unity_capture_frame_rate = config.get('unity_capture_frame_rate')
+        self.simulation_type = config.get('simulation_type')
 
         self.worker_index = worker_index
         self.do_capture = save_dir != None and config.get('do_capture')
@@ -71,14 +68,27 @@ class Donkey:
         if self.track_randomized:
             self.track.randomize()
 
-        self.simulation = Unity(
-            True,
-            self.unity_headless,
-            self.unity_time_scale,
-            self.unity_step_interval,
-            self.unity_capture_frame_rate,
-            None,
-        )
+        self.simulation = None
+        if self.simulation_type == 'unity':
+            self.unity_headless = config.get('unity_headless')
+            self.unity_time_scale = config.get('unity_time_scale')
+            self.unity_step_interval = config.get('unity_step_interval')
+            self.unity_capture_frame_rate = config.get('unity_capture_frame_rate')
+
+            self.simulation = Unity(
+                True,
+                self.unity_headless,
+                self.unity_time_scale,
+                self.unity_step_interval,
+                self.unity_capture_frame_rate,
+                None,
+            )
+        if self.simulation_type == 'synthetic':
+            self.simulation = Engine(
+                config,
+                load_dir,
+            )
+        assert self.simulation != None
 
         self.last_reset_time = 0.0
         self.step_count = 0
@@ -419,13 +429,13 @@ _recv_condition = threading.Condition()
 _recv_count = 0
 
 class Worker(threading.Thread):
-    def __init__(self, config, index, save_dir=None):
+    def __init__(self, config, index, load_dir=None, save_dir=None):
         self.condition = threading.Condition()
         self.controls = None
         self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = Donkey(config, save_dir=save_dir, worker_index=index)
+        self.donkey = Donkey(config, load_dir=load_dir, save_dir=save_dir, worker_index=index)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -459,10 +469,10 @@ class Worker(threading.Thread):
             _recv_condition.release()
 
 class Envs:
-    def __init__(self, config, save_dir=None):
+    def __init__(self, config, load_dir=None, save_dir=None):
         self.worker_count = config.get('worker_count')
         self.workers = [
-            Worker(config, i, save_dir) for i in range(self.worker_count)
+            Worker(config, i, load_dir, save_dir) for i in range(self.worker_count)
         ]
         for w in self.workers:
             w.start()

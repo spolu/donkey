@@ -25,7 +25,6 @@ _d = None
 _observations = None
 _reward = None
 _done = None
-_track = None
 _input_filter = None
 _synthetic = None
 
@@ -44,7 +43,7 @@ def transition():
     generated = [[]]
     if _synthetic is not None:
         generated = _synthetic.generate(state)[0][0].tolist()
-        # import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     message =  {
         'done': _done,
@@ -55,9 +54,7 @@ def transition():
             'track_linear_speed': _observations.track_linear_speed,
             'camera': processed.tolist(),
             'generated': generated,
-            'position': _track.invert(
-                _observations.track_coordinates,
-            ).tolist(),
+            'position': _observations.position.tolist(),
         },
     }
 
@@ -132,9 +129,8 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     _input_filter = InputFilter(cfg)
-    _d = Donkey(cfg)
+    _d = Donkey(cfg, load_dir=args.synthetic_load_dir)
     _observations = _d.reset()
-    _track = Track(cfg.get('track_name'))
 
     if args.synthetic_load_dir:
         _synthetic = Synthetic(cfg, None, args.synthetic_load_dir)

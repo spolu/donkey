@@ -1,6 +1,6 @@
 var socket = io.connect("ws://127.0.0.1:9091")
 
-var SCALE = 80
+var SCALE = 40
 var DX = 450;
 var DY = 450;
 var INPUT_WIDTH = 160
