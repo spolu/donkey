@@ -4,9 +4,10 @@ import random
 import numpy as np
 
 from reinforce import Telemetry
+from synthetic import Synthetic, State
 
 class Engine:
-    def __init__(self, config):
+    def __init__(self, config, load_dir):
         self.step_interval = config.get('engine_step_interval')
         self.brake_torque_max = config.get('engine_braque_torque_max')
         self.motor_torque_max = config.get('engine_motor_torque_max')
@@ -27,6 +28,7 @@ class Engine:
         self.heading = None            # theta
         self.front_position = None     # p_f
 
+        self.synthetic = Synthetic(config, save_dir=None, load_dir=load_dir)
 
     def reset(self, track):
         self.track = track
@@ -76,26 +78,18 @@ class Engine:
             self.front_wheel_speed * np.sin(self.heading + self.steering_angle),
         ])
 
-    def telemetry_time(self):
-        return self.time
-
-    def telemetry_position(self):
-        return np.array([
+    def state(self):
+        position = np.array([
             self.front_position[0] - self.vehicule_length * np.cos(self.heading),
             0.0,
             self.front_position[1] - self.vehicule_length * np.sin(self.heading),
         ])
-
-    def telemetry_velocity(self):
-        rear_wheel_speed = self.front_wheel_speed * np.cos(self.steering_angle)
-        return np.array([
+        velocity = np.array([
             rear_wheel_speed * np.cos(self.heading),
             0.0,
             rear_wheel_speed * np.sin(self.heading),
         ])
-
-    def telemetry_angular_velocity(self):
-        return np.array([
+        angular_velocity = np.array([
             0.0,
             (
                 self.front_wheel_speed /
@@ -104,3 +98,31 @@ class Engine:
             ),
             0.0
         ])
+
+        track_coordinates = self.track.coordinates(position)
+        track_angle = self.track.angle(position, velocity, 0)
+
+        return State(
+            track.randomization,
+            position,
+            velocity,
+            angular_velocity,
+            track_coordinates,
+            # TODO(stan): remove math.pi regularization
+            track_angle / math.pi,
+        )
+
+    def telemetry(self):
+        state = self.state()
+
+        camera = self.synthetic.generate(state)
+        rear_wheel_speed = self.front_wheel_speed * np.cos(self.steering_angle)
+
+        return Telemetry(
+            self.time,
+            # TODO(stan): base64 encode of JPG
+            '',
+            state.position,
+            state.velocity,
+            state.angular_velocity,
+        )
