@@ -15,10 +15,7 @@ from eventlet.green import threading
 from utils import Config, str2bool
 from track import Track
 
-import reinforce
-
-from reinforce.input_filter import InputFilter
-
+from reinforce import InputFilter, Donkey
 from synthetic import Synthetic, State
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
@@ -135,7 +132,7 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     _input_filter = InputFilter(cfg)
-    _d = reinforce.Donkey(cfg)
+    _d = Donkey(cfg)
     _observations = _d.reset()
     _track = Track(cfg.get('track_name'))
 

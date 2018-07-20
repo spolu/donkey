@@ -18,8 +18,8 @@ from planner import Planner
 from flask import Flask
 from eventlet.green import threading
 from utils import Config, str2bool
-from simulation import Donkey
-from simulation import Track
+from reinforce import Donkey
+from track import Track
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)

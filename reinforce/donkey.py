@@ -1,4 +1,3 @@
-import simulation
 import base64
 import cv2
 import random
@@ -8,11 +7,13 @@ import os
 import numpy as np
 
 from eventlet.green import threading
+
+from simulation import Command, Observation, Telemetry
 from track import Track
-from simulation import Simulation
+from unity import Simulation
+from synthetic import Engine
 from capture import Capture
 
-from reinforce.types import Command, Observation, Telemetry
 
 MAX_SPEED = 10.0
 STALL_SPEED = 0.1

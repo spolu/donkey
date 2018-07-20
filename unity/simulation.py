@@ -15,7 +15,7 @@ import numpy as np
 from flask import Flask
 from eventlet.green import threading
 
-from reinforce.types import Telemetry
+from simulation import Telemetry
 
 """
 Shared underlying socket.io server

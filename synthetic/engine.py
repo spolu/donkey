@@ -1,9 +1,12 @@
 import math
 import random
+import base64
+import cv2
 
 import numpy as np
+import torch
 
-from reinforce import Telemetry
+from simulation import Telemetry
 from synthetic import Synthetic, State
 
 class Engine:
@@ -79,6 +82,8 @@ class Engine:
         ])
 
     def state(self):
+        rear_wheel_speed = self.front_wheel_speed * np.cos(self.steering_angle)
+
         position = np.array([
             self.front_position[0] - self.vehicule_length * np.cos(self.heading),
             0.0,
@@ -116,12 +121,11 @@ class Engine:
         state = self.state()
 
         camera = self.synthetic.generate(state)
-        rear_wheel_speed = self.front_wheel_speed * np.cos(self.steering_angle)
+        camera_raw = cv2.imencode(".jpg", camera)[1].tostring()
 
         return Telemetry(
             self.time,
-            # TODO(stan): base64 encode of JPG
-            '',
+            base64.b64encode(camera_raw),
             state.position,
             state.velocity,
             state.angular_velocity,

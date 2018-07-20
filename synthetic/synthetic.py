@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from synthetic import Discriminator, State, VAE, STL
 from capture import CaptureSet
 from utils import Meter
-from reinforce import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -19,7 +18,6 @@ class Synthetic:
     def __init__(self, config, save_dir=None, load_dir=None):
         self.config = config
         self.device = torch.device(config.get('device'))
-        self.input_filter = InputFilter(config)
 
         self.vae = VAE(config).to(self.device)
         self.stl = STL(config).to(self.device)
@@ -51,8 +49,15 @@ class Synthetic:
             torch.from_numpy(state.vector()).float().to(self.device),
         )
         generated = self.vae.decode(stl_latent)
+        camera = torch.cat(
+            (
+                torch.zeros(1, 1, 50, generated.size(3)),
+                generated,
+            ),
+            dim=2,
+        ).detach()
 
-        return generated * 255.0
+        return (camera * 255.0).numpy()
 
     def _generator_capture_loader(self, item):
         state = torch.from_numpy(State(
@@ -64,8 +69,11 @@ class Synthetic:
             item['simulation_track_angle'],
         ).vector()).float().to(self.device)
 
-        camera = torch.from_numpy(
-            self.input_filter.apply(item['camera']) / 255.0
+        torch.from_numpy(
+            cv2.imdecode(
+                np.fromstring(item['camera'], np.uint8),
+                cv2.IMREAD_GRAYSCALE,
+            )[50:] / 255.0
         ).float().to(self.device).unsqueeze(0)
 
         return state, camera

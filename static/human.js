@@ -4,7 +4,7 @@ var SCALE = 80
 var DX = 450;
 var DY = 450;
 var INPUT_WIDTH = 160
-var INPUT_HEIGHT = 90
+var INPUT_HEIGHT = 120
 
 var keypressed = {
   w: false,
