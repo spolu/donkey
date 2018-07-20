@@ -36,7 +36,7 @@ DISCRETE_CONTROL_COUNT = 9
 ANGLES_WINDOW = 5
 
 class Donkey:
-    def __init__(self, config, load_dir=None, save_dir=None, worker_index=0):
+    def __init__(self, config, synthetic_load_dir=None, save_dir=None, worker_index=0):
         self.track_name = config.get('track_name')
         self.track_randomized = config.get('track_randomized')
         self.reward_type = config.get('reward_type')
@@ -86,7 +86,7 @@ class Donkey:
         if self.simulation_type == 'synthetic':
             self.simulation = Engine(
                 config,
-                load_dir,
+                synthetic_load_dir,
             )
         assert self.simulation != None
 
@@ -429,13 +429,13 @@ _recv_condition = threading.Condition()
 _recv_count = 0
 
 class Worker(threading.Thread):
-    def __init__(self, config, index, load_dir=None, save_dir=None):
+    def __init__(self, config, index, synthetic_load_dir=None, save_dir=None):
         self.condition = threading.Condition()
         self.controls = None
         self.observation = None
         self.reward = 0.0
         self.done = False
-        self.donkey = Donkey(config, load_dir=load_dir, save_dir=save_dir, worker_index=index)
+        self.donkey = Donkey(config, synthetic_load_dir=synthetic_load_dir, save_dir=save_dir, worker_index=index)
         threading.Thread.__init__(self)
 
     def reset(self):
@@ -469,10 +469,10 @@ class Worker(threading.Thread):
             _recv_condition.release()
 
 class Envs:
-    def __init__(self, config, load_dir=None, save_dir=None):
+    def __init__(self, config, synthetic_load_dir=None, save_dir=None):
         self.worker_count = config.get('worker_count')
         self.workers = [
-            Worker(config, i, load_dir, save_dir) for i in range(self.worker_count)
+            Worker(config, i, synthetic_load_dir, save_dir) for i in range(self.worker_count)
         ]
         for w in self.workers:
             w.start()

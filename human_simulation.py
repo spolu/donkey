@@ -129,7 +129,7 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     _input_filter = InputFilter(cfg)
-    _d = Donkey(cfg, load_dir=args.synthetic_load_dir)
+    _d = Donkey(cfg, synthetic_load_dir=args.synthetic_load_dir)
     _observations = _d.reset()
 
     if args.synthetic_load_dir:
