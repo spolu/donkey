@@ -7,4 +7,8 @@ from reinforce.donkey import CONTINUOUS_CONTROL_SIZE
 from reinforce.donkey import CAMERA_HEIGHT
 from reinforce.donkey import CAMERA_WIDTH
 
+from reinforce.types import Command
+from reinforce.types import Telemetry
+from reinforce.types import Observation
+
 from reinforce.input_filter import InputFilter

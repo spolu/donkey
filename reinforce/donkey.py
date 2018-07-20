@@ -1,6 +1,5 @@
 import simulation
 import base64
-import collections
 import cv2
 import random
 import math
@@ -12,6 +11,8 @@ from eventlet.green import threading
 from track import Track
 from simulation import Simulation
 from capture import Capture
+
+from reinforce.types import Command, Observation, Telemetry
 
 MAX_SPEED = 10.0
 STALL_SPEED = 0.1
@@ -32,20 +33,6 @@ DISCRETE_THROTTLE_SLOW = 0.6
 DISCRETE_CONTROL_COUNT = 9
 
 ANGLES_WINDOW = 5
-
-Observation = collections.namedtuple(
-    'Observation',
-    ('time '
-     'track_coordinates '
-     'track_angles '
-     'track_linear_speed '
-     'position '
-     'velocity '
-     'angular_velocity '
-     'camera '
-     'camera_stack '
-     'camera_raw'),
-)
 
 class Donkey:
     def __init__(self, config, save_dir=None, worker_index=0):
@@ -108,7 +95,7 @@ class Donkey:
         """
         Returns a named tuple with physical measurements as well as camera.
         """
-        camera_raw = base64.b64decode(telemetry['camera'])
+        camera_raw = base64.b64decode(telemetry.camera)
         camera = cv2.imdecode(
             np.fromstring(camera_raw, np.uint8),
             cv2.IMREAD_GRAYSCALE,
@@ -130,21 +117,9 @@ class Donkey:
                 else:
                     self.camera_stack[i] = np.copy(camera)
 
-        position = np.array([
-            telemetry['position']['x'],
-            telemetry['position']['y'],
-            telemetry['position']['z'],
-        ])
-        velocity = np.array([
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-        ])
-        angular_velocity = np.array([
-            telemetry['angular_velocity']['x'],
-            telemetry['angular_velocity']['y'],
-            telemetry['angular_velocity']['z'],
-        ])
+        position = telemetry.position
+        velocity = telemetry.velocity
+        angular_velocity = telemetry.angular_velocity
 
         track_angles = []
         for i in range(ANGLES_WINDOW):
@@ -155,7 +130,7 @@ class Donkey:
         track_linear_speed = self.track.linear_speed(position, velocity) / MAX_SPEED
         self.last_track_linear_speed = track_linear_speed
 
-        time = telemetry['time'] - self.last_reset_time
+        time = telemetry.time - self.last_reset_time
 
         return Observation(
             time,
@@ -171,18 +146,10 @@ class Donkey:
         )
 
     def reward_from_telemetry(self, telemetry):
-        position = np.array([
-            telemetry['position']['x'],
-            telemetry['position']['y'],
-            telemetry['position']['z'],
-        ])
-        velocity = np.array([
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-        ])
+        position = telemetry.position
+        velocity = telemetry.velocity
 
-        time = telemetry['time'] - self.last_reset_time
+        time = telemetry.time - self.last_reset_time
 
         track_coordinates = self.track.coordinates(position)
         track_position = self.track.position(track_coordinates)
@@ -224,18 +191,10 @@ class Donkey:
         return 0.0
 
     def done_from_telemetry(self, telemetry):
-        position = np.array([
-            telemetry['position']['x'],
-            telemetry['position']['y'],
-            telemetry['position']['z'],
-        ])
-        velocity = np.array([
-            telemetry['velocity']['x'],
-            telemetry['velocity']['y'],
-            telemetry['velocity']['z'],
-        ])
+        position = telemetry.position
+        velocity = telemetry.velocity
 
-        time = telemetry['time'] - self.last_reset_time
+        time = telemetry.time - self.last_reset_time
 
         track_coordinates = self.track.coordinates(position)
         track_position = self.track.position(track_coordinates)
@@ -310,7 +269,7 @@ class Donkey:
             else:
                 self.simulation.reset(self.track)
         telemetry = self.simulation.telemetry()
-        self.last_reset_time = telemetry['time']
+        self.last_reset_time = telemetry.time
 
         self.lap_count = 0
         self.last_lap_time = 0.0
@@ -420,7 +379,7 @@ class Donkey:
                 },
             )
 
-        command = simulation.Command(steering, throttle, brake)
+        command = Command(steering, throttle, brake)
 
         self.simulation.step(command)
         telemetry = self.simulation.telemetry()

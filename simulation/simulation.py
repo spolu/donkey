@@ -10,8 +10,12 @@ import subprocess
 import socket
 import atexit
 
+import numpy as np
+
 from flask import Flask
 from eventlet.green import threading
+
+from reinforce.types import Telemetry
 
 """
 Shared underlying socket.io server
@@ -124,13 +128,6 @@ def init_server():
 """
 Simulation interface
 """
-
-Command = collections.namedtuple(
-    'Command',
-    ('steering '
-     'throttle '
-     'brake'),
-)
 
 class Simulation:
     def __init__(
@@ -276,7 +273,26 @@ class Simulation:
         self.client['condition'].acquire()
         telemetry = self.client['telemetry']
         self.client['condition'].release()
-        return telemetry
+
+        return Telemetry(
+            telemetry['time'],
+            telemetry['camera'],
+            np.array([
+                telemetry['position']['x'],
+                telemetry['position']['y'],
+                telemetry['position']['z'],
+            ]),
+            np.array([
+                telemetry['velocity']['x'],
+                telemetry['velocity']['y'],
+                telemetry['velocity']['z'],
+            ]),
+            np.array([
+                telemetry['angular_velocity']['x'],
+                telemetry['angular_velocity']['y'],
+                telemetry['angular_velocity']['z'],
+            ]),
+        )
 
 def cleanup():
     for c in _clients:

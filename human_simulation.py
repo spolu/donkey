@@ -5,7 +5,6 @@ import argparse
 import eventlet
 import eventlet.wsgi
 import os
-import simulation
 
 import numpy as np
 
