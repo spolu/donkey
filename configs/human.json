@@ -25,5 +25,9 @@
   "synthetic_vehicule_mass": 1.5,
   "synthetic_vehicule_length": 0.181,
   "synthetic_wheel_radius": 0.04,
-  "synthetic_wheel_damping_rate": 0.1
+  "synthetic_wheel_damping_rate": 0.1,
+
+  "capture_set_save_dir": null,
+  "synthetic_load_dir": null,
+  "synthetic_save_dir": null
 }

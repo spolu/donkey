@@ -10,7 +10,7 @@ from simulation import Telemetry
 from synthetic import Synthetic, State
 
 class Engine:
-    def __init__(self, config, load_dir):
+    def __init__(self, config):
         self.step_interval = config.get('synthetic_step_interval')
         self.brake_torque_max = config.get('synthetic_braque_torque_max')
         self.motor_torque_max = config.get('synthetic_motor_torque_max')
@@ -31,7 +31,7 @@ class Engine:
         self.heading = None            # theta
         self.front_position = None     # p_f
 
-        self.synthetic = Synthetic(config, save_dir=None, load_dir=load_dir)
+        self.synthetic = Synthetic(config, save_dir=None)
 
     def reset(self, track):
         self.track = track

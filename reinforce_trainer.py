@@ -13,6 +13,8 @@ from reinforce.algorithms import PPOVAE
 def run(args):
     cfg = Config(args.config_path)
 
+    if args.capture_set_save_dir != None:
+        cfg.override('capture_set_save_dir', args.capture_set_save_dir)
     if args.worker_count != None:
         cfg.override('worker_count', args.worker_count)
     if args.device != None:
@@ -60,6 +62,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--save_dir', type=str, help="directory to save policies to")
     parser.add_argument('--load_dir', type=str, help="path to saved policies directory")
+
+    parser.add_argument('--capture_set_save_dir', type=str, help="config override")
 
     parser.add_argument('--device', type=str, help="config override")
     parser.add_argument('--worker_count', type=int, help="config override")

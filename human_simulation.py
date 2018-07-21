@@ -108,8 +108,8 @@ if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
 
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('--synthetic_load_dir', type=str, help="path to saved synthetic decoder models")
-
+    parser.add_argument('--capture_set_save_dir', type=str, help="config override")
+    parser.add_argument('--synthetic_load_dir', type=str, help="config override")
     parser.add_argument('--simulation_headless', type=str2bool, help="config override")
     parser.add_argument('--simulation_time_scale', type=float, help="config override")
     parser.add_argument('--simulation_step_interval', type=float, help="config override")
@@ -119,6 +119,10 @@ if __name__ == "__main__":
 
     cfg = Config('configs/human.json')
 
+    if args.synthetic_load_dir != None:
+        cfg.override('synthetic_load_dir', args.synthetic_load_dir)
+    if args.capture_set_save_dir != None:
+        cfg.override('capture_set_save_dir', args.capture_set_save_dir)
     if args.simulation_headless != None:
         cfg.override('simulation_headless', args.simulation_headless)
     if args.simulation_time_scale != None:
@@ -129,11 +133,11 @@ if __name__ == "__main__":
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
     _input_filter = InputFilter(cfg)
-    _d = Donkey(cfg, synthetic_load_dir=args.synthetic_load_dir)
+    _d = Donkey(cfg)
     _observations = _d.reset()
 
     if args.synthetic_load_dir:
-        _synthetic = Synthetic(cfg, None, args.synthetic_load_dir)
+        _synthetic = Synthetic(cfg)
 
     run_server()
 

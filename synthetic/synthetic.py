@@ -15,7 +15,7 @@ from utils import Meter
 # import pdb; pdb.set_trace()
 
 class Synthetic:
-    def __init__(self, config, save_dir=None, load_dir=None):
+    def __init__(self, config, save_dir=None):
         self.config = config
         self.device = torch.device(config.get('device'))
 
@@ -23,7 +23,7 @@ class Synthetic:
         self.stl = STL(config).to(self.device)
 
         self.save_dir = save_dir
-        self.load_dir = load_dir
+        self.load_dir = config.get('synthetic_load_dir')
 
         if self.load_dir:
             if config.get('device') != 'cpu':
