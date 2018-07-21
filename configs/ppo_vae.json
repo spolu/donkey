@@ -39,8 +39,24 @@
 
   "grad_norm_max": 0.0,
 
+  "simulation_type": "synthetic",
+
   "unity_headless": true,
   "unity_time_scale": 4.0,
   "unity_step_interval": 0.039,
-  "unity_capture_frame_rate": 120
+  "unity_capture_frame_rate": 120,
+
+  "synthetic_step_interval": 0.05,
+  "synthetic_braque_torque_max": 0.03,
+  "synthetic_motor_torque_max": 0.25,
+  "synthetic_speed_max": 2.5,
+  "synthetic_steer_max": 0.191,
+  "synthetic_vehicule_mass": 1.5,
+  "synthetic_vehicule_length": 0.181,
+  "synthetic_wheel_radius": 0.04,
+  "synthetic_wheel_damping_rate": 0.1,
+
+  "capture_set_save_dir": null,
+  "synthetic_load_dir": null,
+  "synthetic_save_dir": null
 }
