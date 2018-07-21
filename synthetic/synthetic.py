@@ -15,14 +15,14 @@ from utils import Meter
 # import pdb; pdb.set_trace()
 
 class Synthetic:
-    def __init__(self, config, save_dir=None):
+    def __init__(self, config):
         self.config = config
         self.device = torch.device(config.get('device'))
 
         self.vae = VAE(config).to(self.device)
         self.stl = STL(config).to(self.device)
 
-        self.save_dir = save_dir
+        self.save_dir = config.get('synthetic_save_dir')
         self.load_dir = config.get('synthetic_load_dir')
 
         if self.load_dir:

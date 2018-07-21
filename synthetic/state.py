@@ -18,7 +18,7 @@ class State:
         self.track_angle = track_angle
 
         self._vector = np.array([
-            track_randomization,
+            # track_randomization,
             track_coordinates[0],
             track_coordinates[1],
             track_coordinates[2],
@@ -30,4 +30,4 @@ class State:
 
     @staticmethod
     def size():
-        return 5
+        return 4
