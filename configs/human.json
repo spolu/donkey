@@ -19,7 +19,7 @@
 
   "synthetic_step_interval": 0.05,
   "synthetic_braque_torque_max": 0.03,
-  "synthetic_motor_torque_max": 0.07,
+  "synthetic_motor_torque_max": 0.25,
   "synthetic_speed_max": 2.5,
   "synthetic_steer_max": 0.191,
   "synthetic_vehicule_mass": 1.5,
