@@ -72,7 +72,7 @@ class Engine:
         )
 
         # Immediate steering.
-        self.steering_angle = steering * self.steer_max
+        self.steering_angle = -steering * self.steer_max
 
         # Integrate heading.
         self.heading += self.step_interval * (
