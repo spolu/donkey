@@ -31,7 +31,7 @@ class Engine:
         self.heading = None            # theta
         self.front_position = None     # p_f
 
-        self.synthetic = Synthetic(config, save_dir=None)
+        self.synthetic = Synthetic(config)
 
     def reset(self, track):
         self.track = track

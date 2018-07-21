@@ -10,7 +10,7 @@
 
   "latent_size": 128,
 
-  "simulation_type": "unity",
+  "simulation_type": "synthetic",
 
   "unity_headless": false,
   "unity_time_scale": 1.0,
