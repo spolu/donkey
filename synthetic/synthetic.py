@@ -272,7 +272,7 @@ class Synthetic:
                 generated, camera.detach(),
             )
 
-            if i % 1000 == 0:
+            if i % 100 == 0:
                 if self.save_dir:
                     cv2.imwrite(
                         os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),

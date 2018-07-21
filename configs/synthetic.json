@@ -10,8 +10,8 @@
   "stl_learning_rate": 0.001,
   "discriminator_learning_rate": 0.0002,
 
-  "vae_l1_loss_coeff": 0.0,
-  "vae_mse_loss_coeff": 1.0,
+  "vae_l1_loss_coeff": 1.0,
+  "vae_mse_loss_coeff": 0.0,
   "vae_bce_loss_coeff": 0.0,
   "vae_kld_loss_coeff": 0.0,
   "vae_gan_loss_coeff": 0.0,
