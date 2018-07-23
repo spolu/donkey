@@ -9,6 +9,7 @@ import signal
 import subprocess
 import socket
 import atexit
+import cv2
 
 import numpy as np
 
@@ -274,9 +275,16 @@ class Unity:
         telemetry = self.client['telemetry']
         self.client['condition'].release()
 
+        camera_raw = base64.b64decode(telemetry['camera'])
+
+        camera = cv2.imdecode(
+            np.fromstring(camera_raw, np.uint8),
+            cv2.IMREAD_GRAYSCALE,
+        ).astype(np.float)
+
         return Telemetry(
             telemetry['time'],
-            telemetry['camera'],
+            camera,
             np.array([
                 telemetry['position']['x'],
                 telemetry['position']['y'],

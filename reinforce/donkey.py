@@ -6,6 +6,8 @@ import os
 
 import numpy as np
 
+import torch
+
 from eventlet.green import threading
 
 from simulation import Command, Observation, Telemetry
@@ -100,33 +102,24 @@ class Donkey:
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
-        self.camera_stack = None
+        # self.camera_stack = None
 
     def observation_from_telemetry(self, telemetry):
         """
         Returns a named tuple with physical measurements as well as camera.
         """
-        camera_raw = base64.b64decode(telemetry.camera)
-        camera = cv2.imdecode(
-            np.fromstring(camera_raw, np.uint8),
-            cv2.IMREAD_GRAYSCALE,
-        ).astype(np.float)
-
-        # Scale, size is 120x160.
-        camera = camera / 127.5 - 1
-
-        if self.camera_stack is None:
-            self.camera_stack = np.zeros(
-                (CAMERA_STACK_SIZE, CAMERA_HEIGHT, CAMERA_WIDTH),
-            )
-            for i in range(CAMERA_STACK_SIZE):
-                self.camera_stack[i] = np.copy(camera)
-        else:
-            for i in reversed(range(CAMERA_STACK_SIZE)):
-                if i > 0:
-                    self.camera_stack[i] = self.camera_stack[i-1]
-                else:
-                    self.camera_stack[i] = np.copy(camera)
+        # if self.camera_stack is None:
+        #     self.camera_stack = torch.zeros(
+        #         CAMERA_STACK_SIZE, CAMERA_HEIGHT, CAMERA_WIDTH,
+        #     )
+        #     for i in range(CAMERA_STACK_SIZE):
+        #         self.camera_stack[i].copy_(camera)
+        # else:
+        #     for i in reversed(range(CAMERA_STACK_SIZE)):
+        #         if i > 0:
+        #             self.camera_stack[i].copy_(self.camera_stack[i-1])
+        #         else:
+        #             self.camera_stack[i].copy_(camera)
 
         position = telemetry.position
         velocity = telemetry.velocity
@@ -152,9 +145,8 @@ class Donkey:
             position,
             velocity,
             angular_velocity,
-            np.copy(camera),
-            np.copy(self.camera_stack),
-            camera_raw,
+            telemetry.camera,
+            # np.copy(self.camera_stack),
         )
 
     def reward_from_telemetry(self, telemetry):
@@ -291,14 +283,15 @@ class Donkey:
         self.last_rewarded_advance = 0.0
         self.last_track_linear_speed = 0.0
 
-        self.camera_stack = None
+        # self.camera_stack = None
 
         observation = self.observation_from_telemetry(telemetry)
         # print("TELEMETRY RESET {}".format(telemetry))
 
         if self.do_capture:
+            camera_raw = cv2.imencode(".jpg", observation.camera)[1].tostring()
             self.capture.add_item(
-                observation.camera_raw,
+                camera_raw,
                 {
                     'time': observation.time,
                     'simulation_track_randomization': self.track.randomization,
@@ -403,8 +396,9 @@ class Donkey:
         self.step_count += 1
 
         if not done and self.do_capture:
+            camera_raw = cv2.imencode(".jpg", observation.camera)[1].tostring()
             self.capture.add_item(
-                observation.camera_raw,
+                camera_raw,
                 {
                     'time': observation.time,
                     'simulation_track_randomization': self.track.randomization,

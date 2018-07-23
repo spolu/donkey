@@ -20,11 +20,8 @@ class InputFilter():
             int(reinforce.CAMERA_WIDTH),
         )
 
-    def apply(self, camera_raw):
-        img = cv2.imdecode(
-            np.fromstring(camera_raw, np.uint8),
-            cv2.IMREAD_GRAYSCALE,
-        )[50:]
+    def apply(self, camera):
+        img = camera[50:]
 
         if self.input_filter == 'warp_line_detector':
             pts1 = np.float32([[13,33],[54,8],[147,33],[107,8]])

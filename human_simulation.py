@@ -29,7 +29,7 @@ _input_filter = None
 _synthetic = None
 
 def transition():
-    processed = _input_filter.apply(_observations.camera_raw)
+    processed = _input_filter.apply(_observations.camera)
 
     state = State(
         _d.track.randomization,

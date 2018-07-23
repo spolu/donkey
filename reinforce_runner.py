@@ -29,10 +29,7 @@ _done = None
 _track = None
 
 def transition():
-    camera = cv2.imdecode(
-        np.fromstring(_observations.camera_raw, np.uint8),
-        cv2.IMREAD_GRAYSCALE,
-    ).astype(np.float)
+    camera = observations.camera
     edges = cv2.Canny(
         camera.astype(np.uint8), 50, 150, apertureSize = 3,
     )

@@ -120,7 +120,7 @@ class VAE(nn.Module):
 
     def input(self, observation):
         cameras = [
-            self.input_filter.apply(o.camera_raw) / 255.0
+            self.input_filter.apply(o.camera) / 255.0
             for o in observation
         ]
 

@@ -122,7 +122,7 @@ class PPOPixelsCNN(nn.Module):
     def input(self, observation):
 
         cameras = [
-            self.input_filter.apply(o.camera_raw) / 127.5 - 1
+            self.input_filter.apply(o.camera) / 127.5 - 1
             for o in observation
         ]
 

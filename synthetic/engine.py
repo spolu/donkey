@@ -126,12 +126,11 @@ class Engine:
     def telemetry(self):
         state = self.state()
 
-        camera = self.synthetic.generate(state)
-        camera_raw = cv2.imencode(".jpg", camera[0][0])[1].tostring()
+        camera = self.synthetic.generate(state)[0][0]
 
         return Telemetry(
             self.time,
-            base64.b64encode(camera_raw),
+            camera,
             state.position,
             state.velocity,
             state.angular_velocity,
