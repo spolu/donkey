@@ -207,15 +207,11 @@ class Synthetic:
 
     def batch_train(self):
         self.vae.train()
-        self.stl.train()
         self.discriminator.train()
 
         for i, (state, camera) in enumerate(self.train_loader):
             vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                 camera.detach(), deterministic=False,
-            )
-            stl_latent = self.stl(
-                state.detach()
             )
 
             # Discriminator pass.
@@ -252,6 +248,38 @@ class Synthetic:
 
             self.vae_optimizer.step()
 
+            print(
+                ("TRAIN_VAE {} batch {} " + \
+                 "fake_loss {:.5f} " + \
+                 "real_loss {:.5f} " + \
+                 "vae_l1_loss {:.5f} " + \
+                 "vae_mse_loss {:.5f} " + \
+                 "vae_bce_loss {:.5f} " + \
+                 "vae_kld_loss {:.5f} " + \
+                 "vae_gan_loss {:.5f}").
+                format(
+                    self.batch_count,
+                    i,
+                    fake_loss.item(),
+                    real_loss.item(),
+                    vae_l1_loss.item(),
+                    vae_mse_loss.item(),
+                    vae_bce_loss.item(),
+                    vae_kld_loss.item(),
+                    vae_gan_loss.item(),
+                ))
+            sys.stdout.flush()
+
+        self.stl.train()
+
+        for i, (state, camera) in enumerate(self.train_loader):
+            vae_latent, encoded, vae_mean, vae_logvar = self.vae(
+                camera.detach(), deterministic=False,
+            )
+            stl_latent = self.stl(
+                state.detach()
+            )
+
             # STL pass.
             self.stl_optimizer.zero_grad()
 
@@ -268,10 +296,6 @@ class Synthetic:
 
             generated = self.vae.decode(stl_latent.detach())
 
-            e2e_mse_loss = F.mse_loss(
-                generated, camera.detach(),
-            )
-
             if i % 100 == 0:
                 if self.save_dir:
                     cv2.imwrite(
@@ -287,31 +311,22 @@ class Synthetic:
                         (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
                     )
 
+            e2e_mse_loss = F.mse_loss(
+                generated, camera.detach(),
+            )
+
             print(
-                ("TRAIN {} batch {} " + \
-                 "fake_loss {:.5f} " + \
-                 "real_loss {:.5f} " + \
-                 "vae_l1_loss {:.5f} " + \
-                 "vae_mse_loss {:.5f} " + \
-                 "vae_bce_loss {:.5f} " + \
-                 "vae_kld_loss {:.5f} " + \
-                 "vae_gan_loss {:.5f} " + \
+                ("TRAIN_STL {} batch {} " + \
                  "stl_mse_loss {:.5f} " + \
                  "e2e_mse_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
-                    fake_loss.item(),
-                    real_loss.item(),
-                    vae_l1_loss.item(),
-                    vae_mse_loss.item(),
-                    vae_bce_loss.item(),
-                    vae_kld_loss.item(),
-                    vae_gan_loss.item(),
                     stl_mse_loss.item(),
                     e2e_mse_loss.item(),
                 ))
             sys.stdout.flush()
+
 
         self.batch_count += 1
 
