@@ -35,9 +35,9 @@ def run(args):
         torch.cuda.manual_seed(cfg.get('seed'))
 
     if cfg.get('algorithm') == 'ppo':
-        algorithm = PPO(cfg, args.save_dir, args.load_dir)
+        algorithm = PPO(cfg)
     if cfg.get('algorithm') == 'ppo_vae':
-        algorithm = PPOVAE(cfg, args.save_dir, args.load_dir)
+        algorithm = PPOVAE(cfg)
     assert algorithm is not None
 
     episode = 0
@@ -60,10 +60,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('config_path', type=str, help="path to the config file")
 
-    parser.add_argument('--save_dir', type=str, help="directory to save policies to")
-    parser.add_argument('--load_dir', type=str, help="path to saved policies directory")
+    parser.add_argument('--reinforce_save_dir', type=str, help="config override")
+    parser.add_argument('--reinforce_load_dir', type=str, help="config override")
 
     parser.add_argument('--capture_set_save_dir', type=str, help="config override")
+    parser.add_argument('--synthetic_load_dir', type=str, help="config override")
 
     parser.add_argument('--device', type=str, help="config override")
     parser.add_argument('--worker_count', type=int, help="config override")

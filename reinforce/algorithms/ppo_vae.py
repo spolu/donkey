@@ -163,7 +163,7 @@ class Storage:
                 advantage_targets
 
 class PPOVAE:
-    def __init__(self, config, save_dir=None, load_dir=None):
+    def __init__(self, config):
         self.ppo_learning_rate = config.get('ppo_learning_rate')
         self.vae_learning_rate = config.get('vae_learning_rate')
         self.worker_count = config.get('worker_count')
@@ -179,7 +179,9 @@ class PPOVAE:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
-        self.config = config
+
+        self.save_dir = config.get('synthetic_save_dir')
+        self.load_dir = config.get('synthetic_load_dir')
 
         self.device = torch.device(config.get('device'))
 
@@ -190,8 +192,7 @@ class PPOVAE:
             self.vae_policy = VAE(config).to(self.device)
         assert self.vae_policy is not None
 
-        self.save_dir = save_dir
-        self.load_dir = load_dir
+        self.config = config
 
         self.ppo_optimizer = optim.Adam(
             self.ppo_policy.parameters(),

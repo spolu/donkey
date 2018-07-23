@@ -147,7 +147,7 @@ class PPOStorage:
                 advantage_targets
 
 class PPO:
-    def __init__(self, config, save_dir=None, load_dir=None):
+    def __init__(self, config):
         self.learning_rate = config.get('learning_rate')
         self.worker_count = config.get('worker_count')
         self.rollout_size = config.get('rollout_size')
@@ -159,7 +159,9 @@ class PPO:
         self.entropy_loss_coeff = config.get('entropy_loss_coeff')
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
-        self.config = config
+
+        self.save_dir = config.get('synthetic_save_dir')
+        self.load_dir = config.get('synthetic_load_dir')
 
         self.device = torch.device(config.get('device'))
 
@@ -167,8 +169,7 @@ class PPO:
             self.policy = PPOPixelsCNN(config).to(self.device)
         assert self.policy is not None
 
-        self.save_dir = save_dir
-        self.load_dir = load_dir
+        self.config = config
 
         self.optimizer = optim.Adam(
             self.policy.parameters(),
@@ -202,7 +203,7 @@ class PPO:
         self.test_env = None
 
     def initialize(self):
-        self.envs = reinforce.Envs(self.config, save_dir=self.save_dir)
+        self.envs = reinforce.Envs(self.config)
         observation = self.envs.reset()
         observation = self.policy.input(observation)
 
