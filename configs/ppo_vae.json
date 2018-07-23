@@ -39,7 +39,7 @@
 
   "grad_norm_max": 0.0,
 
-  "simulation_type": "synthetic",
+  "simulation_type": "unity",
 
   "unity_headless": true,
   "unity_time_scale": 4.0,
