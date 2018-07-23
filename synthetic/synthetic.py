@@ -51,13 +51,13 @@ class Synthetic:
         generated = self.vae.decode(stl_latent)
         camera = torch.cat(
             (
-                torch.zeros(1, 1, 50, generated.size(3)),
+                torch.zeros(1, 1, 50, generated.size(3)).to(self.device),
                 generated,
             ),
             dim=2,
         ).detach()
 
-        return (camera * 255.0).numpy()
+        return (camera * 255.0).cpu().numpy()
 
     def _generator_capture_loader(self, item):
         state = torch.from_numpy(State(
