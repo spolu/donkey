@@ -15,7 +15,7 @@ from eventlet.green import threading
 from utils import Config, str2bool
 from track import Track
 
-from reinforce import InputFilter, Donkey
+from reinforce import Donkey
 from synthetic import Synthetic, State
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
@@ -25,12 +25,9 @@ _d = None
 _observations = None
 _reward = None
 _done = None
-_input_filter = None
 _synthetic = None
 
 def transition():
-    processed = _input_filter.apply(_observations.camera)
-
     state = State(
         _d.track.randomization,
         _observations.position,
@@ -52,7 +49,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': processed.tolist(),
+            'camera': _observations.camera.tolist(),
             'generated': generated,
             'position': _observations.position.tolist(),
         },
@@ -132,7 +129,6 @@ if __name__ == "__main__":
     if args.simulation_capture_frame_rate != None:
         cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
 
-    _input_filter = InputFilter(cfg)
     _d = Donkey(cfg)
     _observations = _d.reset()
 

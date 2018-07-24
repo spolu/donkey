@@ -15,6 +15,7 @@ from track import Track
 from unity import Unity
 from synthetic import Engine
 from capture import Capture
+from reinforce.input_filter import InputFilter
 
 
 MAX_SPEED = 10.0
@@ -50,6 +51,8 @@ class Donkey:
         self.worker_index = worker_index
         self.capture_set_save_dir = config.get('capture_set_save_dir')
         self.do_capture = self.capture_set_save_dir != None
+
+        self.input_filter = InputFilter(config)
 
         if self.do_capture:
             if not os.path.isdir(self.capture_set_save_dir):
@@ -137,6 +140,8 @@ class Donkey:
 
         time = telemetry.time - self.last_reset_time
 
+        processed = self.input_filter.apply(telemetry.camera)
+
         return Observation(
             time,
             track_coordinates,
@@ -145,7 +150,7 @@ class Donkey:
             position,
             velocity,
             angular_velocity,
-            telemetry.camera,
+            processed,
             # np.copy(self.camera_stack),
         )
 

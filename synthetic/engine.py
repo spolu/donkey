@@ -9,6 +9,8 @@ import torch
 from simulation import Telemetry
 from synthetic import Synthetic, State
 
+EPS = 10e-9
+
 class Engine:
     def __init__(self, config):
         self.step_interval = config.get('synthetic_step_interval')
@@ -37,8 +39,8 @@ class Engine:
         self.track = track
         self.time = 0.0
 
-        self.front_wheel_speed = 0.0
-        self.steering_angle = 0.0
+        self.front_wheel_speed = EPS
+        self.steering_angle = EPS
         self.heading = math.pi / 2
         self.front_position = np.array([0.0, 0.0]) + np.array([
             self.vehicule_length * np.cos(self.heading),

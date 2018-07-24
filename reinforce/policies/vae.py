@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
 
 import reinforce
-from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -24,7 +23,7 @@ class VAE(nn.Module):
         self.latent_size = config.get('latent_size')
         self.device = torch.device(config.get('device'))
 
-        self.input_filter = InputFilter(config)
+        self.input_filter = reinforce.InputFilter(config)
 
         ## Encoder
         self.cv1 = nn.Conv2d(1, 32, 4, stride=2)
@@ -119,10 +118,7 @@ class VAE(nn.Module):
         )
 
     def input(self, observation):
-        cameras = [
-            self.input_filter.apply(o.camera) / 255.0
-            for o in observation
-        ]
+        cameras = [o.camera / 255.0 for o in observation]
 
         observation = np.concatenate(
             (

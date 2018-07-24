@@ -11,7 +11,6 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Categorical
 
 import reinforce
-from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -23,7 +22,9 @@ class PPOPixelsCNN(nn.Module):
         self.action_type = config.get('action_type')
         self.fixed_action_std = config.get('fixed_action_std')
         self.device = torch.device(config.get('device'))
-        self.input_filter = InputFilter(config)
+
+        self.input_filter = reinforce.InputFilter(config)
+
         self.cv1 = nn.Conv2d(1, 12, 5, stride=2)
         self.cv2 = nn.Conv2d(12, 16, 5, stride=3)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
@@ -122,8 +123,7 @@ class PPOPixelsCNN(nn.Module):
     def input(self, observation):
 
         cameras = [
-            self.input_filter.apply(o.camera) / 127.5 - 1
-            for o in observation
+            o.camera / 127.5 - 1 for o in observation
         ]
 
         observation = np.concatenate(
