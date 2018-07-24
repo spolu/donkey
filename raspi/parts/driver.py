@@ -48,7 +48,7 @@ class Driver:
             cv2.IMREAD_GRAYSCALE,
         )
 
-        camera = self.input_filter.apply(img) / 127.5 - 1
+        camera = self.input_filter.apply(camera) / 127.5 - 1
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
 
         _, action, hiddens, _, _ = self.policy.action(
