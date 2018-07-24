@@ -27,11 +27,11 @@ class Driver:
         assert self.policy is not None
         self.track = Track(self.track_name)
 
-        if not load_dir:
-            raise Exception("Required argument: --load_dir")
+        self.load_dir = cfg.get('reinforce_load_dir')
+        assert self.load_dir is not None
 
         self.policy.load_state_dict(
-            torch.load(load_dir + "/policy.pt", map_location='cpu'),
+            torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
         )
         self.policy.eval()
 

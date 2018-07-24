@@ -180,8 +180,8 @@ class PPOVAE:
         self.grad_norm_max = config.get('grad_norm_max')
         self.action_type = config.get('action_type')
 
-        self.save_dir = config.get('synthetic_save_dir')
-        self.load_dir = config.get('synthetic_load_dir')
+        self.save_dir = config.get('reinforce_save_dir')
+        self.load_dir = config.get('reinforce_load_dir')
 
         self.device = torch.device(config.get('device'))
 

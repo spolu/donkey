@@ -48,6 +48,8 @@ def drive(args):
     cfg = Config(args.config_path)
 
     cfg.override('cuda', False)
+    if args.reinforce_load_dir != None:
+        cfg.override('reinforce_load_dir', args.reinforce_load_dir)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
@@ -69,8 +71,8 @@ def drive(args):
     #         outputs=['angle', 'throttle'],
     #         threaded=False)
 
-    if args.load_dir is not None and cfg is not None:
-        driver = Driver(cfg, args.load_dir)
+    if args.reinforce_load_dir is not None and cfg is not None:
+        driver = Driver(cfg)
         V.add(driver,
           inputs=['cam/image_array'],
           outputs=['angle', 'throttle'],
@@ -111,7 +113,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument('--config_path', type=str, help="path to the config file")
-    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
+    parser.add_argument('--reinforce_load_dir', type=str, help="config override")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()

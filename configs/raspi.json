@@ -9,5 +9,7 @@
   "hidden_size": 128,
   "recurring_cell": "gru",
 
-  "device": "cpu"
+  "device": "cpu",
+
+  "reinforce_load_dir": null
 }

@@ -15,6 +15,10 @@ def run(args):
 
     if args.capture_set_save_dir != None:
         cfg.override('capture_set_save_dir', args.capture_set_save_dir)
+    if args.reinforce_load_dir != None:
+        cfg.override('reinforce_load_dir', args.reinforce_load_dir)
+    if args.reinforce_save_dir != None:
+        cfg.override('reinforce_save_dir', args.reinforce_save_dir)
     if args.worker_count != None:
         cfg.override('worker_count', args.worker_count)
     if args.device != None:
