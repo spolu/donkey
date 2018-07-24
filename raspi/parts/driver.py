@@ -9,9 +9,8 @@ import torch.nn as nn
 import torch.optim as optim
 
 from track import Track
-from capture.models import ConvNet
-
 from reinforce.policies import PPOPixelsCNN
+from reinforce.input_filter import InputFilter
 
 # import pdb; pdb.set_trace()
 
@@ -20,6 +19,8 @@ class Driver:
         self.track_name = cfg.get('track_name')
         self.hidden_size = cfg.get('hidden_size')
         self.device = torch.device('cpu')
+
+        self.input_filter = InputFilter(cfg)
 
         if cfg.get('policy') == 'ppo_pixels_cnn':
             self.policy = PPOPixelsCNN(cfg).to(self.device)
@@ -40,15 +41,14 @@ class Driver:
     def run(self, img_array = None):
         b,g,r = cv2.split(img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
         rgb_img = cv2.merge([r,g,b])
+
         camera_raw = cv2.imencode(".jpg", rgb_img)[1].tostring()
+        camera = cv2.imdecode(
+            np.fromstring(camera_raw, np.uint8),
+            cv2.IMREAD_GRAYSCALE,
+        )
 
-        camera = cv2.Canny(
-            cv2.imdecode(
-                np.fromstring(camera_raw, np.uint8),
-                cv2.IMREAD_GRAYSCALE,
-            ), 50, 150, apertureSize = 3,
-        )[50:] / 127.5 - 1
-
+        camera = self.input_filter.apply(img) / 127.5 - 1
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
 
         _, action, hiddens, _, _ = self.policy.action(
@@ -57,6 +57,7 @@ class Driver:
             self.masks.detach(),
             deterministic=True,
         )
+
         steering = action[0][0].item()
         throttle = 0.62
 
