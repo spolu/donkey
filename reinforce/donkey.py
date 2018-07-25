@@ -130,8 +130,7 @@ class Donkey:
 
         track_angles = []
         for i in range(ANGLES_WINDOW):
-            # TODO(stan): remove math.pi regularization
-            track_angles.append(self.track.angle(position, velocity, i) / math.pi)
+            track_angles.append(self.track.angle(position, velocity, i))
 
         track_coordinates = self.track.coordinates(position)
 

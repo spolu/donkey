@@ -121,8 +121,7 @@ class Engine:
             velocity,
             angular_velocity,
             track_coordinates,
-            # TODO(stan): remove math.pi regularization
-            track_angle / math.pi,
+            track_angle,
         )
 
     def telemetry(self):
