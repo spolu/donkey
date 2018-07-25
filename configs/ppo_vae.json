@@ -46,7 +46,7 @@
   "unity_step_interval": 0.039,
   "unity_capture_frame_rate": 120,
 
-  "synthetic_step_interval": 0.05,
+  "synthetic_step_interval": 0.04,
   "synthetic_braque_torque_max": 0.03,
   "synthetic_motor_torque_max": 0.25,
   "synthetic_speed_max": 2.5,
