@@ -238,7 +238,6 @@ class PPOVAE:
         self.final_rewards = torch.zeros([self.worker_count, 1])
         self.episode_rewards = torch.zeros([self.worker_count, 1])
         self.batch_count = 0
-        self.start = time.time()
         self.running_reward = None
         self.best_test_reward = 0.0
         self.test_env = None
@@ -301,7 +300,6 @@ class PPOVAE:
             self.final_rewards *= mask
             self.final_rewards += (1 - mask) * self.episode_rewards
             self.episode_rewards *= mask
-
 
             observation = observation.to(self.device)
             latent = self.vae_policy(
@@ -567,7 +565,6 @@ class PPOVAE:
 
                 episode_size += 1
 
-
         test_end = time.time()
 
         print("TEST FPS {} step_count {} final_reward {:.1f}".format(
@@ -575,5 +572,6 @@ class PPOVAE:
             episode_size,
             final_reward
         ))
+        sys.stdout.flush()
 
         return final_reward

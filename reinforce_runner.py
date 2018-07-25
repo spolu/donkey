@@ -19,6 +19,7 @@ from reinforce import Donkey
 
 from reinforce.algorithms import PPO
 from reinforce.algorithms import PPOVAE
+from reinforce.algorithms import Random
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -76,13 +77,13 @@ def run(args):
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
 
-    if not args.reinforce_load_dir:
-        raise Exception("Required argument: --reinforce_load_dir")
-
+    algorithm = None
     if cfg.get('algorithm') == 'ppo':
         algorithm = PPO(cfg)
     if cfg.get('algorithm') == 'ppo_vae':
         algorithm = PPOVAE(cfg)
+    if cfg.get('algorithm') == 'random':
+        algorithm = Random(cfg)
     assert algorithm is not None
 
     episode = 0

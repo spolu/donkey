@@ -9,6 +9,7 @@ from utils import Config, str2bool
 
 from reinforce.algorithms import PPO
 from reinforce.algorithms import PPOVAE
+from reinforce.algorithms import Random
 
 def run(args):
     cfg = Config(args.config_path)
@@ -40,10 +41,13 @@ def run(args):
     if cfg.get('device') != 'cpu':
         torch.cuda.manual_seed(cfg.get('seed'))
 
+    algorithm = None
     if cfg.get('algorithm') == 'ppo':
         algorithm = PPO(cfg)
     if cfg.get('algorithm') == 'ppo_vae':
         algorithm = PPOVAE(cfg)
+    if cfg.get('algorithm') == 'random':
+        algorithm = Random(cfg)
     assert algorithm is not None
 
     episode = 0
