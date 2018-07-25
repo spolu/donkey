@@ -29,11 +29,6 @@ _done = None
 _track = None
 
 def transition():
-    camera = observations.camera
-    edges = cv2.Canny(
-        camera.astype(np.uint8), 50, 150, apertureSize = 3,
-    )
-
     return {
         'done': _done,
         'reward': _reward,
@@ -41,7 +36,8 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': edges.tolist(),
+            'camera': _observations.camera.tolist(),
+            'position': _observations.position.tolist(),
         },
     }
 
@@ -62,25 +58,31 @@ def run(args):
     cfg.override('worker_count', 1)
     cfg.override('device', 'cpu')
 
-    if args.simulation_headless != None:
-        cfg.override('simulation_headless', args.simulation_headless)
-    if args.simulation_time_scale != None:
-        cfg.override('simulation_time_scale', args.simulation_time_scale)
-    if args.simulation_step_interval != None:
-        cfg.override('simulation_step_interval', args.simulation_step_interval)
-    if args.simulation_capture_frame_rate != None:
-        cfg.override('simulation_capture_frame_rate', args.simulation_capture_frame_rate)
+    if args.capture_set_save_dir != None:
+        cfg.override('capture_set_save_dir', args.capture_set_save_dir)
+    if args.reinforce_load_dir != None:
+        cfg.override('reinforce_load_dir', args.reinforce_load_dir)
+    if args.synthetic_load_dir != None:
+        cfg.override('synthetic_load_dir', args.synthetic_load_dir)
+    if args.unity_headless != None:
+        cfg.override('unity_headless', args.unity_headless)
+    if args.unity_time_scale != None:
+        cfg.override('unity_time_scale', args.unity_time_scale)
+    if args.unity_step_interval != None:
+        cfg.override('unity_step_interval', args.unity_step_interval)
+    if args.unity_capture_frame_rate != None:
+        cfg.override('unity_capture_frame_rate', args.unity_capture_frame_rate)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
 
-    if not args.load_dir:
-        raise Exception("Required argument: --load_dir")
+    if not args.reinforce_load_dir:
+        raise Exception("Required argument: --reinforce_load_dir")
 
     if cfg.get('algorithm') == 'ppo':
-        algorithm = PPO(cfg, None, args.load_dir)
+        algorithm = PPO(cfg)
     if cfg.get('algorithm') == 'ppo_vae':
-        algorithm = PPOVAE(cfg, None, args.load_dir)
+        algorithm = PPOVAE(cfg)
     assert algorithm is not None
 
     episode = 0
@@ -108,12 +110,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('config_path', type=str, help="path to the config file")
 
-    parser.add_argument('--load_dir', type=str, help="path to saved models directory")
+    parser.add_argument('--reinforce_load_dir', type=str, help="config override")
+    parser.add_argument('--synthetic_load_dir', type=str, help="config override")
+    parser.add_argument('--capture_set_save_dir', type=str, help="config override")
 
-    parser.add_argument('--simulation_headless', type=str2bool, help="config override")
-    parser.add_argument('--simulation_time_scale', type=float, help="config override")
-    parser.add_argument('--simulation_step_interval', type=float, help="config override")
-    parser.add_argument('--simulation_capture_frame_rate', type=int, help="config override")
+    parser.add_argument('--unity_headless', type=str2bool, help="config override")
+    parser.add_argument('--unity_time_scale', type=float, help="config override")
+    parser.add_argument('--unity_step_interval', type=float, help="config override")
+    parser.add_argument('--unity_capture_frame_rate', type=int, help="config override")
 
     args = parser.parse_args()
 
