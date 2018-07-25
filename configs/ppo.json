@@ -1,6 +1,6 @@
 {
   "track_name": "stationfxl",
-  "track_randomized": true,
+  "track_randomized": false,
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
