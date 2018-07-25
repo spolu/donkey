@@ -89,7 +89,7 @@ class Donkey:
                 None,
             )
         if self.simulation_type == 'synthetic':
-            self.synthetic_load_dir = config.get('synthetic_load_dir')
+            assert config.get('synthetic_load_dir') != None
             self.simulation = Engine(
                 config,
             )

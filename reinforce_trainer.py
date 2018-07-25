@@ -19,6 +19,8 @@ def run(args):
         cfg.override('reinforce_load_dir', args.reinforce_load_dir)
     if args.reinforce_save_dir != None:
         cfg.override('reinforce_save_dir', args.reinforce_save_dir)
+    if args.synthetic_load_dir != None:
+        cfg.override('synthetic_load_dir', args.synthetic_load_dir)
     if args.worker_count != None:
         cfg.override('worker_count', args.worker_count)
     if args.device != None:
