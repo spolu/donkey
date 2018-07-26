@@ -81,7 +81,7 @@ class Synthetic:
             ).float().to(self.device).unsqueeze(0)
             for item in items
         ]
-        camera = torch.stack(cameras, 1)
+        camera = torch.cat(cameras)
 
         return state, camera
 
