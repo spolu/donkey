@@ -62,8 +62,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--synthetic_save_dir', type=str, help="config override")
     parser.add_argument('--synthetic_load_dir', type=str, help="config override")
-    parser.add_argument('--stl_epoch_count', type=str, help="config override")
-    parser.add_argument('--vae_epoch_count', type=str, help="config override")
+    parser.add_argument('--stl_epoch_count', type=int, help="config override")
+    parser.add_argument('--vae_epoch_count', type=int, help="config override")
 
     parser.add_argument('--device', type=str, help="config override")
 

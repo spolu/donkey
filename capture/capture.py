@@ -157,10 +157,11 @@ class Capture(data.Dataset):
 CaptureSet is a set of captures.
 """
 class CaptureSet(data.Dataset):
-    def __init__(self, data_dir, loader=lambda item: item):
+    def __init__(self, data_dir, loader=lambda item: item, frame_size=1):
         self.captures = []
         self.data_dir = data_dir
         self.loader = loader
+        self.frame_size = frame_size
 
         for d in [os.path.join(self.data_dir, s) for s in next(os.walk(self.data_dir))[1]]:
             c = Capture(d, load=True)
@@ -177,17 +178,23 @@ class CaptureSet(data.Dataset):
 
     def __getitem__(self, index):
         for i in range(len(self.captures)):
-            if index >= len(self.captures[i].ready):
-                index -= len(self.captures[i].ready)
+            if index >= (len(self.captures[i].ready) - (self.frame_size-1)):
+                index -= (len(self.captures[i].ready) - (self.frame_size-1))
                 continue
             else:
-                assert index < len(self.captures[i].ready)
-                item = self.captures[i].get_item(self.captures[i].ready[index])
-                return self.loader(item)
+                assert index < len(self.captures[i].ready) - (self.frame_size-1)
+                items = []
+                for j in reversed(range(self.frame_size)):
+                    items.append(
+                        self.captures[i].get_item(
+                            self.captures[i].ready[index + self.frame_size - 1 - j],
+                        ),
+                    )
+                return self.loader(items)
 
     def __len__(self):
         length = 0
         for i in range(len(self.captures)):
-            length += len(self.captures[i].ready)
+            length += len(self.captures[i].ready) - (self.frame_size-1)
         return length
 

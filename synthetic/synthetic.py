@@ -59,19 +59,19 @@ class Synthetic:
 
         return (camera * 255.0).cpu().numpy()
 
-    def _generator_capture_loader(self, item):
+    def _generator_capture_loader(self, items):
         state = torch.from_numpy(State(
-            item['simulation_track_randomization'],
-            item['simulation_position'],
-            item['simulation_velocity'],
-            item['simulation_angular_velocity'],
-            item['simulation_track_coordinates'],
-            item['simulation_track_angle'],
+            items[0]['simulation_track_randomization'],
+            items[0]['simulation_position'],
+            items[0]['simulation_velocity'],
+            items[0]['simulation_angular_velocity'],
+            items[0]['simulation_track_coordinates'],
+            items[0]['simulation_track_angle'],
         ).vector()).float().to(self.device)
 
         camera = torch.from_numpy(
             cv2.imdecode(
-                np.fromstring(item['camera'], np.uint8),
+                np.fromstring(items[0]['camera'], np.uint8),
                 cv2.IMREAD_GRAYSCALE,
             ) / 255.0
         ).float().to(self.device).unsqueeze(0)
