@@ -21,9 +21,9 @@
   "vae_gan_loss_coeff": 0.0,
 
   "stl_mse_loss_coeff": 1.0,
-  "stl_e2e_l1_loss_coeff": 0.5,
+  "stl_e2e_l1_loss_coeff": 0.0,
   "stl_e2e_mse_loss_coeff": 0.0,
-  "stl_e2e_bce_loss_coeff": 0.5,
+  "stl_e2e_bce_loss_coeff": 0.0,
 
   "synthetic_load_dir": null,
   "synthetic_save_dir": null
