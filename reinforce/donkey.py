@@ -302,7 +302,9 @@ class Donkey:
                     'simulation_position': observation.position.tolist(),
                     'simulation_velocity': observation.velocity.tolist(),
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
-                    'simulation_track_coordinates': observation.track_coordinates.tolist(),
+                    'simulation_track_coordinates': self.track.coordinates(
+                        observation.position, derandomized=True,
+                    ),
                     'simulation_track_angle': observation.track_angles[0],
                 },
             )
@@ -399,6 +401,11 @@ class Donkey:
 
         self.step_count += 1
 
+        # print("PROGRESS/POSITION: {} {}".format(
+        #     self.track.progress(self.track.coordinates(observation.position, derandomized=True)),
+        #     self.track.position(self.track.coordinates(observation.position, derandomized=True)),
+        # ))
+
         if not done and self.do_capture:
             camera_raw = cv2.imencode(".jpg", observation.camera)[1].tostring()
             self.capture.add_item(
@@ -409,7 +416,9 @@ class Donkey:
                     'simulation_position': observation.position.tolist(),
                     'simulation_velocity': observation.velocity.tolist(),
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
-                    'simulation_track_coordinates': observation.track_coordinates.tolist(),
+                    'simulation_track_coordinates': self.track.coordinates(
+                        observation.position, derandomized=True,
+                    ),
                     'simulation_track_angle': observation.track_angles[0],
                 },
             )

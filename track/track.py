@@ -71,10 +71,9 @@ class Track:
                 for i in range(len(self.points)):
                     self.points[i][2] = -self.points[i][2]
 
-        position = random.randint(0, len(self.points)-1)
-        self.randomization = float(position) / len(self.points)
+        self.randomization = random.randint(0, len(self.points)-1)
 
-        for i in range(position):
+        for i in range(self.randomization):
             v = self.points[1] - self.points[0]
             for j in range(len(self.points)):
                 u = [0, 0, 1]
@@ -187,10 +186,16 @@ class Track:
         t = self.unity(position, offset)
         return np.cross(t, velocity)[1]
 
-    def coordinates(self, position):
+    def coordinates(self, position, derandomized=False):
         closests = self.closests(position, 0)
 
         p = 0.0
+        if derandomized:
+            for i in range(len(self.points)-self.randomization, len(self.points)):
+                p += np.linalg.norm(
+                    self.points[self.next(i)] - self.points[i],
+                )
+
         for i in range(closests[1]):
             p += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
