@@ -18,6 +18,10 @@ def run(args):
         cfg.override('synthetic_save_dir', args.synthetic_save_dir)
     if args.synthetic_load_dir != None:
         cfg.override('synthetic_load_dir', args.synthetic_load_dir)
+    if args.stl_epoch_count != None:
+        cfg.override('stl_epoch_count', args.stl_epoch_count)
+    if args.vae_epoch_count != None:
+        cfg.override('vae_epoch_count', args.vae_epoch_count)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -58,6 +62,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--synthetic_save_dir', type=str, help="config override")
     parser.add_argument('--synthetic_load_dir', type=str, help="config override")
+    parser.add_argument('--stl_epoch_count', type=str, help="config override")
+    parser.add_argument('--vae_epoch_count', type=str, help="config override")
 
     parser.add_argument('--device', type=str, help="config override")
 

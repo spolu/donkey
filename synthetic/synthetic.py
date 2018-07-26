@@ -73,7 +73,7 @@ class Synthetic:
             cv2.imdecode(
                 np.fromstring(item['camera'], np.uint8),
                 cv2.IMREAD_GRAYSCALE,
-            )[50:] / 255.0
+            ) / 255.0
         ).float().to(self.device).unsqueeze(0)
 
         return state, camera
@@ -105,6 +105,7 @@ class Synthetic:
 
         self.stl_mse_loss_coeff = self.config.get('stl_mse_loss_coeff')
 
+        self.vae_epoch_count = self.config.get('vae_epoch_count')
         self.stl_epoch_count = self.config.get('stl_epoch_count')
 
         if self.load_dir:
@@ -134,6 +135,14 @@ class Synthetic:
                 self.discriminator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/discriminator_optimizer.pt", map_location='cpu'),
                 )
+        # We save the models initially (no-op if just loaded)
+        if self.save_dir:
+            torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
+            torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
+            torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
+            torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
+            torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
+            torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
         self.train_capture_set = CaptureSet(
             train_capture_set_dir,
@@ -159,7 +168,8 @@ class Synthetic:
         )
 
         self.batch_count = 0
-        self.best_test_loss = 9999.0
+        self.best_e2e_loss = 9999.0
+        self.best_vae_loss = 9999.0
 
     def _discriminator_loss(self, camera, encoded):
         pred_fake = self.discriminator(encoded.detach())
@@ -211,66 +221,67 @@ class Synthetic:
         self.vae.train()
         self.discriminator.train()
 
-        for i, (state, camera) in enumerate(self.train_loader):
-            vae_latent, encoded, vae_mean, vae_logvar = self.vae(
-                camera.detach(), deterministic=False,
-            )
+        for epoch in range(self.vae_epoch_count):
+            for i, (state, camera) in enumerate(self.train_loader):
+                vae_latent, encoded, vae_mean, vae_logvar = self.vae(
+                    camera.detach(), deterministic=False,
+                )
 
-            # Discriminator pass.
-            self.discriminator.set_requires_grad(True)
-            self.discriminator_optimizer.zero_grad()
+                # Discriminator pass.
+                self.discriminator.set_requires_grad(True)
+                self.discriminator_optimizer.zero_grad()
 
-            fake_loss, real_loss = self._discriminator_loss(
-                camera, encoded,
-            )
+                fake_loss, real_loss = self._discriminator_loss(
+                    camera, encoded,
+                )
 
-            discriminator_loss = (
-                fake_loss * 0.5 +
-                real_loss * 0.5
-            )
-            discriminator_loss.backward()
+                discriminator_loss = (
+                    fake_loss * 0.5 +
+                    real_loss * 0.5
+                )
+                discriminator_loss.backward()
 
-            self.discriminator_optimizer.step()
+                self.discriminator_optimizer.step()
 
-            # VAE pass.
-            self.vae_optimizer.zero_grad()
+                # VAE pass.
+                self.vae_optimizer.zero_grad()
 
-            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
-                camera, encoded, vae_mean, vae_logvar,
-            )
+                vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+                    camera, encoded, vae_mean, vae_logvar,
+                )
 
-            vae_loss = (
-                vae_l1_loss * self.vae_l1_loss_coeff +
-                vae_mse_loss * self.vae_mse_loss_coeff +
-                vae_bce_loss * self.vae_bce_loss_coeff +
-                vae_kld_loss * self.vae_kld_loss_coeff +
-                vae_gan_loss * self.vae_gan_loss_coeff
-            )
-            vae_loss.backward()
+                vae_loss = (
+                    vae_l1_loss * self.vae_l1_loss_coeff +
+                    vae_mse_loss * self.vae_mse_loss_coeff +
+                    vae_bce_loss * self.vae_bce_loss_coeff +
+                    vae_kld_loss * self.vae_kld_loss_coeff +
+                    vae_gan_loss * self.vae_gan_loss_coeff
+                )
+                vae_loss.backward()
 
-            self.vae_optimizer.step()
+                self.vae_optimizer.step()
 
-            print(
-                ("TRAIN_VAE {} batch {} " + \
-                 "fake_loss {:.5f} " + \
-                 "real_loss {:.5f} " + \
-                 "vae_l1_loss {:.5f} " + \
-                 "vae_mse_loss {:.5f} " + \
-                 "vae_bce_loss {:.5f} " + \
-                 "vae_kld_loss {:.5f} " + \
-                 "vae_gan_loss {:.5f}").
-                format(
-                    self.batch_count,
-                    i,
-                    fake_loss.item(),
-                    real_loss.item(),
-                    vae_l1_loss.item(),
-                    vae_mse_loss.item(),
-                    vae_bce_loss.item(),
-                    vae_kld_loss.item(),
-                    vae_gan_loss.item(),
-                ))
-            sys.stdout.flush()
+                print(
+                    ("TRAIN_VAE {} batch {}-{} " + \
+                     "fake_loss {:.5f} " + \
+                     "real_loss {:.5f} " + \
+                     "vae_l1_loss {:.5f} " + \
+                     "vae_mse_loss {:.5f} " + \
+                     "vae_bce_loss {:.5f} " + \
+                     "vae_kld_loss {:.5f} " + \
+                     "vae_gan_loss {:.5f}").
+                    format(
+                        self.batch_count,
+                        epoch, i,
+                        fake_loss.item(),
+                        real_loss.item(),
+                        vae_l1_loss.item(),
+                        vae_mse_loss.item(),
+                        vae_bce_loss.item(),
+                        vae_kld_loss.item(),
+                        vae_gan_loss.item(),
+                    ))
+                sys.stdout.flush()
 
         self.stl.train()
 
@@ -337,7 +348,8 @@ class Synthetic:
         self.vae.eval()
         self.stl.eval()
         self.discriminator.eval()
-        loss_meter = Meter()
+        e2e_loss_meter = Meter()
+        vae_loss_meter = Meter()
 
         for i, (state, camera) in enumerate(self.test_loader):
             vae_latent, encoded, vae_mean, vae_logvar = self.vae(
@@ -348,34 +360,64 @@ class Synthetic:
             )
             generated = self.vae.decode(stl_latent.detach())
 
+            # VAE loss.
+            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+                camera, encoded, vae_mean, vae_logvar,
+            )
+
+            vae_loss = (
+                vae_l1_loss * self.vae_l1_loss_coeff +
+                vae_mse_loss * self.vae_mse_loss_coeff +
+                vae_bce_loss * self.vae_bce_loss_coeff +
+                vae_kld_loss * self.vae_kld_loss_coeff +
+                vae_gan_loss * self.vae_gan_loss_coeff
+            )
+
+            vae_loss_meter.update(vae_loss.item())
+
+            # E2E (STL) loss.
             e2e_mse_loss = F.mse_loss(
                 generated, camera.detach(),
             )
 
-            loss_meter.update(e2e_mse_loss.item())
+            e2e_loss_meter.update(e2e_mse_loss.item())
 
             print(
                 ("TEST {} batch {} " + \
+                 "vae_l1_loss {:.5f} " + \
+                 "vae_mse_loss {:.5f} " + \
+                 "vae_bce_loss {:.5f} " + \
+                 "vae_kld_loss {:.5f} " + \
+                 "vae_gan_loss {:.5f} " + \
                  "e2e_mse_loss {:.5f}").
                 format(
                     self.batch_count,
                     i,
+                    vae_l1_loss.item(),
+                    vae_mse_loss.item(),
+                    vae_bce_loss.item(),
+                    vae_kld_loss.item(),
+                    vae_gan_loss.item(),
                     e2e_mse_loss.item(),
                 ))
             sys.stdout.flush()
 
         # Store policy if it did better.
         if self.save_dir:
-            if self.best_test_loss > loss_meter.avg:
-                self.best_test_loss = loss_meter.avg
-                print("Saving models and optimizer: save_dir={} test_loss={}".format(
-                    self.save_dir, self.best_test_loss,
+            if self.stl_epoch_count > 0 and self.best_e2e_loss > e2e_loss_meter.avg:
+                self.best_e2e_loss = e2e_loss_meter.avg
+                print("Saving STL models and optimizer: save_dir={} e2e_loss={}".format(
+                    self.save_dir, self.best_e2e_loss,
+                ))
+                torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
+                torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
+            if self.vae_epoch_count > 0 and self.best_vae_loss > vae_loss_meter.avg:
+                print("Saving VAE models and optimizer: save_dir={} vae_loss={}".format(
+                    self.save_dir, self.best_vae_loss,
                 ))
                 torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
                 torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
-                torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
-                torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
                 torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
                 torch.save(self.discriminator_optimizer.state_dict(), self.save_dir + "/discriminator_optimizer.pt")
 
-        return loss_meter
+        return e2e_loss_meter
