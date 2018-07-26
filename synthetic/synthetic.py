@@ -274,7 +274,7 @@ class Synthetic:
 
         self.stl.train()
 
-        for e in range(self.stl_epoch_count):
+        for epoch in range(self.stl_epoch_count):
             for i, (state, camera) in enumerate(self.train_loader):
                 vae_latent, encoded, vae_mean, vae_logvar = self.vae(
                     camera.detach(), deterministic=False,
@@ -319,12 +319,12 @@ class Synthetic:
                 )
 
                 print(
-                    ("TRAIN_STL {} batch {} " + \
+                    ("TRAIN_STL {} batch {}-{} " + \
                      "stl_mse_loss {:.5f} " + \
                      "e2e_mse_loss {:.5f}").
                     format(
                         self.batch_count,
-                        i,
+                        epoch, i,
                         stl_mse_loss.item(),
                         e2e_mse_loss.item(),
                     ))
