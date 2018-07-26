@@ -8,6 +8,7 @@
 
   "algorithm": "random",
   "input_filter": "none",
+  "device": "cpu",
   "seed": 1,
 
   "rollout_size": 128,
