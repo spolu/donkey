@@ -105,6 +105,8 @@ class Synthetic:
 
         self.stl_mse_loss_coeff = self.config.get('stl_mse_loss_coeff')
 
+        self.stl_epoch_count = self.config.get('stl_epoch_count')
+
         if self.load_dir:
             if self.config.get('device') != 'cpu':
                 self.vae_optimizer.load_state_dict(
@@ -272,60 +274,61 @@ class Synthetic:
 
         self.stl.train()
 
-        for i, (state, camera) in enumerate(self.train_loader):
-            vae_latent, encoded, vae_mean, vae_logvar = self.vae(
-                camera.detach(), deterministic=False,
-            )
-            stl_latent = self.stl(
-                state.detach()
-            )
+        for e in range(self.stl_epoch_count):
+            for i, (state, camera) in enumerate(self.train_loader):
+                vae_latent, encoded, vae_mean, vae_logvar = self.vae(
+                    camera.detach(), deterministic=False,
+                )
+                stl_latent = self.stl(
+                    state.detach()
+                )
 
-            # STL pass.
-            self.stl_optimizer.zero_grad()
+                # STL pass.
+                self.stl_optimizer.zero_grad()
 
-            stl_mse_loss = self._stl_loss(
-                vae_latent, stl_latent,
-            )
+                stl_mse_loss = self._stl_loss(
+                    vae_latent, stl_latent,
+                )
 
-            stl_loss = (
-                stl_mse_loss * self.stl_mse_loss_coeff
-            )
-            stl_loss.backward()
+                stl_loss = (
+                    stl_mse_loss * self.stl_mse_loss_coeff
+                )
+                stl_loss.backward()
 
-            self.stl_optimizer.step()
+                self.stl_optimizer.step()
 
-            generated = self.vae.decode(stl_latent.detach())
+                generated = self.vae.decode(stl_latent.detach())
 
-            if i % 100 == 0:
-                if self.save_dir:
-                    cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
-                        (255 * camera[0].squeeze(0).to('cpu')).detach().numpy(),
-                    )
-                    cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
-                        (255 * encoded[0].squeeze(0).to('cpu')).detach().numpy(),
-                    )
-                    cv2.imwrite(
-                        os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
-                        (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
-                    )
+                if i % 100 == 0:
+                    if self.save_dir:
+                        cv2.imwrite(
+                            os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
+                            (255 * camera[0].squeeze(0).to('cpu')).detach().numpy(),
+                        )
+                        cv2.imwrite(
+                            os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
+                            (255 * encoded[0].squeeze(0).to('cpu')).detach().numpy(),
+                        )
+                        cv2.imwrite(
+                            os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
+                            (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
+                        )
 
-            e2e_mse_loss = F.mse_loss(
-                generated, camera.detach(),
-            )
+                e2e_mse_loss = F.mse_loss(
+                    generated, camera.detach(),
+                )
 
-            print(
-                ("TRAIN_STL {} batch {} " + \
-                 "stl_mse_loss {:.5f} " + \
-                 "e2e_mse_loss {:.5f}").
-                format(
-                    self.batch_count,
-                    i,
-                    stl_mse_loss.item(),
-                    e2e_mse_loss.item(),
-                ))
-            sys.stdout.flush()
+                print(
+                    ("TRAIN_STL {} batch {} " + \
+                     "stl_mse_loss {:.5f} " + \
+                     "e2e_mse_loss {:.5f}").
+                    format(
+                        self.batch_count,
+                        i,
+                        stl_mse_loss.item(),
+                        e2e_mse_loss.item(),
+                    ))
+                sys.stdout.flush()
 
 
         self.batch_count += 1
