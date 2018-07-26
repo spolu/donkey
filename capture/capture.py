@@ -26,11 +26,6 @@ _stored_params = [
     'raspi_sensehat_orientation',
     'raspi_phone_position',
     'raspi_pozyx_position',
-    'annotated_track_coordinates',
-    'reference_track_coordinates',
-    'integrated_track_coordinates',
-    'corrected_track_coordinates',
-    'inferred_track_coordinates',
 ]
 
 """
