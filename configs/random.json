@@ -7,7 +7,7 @@
   "do_capture": false,
 
   "algorithm": "random",
-  "input_filter": "warp_line_detector",
+  "input_filter": "none",
   "seed": 1,
 
   "rollout_size": 128,
