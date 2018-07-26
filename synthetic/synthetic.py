@@ -181,7 +181,7 @@ class Synthetic:
         )
 
         self.batch_count = 0
-        self.best_e2e_loss = 9999.0
+        self.best_stl_loss = 9999.0
         self.best_vae_loss = 9999.0
 
     def _discriminator_loss(self, camera, encoded):
