@@ -135,8 +135,9 @@ class Synthetic:
                 self.discriminator_optimizer.load_state_dict(
                     torch.load(self.load_dir + "/discriminator_optimizer.pt", map_location='cpu'),
                 )
-        # We save the models initially (no-op if just loaded)
-        if self.save_dir:
+
+        # We save the empty models initially if they were not loaded
+        if self.load_dir is None and self.save_dir:
             torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
             torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
             torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
