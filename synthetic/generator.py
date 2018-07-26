@@ -129,6 +129,10 @@ class VAE(nn.Module):
 
         return latent, encoded, mean, logvar
 
+    def set_requires_grad(self, requires_grad=True):
+        for p in self.parameters():
+            p.requires_grad = requires_grad
+
 class STL(nn.Module):
     def __init__(self, config):
         super(STL, self).__init__()
