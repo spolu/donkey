@@ -13,8 +13,9 @@ class Discriminator(nn.Module):
     def __init__(self, config):
         super(Discriminator, self).__init__()
         self.device = torch.device(config.get('device'))
+        self.frame_stack_size = config.get('frame_stack_size')
 
-        self.cv1 = nn.Conv2d(1, 64, 4, stride=2, padding=1)
+        self.cv1 = nn.Conv2d(self.frame_stack_size, 64, 4, stride=2, padding=1)
 
         self.cv2 = nn.Conv2d(64, 128, 4, stride=2, padding=1, bias=False)
         self.cv_bn2 = nn.BatchNorm2d(128)

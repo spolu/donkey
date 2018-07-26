@@ -24,6 +24,7 @@ class Synthetic:
 
         self.save_dir = config.get('synthetic_save_dir')
         self.load_dir = config.get('synthetic_load_dir')
+        self.frame_stack_size = config.get('frame_stack_size')
 
         if self.load_dir:
             if config.get('device') != 'cpu':
@@ -51,7 +52,9 @@ class Synthetic:
         generated = self.vae.decode(stl_latent)
         camera = torch.cat(
             (
-                torch.zeros(1, 1, 50, generated.size(3)).to(self.device),
+                torch.zeros(
+                    1, self.frame_stack_size, 50, generated.size(3),
+                ).to(self.device),
                 generated,
             ),
             dim=2,
@@ -69,12 +72,16 @@ class Synthetic:
             items[0]['simulation_track_angle'],
         ).vector()).float().to(self.device)
 
-        camera = torch.from_numpy(
-            cv2.imdecode(
-                np.fromstring(items[0]['camera'], np.uint8),
-                cv2.IMREAD_GRAYSCALE,
-            ) / 255.0
-        ).float().to(self.device).unsqueeze(0)
+        cameras = [
+            torch.from_numpy(
+                cv2.imdecode(
+                    np.fromstring(item['camera'], np.uint8),
+                    cv2.IMREAD_GRAYSCALE,
+                ) / 255.0
+            ).float().to(self.device).unsqueeze(0)
+            for item in items
+        ]
+        camera = np.concatenate(cameras, axis=0)
 
         return state, camera
 
@@ -150,11 +157,13 @@ class Synthetic:
 
         self.train_capture_set = CaptureSet(
             train_capture_set_dir,
-            loader=self._generator_capture_loader
+            loader=self._generator_capture_loader,
+            frame_size=self.frame_stack_size,
         )
         self.test_capture_set = CaptureSet(
             test_capture_set_dir,
-            loader=self._generator_capture_loader
+            loader=self._generator_capture_loader,
+            frame_size=self.frame_stack_size,
         )
 
         self.train_loader = torch.utils.data.DataLoader(

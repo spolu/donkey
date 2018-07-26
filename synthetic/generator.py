@@ -23,9 +23,10 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         self.device = torch.device(config.get('device'))
         self.latent_size = config.get('latent_size')
+        self.frame_stack_size = config.get('frame_stack_size')
 
         ## Encoder
-        self.cv1 = nn.Conv2d(1, 16, 5, stride=2, bias=False)
+        self.cv1 = nn.Conv2d(self.frame_stack_size, 16, 5, stride=2, bias=False)
         self.bn_cv1 = nn.BatchNorm2d(16)
         self.cv2 = nn.Conv2d(16, 32, 4, stride=(1,2), bias=False)
         self.bn_cv2 = nn.BatchNorm2d(32)
@@ -54,7 +55,7 @@ class VAE(nn.Module):
         self.bn_dcv4 = nn.BatchNorm2d(32)
         self.dcv5 = nn.ConvTranspose2d(32, 16, 4, stride=(1,2), bias=False)
         self.bn_dcv5 = nn.BatchNorm2d(16)
-        self.dcv6 = nn.ConvTranspose2d(16, 1, 5, stride=2)
+        self.dcv6 = nn.ConvTranspose2d(16, self.frame_stack_size, 5, stride=2)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):

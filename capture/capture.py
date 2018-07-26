@@ -184,7 +184,8 @@ class CaptureSet(data.Dataset):
             else:
                 assert index < len(self.captures[i].ready) - (self.frame_size-1)
                 items = []
-                for j in reversed(range(self.frame_size)):
+                # Frame 0 is the most recent one
+                for j in range(self.frame_size):
                     items.append(
                         self.captures[i].get_item(
                             self.captures[i].ready[index + self.frame_size - 1 - j],
