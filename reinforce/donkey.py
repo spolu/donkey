@@ -304,7 +304,7 @@ class Donkey:
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
                     'simulation_track_coordinates': self.track.coordinates(
                         observation.position, derandomized=True,
-                    ),
+                    ).tolist(),
                     'simulation_track_angle': observation.track_angles[0],
                 },
             )
@@ -418,7 +418,7 @@ class Donkey:
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
                     'simulation_track_coordinates': self.track.coordinates(
                         observation.position, derandomized=True,
-                    ),
+                    ).tolist(),
                     'simulation_track_angle': observation.track_angles[0],
                 },
             )
