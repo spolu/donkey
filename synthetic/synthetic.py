@@ -413,6 +413,7 @@ class Synthetic:
                 torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
                 torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
             if self.vae_epoch_count > 0 and self.best_vae_loss > vae_loss_meter.avg:
+                self.best_vae_loss = vae_loss_meter.avg
                 print("Saving VAE models and optimizer: save_dir={} vae_loss={}".format(
                     self.save_dir, self.best_vae_loss,
                 ))
