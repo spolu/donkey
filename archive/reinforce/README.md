@@ -134,6 +134,8 @@ If not enough increase by editing /sbin/dphys-swapfile
 
 ### PyTorch
 
+Install numpy first
+
 http://book.duckietown.org/master/duckiebook/pytorch_install.html
 
 ```
@@ -164,6 +166,37 @@ python raspi.py configs/raspi.json --load_dir=/home/pi/exp_20180407_1537/
 `diskutil list`
 `dd if=/dev/disk2 of=~/SDCardBackup.dmg`
 https://thepihut.com/blogs/raspberry-pi-tutorials/17789160-backing-up-and-restoring-your-raspberry-pis-sd-card
+
+## Jetson TX2
+
+### Flash Jetpack
+
+Follow guidance to flash JetPack to NVIDIA TX2 with Mac through a VirtualBox (VM)
+https://github.com/KleinYuan/tx2-flash
+Doesn't work through wifi, jetson needs to be conencted on ethernet from my perspective
+
+### Create virtual env
+`sudo apt-get update && sudo apt-get upgrade`
+`sudo apt-get install -y python-pip`
+`pip install virtualenvwrapper`
+`sudo apt-get install virtualenv`
+
+`cat >> ~/.bash_profile
+export WORKON_HOME=~/Envs
+source ./.local/bin/virtualenvwrapper.sh`
+
+`mkdir -p $WORKON_HOME`
+`mkvirtualenv -p python3 dr1ve`
+
+### Install PyTorch
+
+https://github.com/pytorch/pytorch#binaries
+Get the source
+`git clone --recursive https://github.com/pytorch/pytorch`
+and install
+`python setup.py install`
+
+note:  pyTorch documentation calls for use of Anaconda, however Anaconda isn't available for aarch64
 
 ## Read list
 
