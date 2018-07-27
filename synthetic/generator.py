@@ -158,8 +158,8 @@ class STL(nn.Module):
 
     def forward(self, state):
         x = F.relu(self.bn_fc1(self.fc1(state)))
-        x = F.relu(self.bn_fc2(self.fc2(state)))
-        x = F.relu(self.bn_fc3(self.fc3(state)))
+        x = F.relu(self.bn_fc2(self.fc2(x)))
+        x = F.relu(self.bn_fc3(self.fc3(x)))
         x = self.fc4(x)
 
         return x
