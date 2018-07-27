@@ -23,8 +23,8 @@ class State:
             track_coordinates[1],
             track_coordinates[2],
             track_angle,
-            # np.linalg.norm(self.velocity),
-            # np.linalg.norm(self.angular_velocity),
+            np.linalg.norm(self.velocity),
+            np.linalg.norm(self.angular_velocity),
         ])
 
     def vector(self):
@@ -32,4 +32,4 @@ class State:
 
     @staticmethod
     def size():
-        return 4
+        return 6
