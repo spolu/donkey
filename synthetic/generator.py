@@ -140,19 +140,27 @@ class STL(nn.Module):
         self.device = torch.device(config.get('device'))
         self.latent_size = config.get('latent_size')
 
-        self.fc1 = nn.Linear(State.size(), 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, self.latent_size)
+        self.fc1 = nn.Linear(State.size(), self.latent_size, bias=False)
+        self.bn_fc1 = nn.BatchNorm2d(self.latent_size)
+        self.fc2 = nn.Linear(self.latent_size, self.latent_size, bias=False)
+        self.bn_fc2 = nn.BatchNorm2d(self.latent_size)
+        self.fc3 = nn.Linear(self.latent_size, self.latent_size, bias=False)
+        self.bn_fc3 = nn.BatchNorm2d(self.latent_size)
+        self.fc4 = nn.Linear(self.latent_size, self.latent_size)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
-                m.bias.data.fill_(0)
+                if m.bias is not None:
+                    nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('linear'))
+                    m.bias.data.fill_(0)
+                else:
+                    nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('relu'))
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.bn_fc1(self.fc1(state)))
+        x = F.relu(self.bn_fc2(self.fc2(state)))
+        x = F.relu(self.bn_fc3(self.fc3(state)))
+        x = self.fc4(x)
 
         return x
 

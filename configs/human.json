@@ -9,7 +9,7 @@
   "device": "cpu",
   "frame_stack_size": 1,
 
-  "latent_size": 128,
+  "latent_size": 32,
 
   "simulation_type": "synthetic",
 
