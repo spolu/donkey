@@ -342,15 +342,15 @@ class Synthetic:
                     if self.save_dir:
                         cv2.imwrite(
                             os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
-                            (255 * camera[0].squeeze(0).to('cpu')).detach().numpy(),
+                            (255 * camera[0][0].to('cpu')).detach().numpy(),
                         )
                         cv2.imwrite(
                             os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
-                            (255 * encoded[0].squeeze(0).to('cpu')).detach().numpy(),
+                            (255 * encoded[0][0].to('cpu')).detach().numpy(),
                         )
                         cv2.imwrite(
                             os.path.join(self.save_dir, '{}_synthetic_generated.jpg'.format(i)),
-                            (255 * generated[0].squeeze(0).to('cpu')).detach().numpy(),
+                            (255 * generated[0][0].to('cpu')).detach().numpy(),
                         )
 
                 print(
