@@ -10,6 +10,7 @@
   "frame_stack_size": 1,
 
   "latent_size": 32,
+  "stl_hidden_size": 256,
 
   "simulation_type": "synthetic",
 
