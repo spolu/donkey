@@ -4,10 +4,10 @@
   "input_filter": "none",
 
   "batch_size": 16,
-  "frame_stack_size": 1,
+  "frame_stack_size": 5,
 
-  "latent_size": 32,
-  "stl_hidden_size": 256,
+  "latent_size": 128,
+  "stl_hidden_size": 512,
   "vae_learning_rate": 0.0005,
   "stl_learning_rate": 0.001,
   "discriminator_learning_rate": 0.0002,

@@ -140,14 +140,30 @@ class STL(nn.Module):
         self.device = torch.device(config.get('device'))
         self.latent_size = config.get('latent_size')
         self.stl_hidden_size = config.get('stl_hidden_size')
+        self.frame_stack_size = config.get('frame_stack_size')
 
-        self.fc1 = nn.Linear(State.size(), self.stl_hidden_size, bias=False)
+        self.fc1 = nn.Linear(
+            self.frame_stack_size * State.size(),
+            self.stl_hidden_size,
+            bias=False,
+        )
         self.bn_fc1 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc2 = nn.Linear(self.stl_hidden_size, self.stl_hidden_size, bias=False)
+        self.fc2 = nn.Linear(
+            self.stl_hidden_size,
+            self.stl_hidden_size,
+            bias=False,
+        )
         self.bn_fc2 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc3 = nn.Linear(self.stl_hidden_size, self.stl_hidden_size, bias=False)
+        self.fc3 = nn.Linear(
+            self.stl_hidden_size,
+            self.stl_hidden_size,
+            bias=False,
+        )
         self.bn_fc3 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc4 = nn.Linear(self.stl_hidden_size, self.latent_size)
+        self.fc4 = nn.Linear(
+            self.stl_hidden_size,
+            self.latent_size,
+        )
 
         for m in self.modules():
             if isinstance(m, nn.Linear):

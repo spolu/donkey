@@ -13,6 +13,8 @@ EPS = 10e-9
 
 class Engine:
     def __init__(self, config):
+        self.frame_stack_size = config.get('frame_stack_size')
+
         self.step_interval = config.get('synthetic_step_interval')
         self.brake_torque_max = config.get('synthetic_braque_torque_max')
         self.motor_torque_max = config.get('synthetic_motor_torque_max')
@@ -33,6 +35,8 @@ class Engine:
         self.heading = None            # theta
         self.front_position = None     # p_f
 
+        self.state_stack = []
+
         self.synthetic = Synthetic(config)
 
     def reset(self, track):
@@ -46,6 +50,10 @@ class Engine:
             self.vehicule_length * np.cos(self.heading),
             self.vehicule_length * np.sin(self.heading),
         ])
+
+        self.state_stack = [
+            self.state() for _ in range(self.frame_stack_size)
+        ]
 
     def start(self, track):
         self.reset(track)
@@ -89,6 +97,12 @@ class Engine:
             self.front_wheel_speed * np.sin(self.heading + self.steering_angle),
         ])
 
+        for i in reversed(range(self.frame_stack_size)):
+            if i > 0:
+                self.state_stack[i].copy_(self.camera_stack[i-1])
+            else:
+                self.state_stack[i] = self.state()
+
     def state(self):
         rear_wheel_speed = self.front_wheel_speed * np.cos(self.steering_angle)
 
@@ -125,14 +139,12 @@ class Engine:
         )
 
     def telemetry(self):
-        state = self.state()
-
-        camera = self.synthetic.generate(state)[0][0]
+        camera = self.synthetic.generate(self.state_stack)[0][0]
 
         return Telemetry(
             self.time,
             camera,
-            state.position,
-            state.velocity,
-            state.angular_velocity,
+            self.state_stack[0].position,
+            self.state_stack[0].velocity,
+            self.state_stack[0].angular_velocity,
         )

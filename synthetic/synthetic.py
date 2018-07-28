@@ -42,12 +42,17 @@ class Synthetic:
                     torch.load(self.load_dir + "/stl.pt", map_location='cpu'),
                 )
 
-    def generate(self, state):
+    def generate(self, states):
         self.vae.eval()
         self.stl.eval()
 
+        assert len(states) == self.frame_stack_size
+
         stl_latent = self.stl(
-            torch.from_numpy(state.vector()).unsqueeze(0).float().to(self.device),
+            torch.cat([
+                torch.from_numpy(state.vector())
+                for state in states
+            ]).unsqueeze(0).float().to(self.device)
         )
         generated = self.vae.decode(stl_latent)
         camera = torch.cat(
@@ -63,14 +68,18 @@ class Synthetic:
         return (camera * 255.0).cpu().numpy()
 
     def _generator_capture_loader(self, items):
-        state = torch.from_numpy(State(
-            items[0]['simulation_track_randomization'],
-            items[0]['simulation_position'],
-            items[0]['simulation_velocity'],
-            items[0]['simulation_angular_velocity'],
-            items[0]['simulation_track_coordinates'],
-            items[0]['simulation_track_angle'],
-        ).vector()).float().to(self.device)
+        states = [
+            torch.from_numpy(State(
+                item['simulation_track_randomization'],
+                item['simulation_position'],
+                item['simulation_velocity'],
+                item['simulation_angular_velocity'],
+                item['simulation_track_coordinates'],
+                item['simulation_track_angle'],
+            ).vector()).float().to(self.device)
+            for item in items
+        ]
+        state = torch.cat(states)
 
         cameras = [
             torch.from_numpy(

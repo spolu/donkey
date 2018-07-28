@@ -38,8 +38,8 @@ def transition():
     )
 
     generated = [[]]
-    if _synthetic is not None:
-        generated = _synthetic.generate(state)[0][0].tolist()
+    # if _synthetic is not None:
+    #     generated = _synthetic.generate([state])[0][0].tolist()
     # import pdb; pdb.set_trace()
 
     message =  {
