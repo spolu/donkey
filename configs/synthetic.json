@@ -4,7 +4,7 @@
   "input_filter": "none",
 
   "batch_size": 16,
-  "frame_stack_size": 5,
+  "frame_stack_size": 1,
 
   "latent_size": 32,
   "vae_learning_rate": 0.0005,

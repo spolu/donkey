@@ -47,7 +47,7 @@ class Synthetic:
         self.stl.eval()
 
         stl_latent = self.stl(
-            torch.from_numpy(state.vector()).float().to(self.device),
+            torch.from_numpy(state.vector()).unsqueeze(0).float().to(self.device),
         )
         generated = self.vae.decode(stl_latent)
         camera = torch.cat(
