@@ -8,9 +8,9 @@
   "input_filter": "none",
   "device": "cpu",
 
-  "latent_size": 32,
-  "stl_hidden_size": 256,
-  "frame_stack_size": 1,
+  "latent_size": 128,
+  "stl_hidden_size": 512,
+  "frame_stack_size": 5,
 
   "simulation_type": "synthetic",
 

@@ -99,7 +99,7 @@ class Engine:
 
         for i in reversed(range(self.frame_stack_size)):
             if i > 0:
-                self.state_stack[i].copy_(self.camera_stack[i-1])
+                self.state_stack[i] = self.state_stack[i-1]
             else:
                 self.state_stack[i] = self.state()
 
