@@ -20,6 +20,7 @@ from reinforce import Donkey
 from reinforce.algorithms import PPO
 from reinforce.algorithms import PPOVAE
 from reinforce.algorithms import Random
+from synthetic import Synthetic, State
 
 _sio = socketio.Server(logging=False, engineio_logger=False)
 _app = Flask(__name__)
@@ -28,9 +29,24 @@ _observations = None
 _reward = None
 _done = None
 _track = None
+_synthetic = None
 
 def transition():
-    return {
+    state = State(
+        0.0,
+        _observations.position,
+        _observations.velocity,
+        _observations.angular_velocity,
+        _observations.track_coordinates,
+        _observations.track_angles[0],
+    )
+
+    generated = [[]]
+    if _synthetic is not None:
+        generated = _synthetic.generate([state])[0][0].tolist()
+    # import pdb; pdb.set_trace()
+
+    message =  {
         'done': _done,
         'reward': _reward,
         'observation': {
@@ -41,6 +57,11 @@ def transition():
             'position': _observations.position.tolist(),
         },
     }
+
+    if generated is not None:
+        message['observation']['generated'] = generated
+
+    return message
 
 def run_server():
     global _app
@@ -54,6 +75,8 @@ def run_server():
         print("Stopping shared server")
 
 def run(args):
+    global _synthetic
+
     cfg = Config(args.config_path)
 
     cfg.override('worker_count', 1)
@@ -85,6 +108,9 @@ def run(args):
     if cfg.get('algorithm') == 'random':
         algorithm = Random(cfg)
     assert algorithm is not None
+
+    if args.synthetic_load_dir:
+        _synthetic = Synthetic(cfg)
 
     episode = 0
 
