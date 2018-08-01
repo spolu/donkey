@@ -13,6 +13,10 @@
   "device": "cuda:0",
   "seed": 1,
 
+  "stl_latent_size": 32,
+  "stl_hidden_size": 256,
+  "frame_stack_size": 1,
+
   "fixed_action_std": 0.0,
   "latent_size": 128,
   "hidden_size": 128,

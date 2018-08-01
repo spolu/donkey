@@ -22,7 +22,7 @@ class VAE(nn.Module):
     def __init__(self,config):
         super(VAE, self).__init__()
         self.device = torch.device(config.get('device'))
-        self.latent_size = config.get('latent_size')
+        self.stl_latent_size = config.get('stl_latent_size')
         self.frame_stack_size = config.get('frame_stack_size')
 
         ## Encoder
@@ -40,9 +40,9 @@ class VAE(nn.Module):
         self.bn_cv6 = nn.BatchNorm2d(512)
 
         ## Latent representation of mean and std
-        self.fc_mean = nn.Linear(512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
-        self.fc_logvar = nn.Linear(512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.latent_size)
-        self.fc_latent = nn.Linear(self.latent_size, 512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
+        self.fc_mean = nn.Linear(512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.stl_latent_size)
+        self.fc_logvar = nn.Linear(512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT, self.stl_latent_size)
+        self.fc_latent = nn.Linear(self.stl_latent_size, 512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
         ## Decoder
         self.dcv1 = nn.ConvTranspose2d(512, 256, 3, stride=2, bias=False)
@@ -138,7 +138,7 @@ class STL(nn.Module):
     def __init__(self, config):
         super(STL, self).__init__()
         self.device = torch.device(config.get('device'))
-        self.latent_size = config.get('latent_size')
+        self.stl_latent_size = config.get('stl_latent_size')
         self.stl_hidden_size = config.get('stl_hidden_size')
         self.frame_stack_size = config.get('frame_stack_size')
 
@@ -162,7 +162,7 @@ class STL(nn.Module):
         self.bn_fc3 = nn.BatchNorm1d(self.stl_hidden_size)
         self.fc4 = nn.Linear(
             self.stl_hidden_size,
-            self.latent_size,
+            self.stl_latent_size,
         )
 
         for m in self.modules():

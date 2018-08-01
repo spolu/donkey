@@ -8,7 +8,7 @@
   "input_filter": "none",
   "device": "cpu",
 
-  "latent_size": 128,
+  "stl_latent_size": 128,
   "stl_hidden_size": 512,
   "frame_stack_size": 5,
 

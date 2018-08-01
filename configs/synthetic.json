@@ -3,22 +3,22 @@
   "seed": 1,
   "input_filter": "none",
 
-  "batch_size": 16,
-  "frame_stack_size": 5,
+  "batch_size": 32,
+  "frame_stack_size": 1,
 
-  "latent_size": 128,
+  "stl_latent_size": 64,
   "stl_hidden_size": 512,
   "vae_learning_rate": 0.0005,
-  "stl_learning_rate": 0.001,
+  "stl_learning_rate": 0.005,
   "discriminator_learning_rate": 0.0002,
 
   "vae_epoch_count": 1,
-  "stl_epoch_count": 1,
+  "stl_epoch_count": 4,
 
   "vae_l1_loss_coeff": 1.0,
   "vae_mse_loss_coeff": 0.0,
   "vae_bce_loss_coeff": 1.0,
-  "vae_kld_loss_coeff": 0.001,
+  "vae_kld_loss_coeff": 0.0005,
   "vae_gan_loss_coeff": 0.0,
 
   "stl_mse_loss_coeff": 1.0,
