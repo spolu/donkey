@@ -6,8 +6,8 @@
   "batch_size": 32,
   "frame_stack_size": 1,
 
-  "stl_latent_size": 64,
-  "stl_hidden_size": 512,
+  "stl_latent_size": 128,
+  "stl_hidden_size": 1024,
   "vae_learning_rate": 0.0005,
   "stl_learning_rate": 0.005,
   "discriminator_learning_rate": 0.0002,
