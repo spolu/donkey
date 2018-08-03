@@ -459,11 +459,11 @@ class Synthetic:
             if self.stl_epoch_count > 0 and self.best_stl_loss > stl_loss_meter.avg:
                 self.best_stl_loss = stl_loss_meter.avg
                 print(
-                    ("Saving STL models and optimizer: save_dir={} " + \
-                     " stl_mse_loss={} " + \
+                    ("Saving STL models and optimizer: episode={} " + \
+                     " stl_loss={} " + \
                      " stl_e2e_l1_loss={}").
                     format(
-                        self.save_dir,
+                        self.batch_count,
                         stl_loss_meter.avg,
                         stl_e2e_l1_loss_meter.avg,
                     ))
@@ -471,9 +471,13 @@ class Synthetic:
                 torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
             if self.vae_epoch_count > 0 and self.best_vae_loss > vae_loss_meter.avg:
                 self.best_vae_loss = vae_loss_meter.avg
-                print("Saving VAE models and optimizer: save_dir={} vae_loss={}".format(
-                    self.save_dir, self.best_vae_loss,
-                ))
+                print(
+                    ("Saving VAE models and optimizer: episode={} " +
+                     "vae_loss={}")
+                    .format(
+                        self.batch_count,
+                        self.best_vae_loss,
+                    ))
                 torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
                 torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
                 torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
