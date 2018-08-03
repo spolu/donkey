@@ -460,8 +460,8 @@ class Synthetic:
                 self.best_stl_loss = stl_loss_meter.avg
                 print(
                     ("Saving STL models and optimizer: episode={} " + \
-                     " stl_loss={} " + \
-                     " stl_e2e_l1_loss={}").
+                     "stl_loss={} " + \
+                     "stl_e2e_l1_loss={}").
                     format(
                         self.batch_count,
                         stl_loss_meter.avg,
