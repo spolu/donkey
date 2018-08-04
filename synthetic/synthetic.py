@@ -385,6 +385,7 @@ class Synthetic:
         self.vae.eval()
         self.stl.eval()
         self.discriminator.eval()
+        vae_l1_loss_meter = Meter()
         stl_e2e_l1_loss_meter = Meter()
         stl_loss_meter = Meter()
         vae_loss_meter = Meter()
@@ -412,6 +413,7 @@ class Synthetic:
             )
 
             vae_loss_meter.update(vae_loss.item())
+            vae_l1_loss_meter.update(vae_l1_loss.item())
 
             # E2E (STL) loss.
             stl_mse_loss, stl_e2e_l1_loss, stl_e2e_mse_loss, stl_e2e_bce_loss = self._stl_loss(
@@ -456,8 +458,8 @@ class Synthetic:
 
         # Store policy if it did better.
         if self.save_dir:
-            if self.stl_epoch_count > 0 and self.best_stl_loss > stl_loss_meter.avg:
-                self.best_stl_loss = stl_loss_meter.avg
+            if self.stl_epoch_count > 0 and self.best_stl_loss > stl_e2e_l1_loss_meter.avg:
+                self.best_stl_loss = stl_e2e_l1_loss_meter.avg
                 print(
                     ("Saving STL models and optimizer: episode={} " + \
                      "stl_loss={} " + \
@@ -469,14 +471,16 @@ class Synthetic:
                     ))
                 torch.save(self.stl.state_dict(), self.save_dir + "/stl.pt")
                 torch.save(self.stl_optimizer.state_dict(), self.save_dir + "/stl_optimizer.pt")
-            if self.vae_epoch_count > 0 and self.best_vae_loss > vae_loss_meter.avg:
-                self.best_vae_loss = vae_loss_meter.avg
+            if self.vae_epoch_count > 0 and self.best_vae_loss > vae_l1_loss_meter.avg:
+                self.best_vae_loss = vae_l1_loss_meter.avg
                 print(
                     ("Saving VAE models and optimizer: episode={} " +
-                     "vae_loss={}")
-                    .format(
+                     "vae_loss={} " + \
+                     "vae_l1_loss={}").
+                    format(
                         self.batch_count,
-                        self.best_vae_loss,
+                        vae_loss_meter.avg,
+                        vae_l1_loss_meter.avg,
                     ))
                 torch.save(self.vae.state_dict(), self.save_dir + "/vae.pt")
                 torch.save(self.vae_optimizer.state_dict(), self.save_dir + "/vae_optimizer.pt")
