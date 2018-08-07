@@ -198,6 +198,10 @@ and install
 
 note:  pyTorch documentation calls for use of Anaconda, however Anaconda isn't available for aarch64
 
+### Install OpenCV 
+
+https://jkjung-avt.github.io/opencv3-on-tx2/
+
 ## Read list
 
 https://www.youtube.com/watch?v=b_lBL2yhU5A&feature=youtu.be
