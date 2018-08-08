@@ -15,7 +15,7 @@ from reinforce.input_filter import InputFilter
 # import pdb; pdb.set_trace()
 
 class Driver:
-    def __init__(self, cfg, load_dir):
+    def __init__(self, cfg, load_dir = None):
         self.track_name = cfg.get('track_name')
         self.hidden_size = cfg.get('hidden_size')
         self.device = torch.device('cpu')
