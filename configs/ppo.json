@@ -8,12 +8,12 @@
 
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn",
-  "input_filter": "warp_line_detector",
+  "input_filter": "canny",
   "device": "cuda:0",
   "seed": 1,
 
-  "stl_latent_size": 32,
-  "stl_hidden_size": 256,
+  "stl_latent_size": 8,
+  "stl_hidden_size": 1024,
   "frame_stack_size": 1,
 
   "fixed_action_std": 0.0,
