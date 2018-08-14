@@ -32,7 +32,7 @@ class InputFilter():
             ])
             M = cv2.getPerspectiveTransform(pts1, pts2)
 
-            x = 0.1
+            x = 0.01
             h_base = np.array([
                 -x, -x, -x, -x, 2*x, 2*x, 2*x, 2*x, -x, -x, -x, -x,
             ])
