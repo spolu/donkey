@@ -32,44 +32,55 @@ class InputFilter():
             ])
             M = cv2.getPerspectiveTransform(pts1, pts2)
 
+            x = 0.1
             h_base = np.array([
-                -1, -1, -1, -1, 2, 2, 2, 2, -1, -1, -1, -1,
+                -x, -x, -x, -x, 2*x, 2*x, 2*x, 2*x, -x, -x, -x, -x,
             ])
             arrays = [h_base for _ in range(12)]
             h_kernel = np.stack(arrays, axis=0)
 
             v_kernel = h_kernel.T
-
+            
             d1_kernel = [
-                [ 2,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [ 2,  2,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1,  2,  2,  2, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1,  2,  2,  2, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,  2,  2,  2, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1,  2,  2,  2, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1,  2,  2,  2, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1,  2,  2,  2, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1,  2,  2,  2, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1,  2,  2,  2, -1],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1,  2,  2,  2],
-                [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2,  2]
+                [2*x,2*x, -x, -x, -x, -x, -x, -x, -x,  0,  0,  0],
+                [2*x,2*x,2*x, -x, -x, -x, -x, -x, -x, -x,  0,  0],
+                [2*x,2*x,2*x,2*x, -x, -x, -x, -x, -x, -x, -x,  0],
+                [ -x,2*x,2*x,2*x,2*x, -x, -x, -x, -x, -x, -x, -x],
+                [ -x, -x,2*x,2*x,2*x,2*x, -x, -x, -x, -x, -x, -x],
+                [ -x, -x, -x,2*x,2*x,2*x,2*x, -x, -x, -x, -x, -x],
+                [ -x, -x, -x, -x,2*x,2*x,2*x,2*x, -x, -x, -x, -x],
+                [ -x, -x, -x, -x, -x,2*x,2*x,2*x,2*x, -x, -x, -x],
+                [ -x, -x, -x, -x, -x, -x,2*x,2*x,2*x,2*x, -x, -x],
+                [  0, -x, -x, -x, -x, -x, -x,2*x,2*x,2*x,2*x, -x],
+                [  0,  0, -x, -x, -x, -x, -x, -x,2*x,2*x,2*x,2*x],
+                [  0,  0,  0, -x, -x, -x, -x, -x, -x,2*x,2*x,2*x]
             ]
+
             d2_kernel = np.fliplr(d1_kernel)
-
-            average_kernel = (
-                v_kernel + h_kernel + d1_kernel + 0.25 + d2_kernel + 0.25
-            ) / 4.0
-
-            img = cv2.filter2D(
-                cv2.warpPerspective(
+            average_kernel = (h_kernel + v_kernel + d1_kernel + d2_kernel)
+            
+            img = cv2.warpPerspective(
                     img, M, (160,90),
-                ),
+                )
+            
+            img = cv2.filter2D(
+                img,
                 -1,
                 average_kernel,
             )
-
-            # Clamping is what gives us the very contrasted lines.
-            img = np.clip(img, 0, 255.0)
+            
+            # normalize img between 0 and 1
+            img = np.divide( np.subtract(
+                                     img, 
+                                    np.min(img)
+                                ), 
+                               np.subtract(
+                                  np.max(img), 
+                                  np.min(img)
+                               )
+                            )
+            # only take above average pixel. this was necessary to use a clipped dataset
+            img = (img > np.average(img) + 0.05 ) * 255.0
 
         if self.input_filter == 'line_detector':
             h_base = np.array([-1]*4 + [2]*8 + [-1]*4)

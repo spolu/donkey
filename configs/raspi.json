@@ -3,7 +3,7 @@
   "action_type": "semi_discrete_throttle",
 
   "policy": "ppo_pixels_cnn",
-  "input_filter": "warp_line_detector",
+  "input_filter": "canny",
 
   "fixed_action_std": 0.0,
   "hidden_size": 128,
