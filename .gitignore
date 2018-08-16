@@ -5,3 +5,4 @@ experiments
 vae_*.jpg
 *_*.jpg
 __pycache__
+.ipynb_checkpoints
