@@ -140,30 +140,38 @@ class STL(nn.Module):
         self.device = torch.device(config.get('device'))
         self.stl_latent_size = config.get('stl_latent_size')
         self.stl_hidden_size = config.get('stl_hidden_size')
+        self.stl_layer_count = config.get('stl_layer_count')
         self.frame_stack_size = config.get('frame_stack_size')
 
-        self.fc1 = nn.Linear(
-            self.frame_stack_size * State.size(),
-            self.stl_hidden_size,
-            bias=False,
-        )
-        self.bn_fc1 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc2 = nn.Linear(
-            self.stl_hidden_size,
-            self.stl_hidden_size,
-            bias=False,
-        )
-        self.bn_fc2 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc3 = nn.Linear(
-            self.stl_hidden_size,
-            self.stl_hidden_size,
-            bias=False,
-        )
-        self.bn_fc3 = nn.BatchNorm1d(self.stl_hidden_size)
-        self.fc4 = nn.Linear(
-            self.stl_hidden_size,
-            self.stl_latent_size,
-        )
+        layers = [
+            nn.Linear(
+                self.frame_stack_size * State.size(),
+                self.stl_hidden_size,
+                bias=False,
+            ),
+            nn.BatchNorm1d(self.stl_hidden_size),
+            nn.ReLU(True),
+        ]
+
+        for i in range(self.stl_layer_count):
+            layers += [
+                nn.Linear(
+                    self.stl_hidden_size,
+                    self.stl_hidden_size,
+                    bias=False,
+                ),
+                nn.BatchNorm1d(self.stl_hidden_size),
+                nn.ReLU(True),
+            ]
+
+        layers += [
+            nn.Linear(
+                self.stl_hidden_size,
+                self.stl_latent_size,
+            ),
+        ]
+
+        self.layers = nn.Sequential(*layers)
 
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -174,10 +182,5 @@ class STL(nn.Module):
                     nn.init.xavier_normal_(m.weight.data, nn.init.calculate_gain('relu'))
 
     def forward(self, state):
-        x = F.relu(self.bn_fc1(self.fc1(state)))
-        x = F.relu(self.bn_fc2(self.fc2(x)))
-        x = F.relu(self.bn_fc3(self.fc3(x)))
-        x = self.fc4(x)
-
-        return x
+        return self.layers(state)
 

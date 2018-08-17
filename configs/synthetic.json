@@ -7,7 +7,8 @@
   "frame_stack_size": 1,
 
   "stl_latent_size": 8,
-  "stl_hidden_size": 1024,
+  "stl_hidden_size": 512,
+  "stl_layer_count": 4,
   "vae_learning_rate": 0.0005,
   "stl_learning_rate": 0.005,
   "discriminator_learning_rate": 0.0002,
@@ -18,7 +19,7 @@
   "vae_l1_loss_coeff": 1.0,
   "vae_mse_loss_coeff": 0.0,
   "vae_bce_loss_coeff": 1.0,
-  "vae_kld_loss_coeff": 0.0,
+  "vae_kld_loss_coeff": 0.0001,
   "vae_gan_loss_coeff": 0.0,
 
   "stl_mse_loss_coeff": 1.0,
