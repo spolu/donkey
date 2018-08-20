@@ -41,7 +41,7 @@ def run(args):
         args.train_capture_set_dir, args.test_capture_set_dir,
     )
 
-    while episode < 500:
+    while episode < 1000:
         synthetic.batch_train()
 
         loss = synthetic.batch_test()
