@@ -200,7 +200,16 @@ note:  pyTorch documentation calls for use of Anaconda, however Anaconda isn't a
 
 ### Install OpenCV 
 
-https://jkjung-avt.github.io/opencv3-on-tx2/
+Doing it out of virtual env, pre-install opencv only includes bindings with python 2.7. We need to recompile OpenCv after uninstalling it to have bindings for python 3.5 and python 2.7
+https://jkjung-avt.github.io/opencv3-on-tx2/ (make sure to follow comment on using cuda-9.0)
+
+Add package to virtual env, by executing
+`cp /usr/local/lib/python3.5/dist-packages/cv2.cpython-35m-aarch64-linux-gnu.so /home/nvidia/Envs/dr1ve/lib/python3.5/site-packages`
+
+### Launc Environment 
+
+Launch env
+'workon dr1ve'
 
 ## Read list
 
