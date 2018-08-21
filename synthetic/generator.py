@@ -45,7 +45,7 @@ class VAE(nn.Module):
         self.fc_latent = nn.Linear(self.stl_latent_size, 512*CONV_OUT_WIDTH*CONV_OUT_HEIGHT)
 
         # Decoder dropout layer
-        self.dropout = nn.Dropout(p=0.1)
+        # self.dropout = nn.Dropout(p=0.1)
 
         ## Decoder
         self.dcv1 = nn.ConvTranspose2d(512, 256, 3, stride=2, bias=False)
@@ -92,7 +92,8 @@ class VAE(nn.Module):
         return self.fc_mean(x), self.fc_logvar(x)
 
     def decode(self, z):
-        x = self.fc_latent(self.dropout(z))
+        # x = self.fc_latent(self.dropout(z))
+        x = self.fc_latent(z)
 
         x = x.view(-1, 512, CONV_OUT_WIDTH, CONV_OUT_HEIGHT)
 
