@@ -194,13 +194,13 @@ class Synthetic:
         self.best_vae_loss = 9999.0
 
     def _discriminator_loss(self, camera, encoded):
-        pred_fake = self.discriminator(encoded.detach())
+        pred_fake = self.discriminator(encoded)
         fake_loss = F.binary_cross_entropy(
             pred_fake,
             torch.zeros(*pred_fake.size()).to(self.device),
         )
 
-        pred_real = self.discriminator(camera.detach())
+        pred_real = self.discriminator(camera)
         real_loss = F.binary_cross_entropy(
             pred_real,
             torch.ones(*pred_real.size()).to(self.device),
@@ -209,42 +209,44 @@ class Synthetic:
         return fake_loss, real_loss
 
     def _vae_loss(self, camera, encoded, vae_mean, vae_logvar):
-        # Do not detach as we want the gradients to flow from D to G.
-        pred_gan = self.discriminator(encoded)
-        gan_loss = F.binary_cross_entropy(
-            pred_gan,
-            torch.ones(*pred_gan.size()).to(self.device),
-        )
-
         l1_loss = F.l1_loss(
-            encoded, camera.detach(),
+            encoded, camera,
         )
         mse_loss = F.mse_loss(
-            encoded, camera.detach(),
+            encoded, camera,
         )
         bce_loss = F.binary_cross_entropy(
-            encoded, camera.detach(),
+            encoded, camera,
         )
         kld_loss = -0.5 * torch.sum(
             1 + vae_logvar - vae_mean.pow(2) - vae_logvar.exp()
         )
         kld_loss /= encoded.size(0) * encoded.size(1) * encoded.size(2)
 
-        return l1_loss, mse_loss, bce_loss, kld_loss, gan_loss
+        return l1_loss, mse_loss, bce_loss, kld_loss
+
+    def _vae_gan_loss(self, encoded):
+        pred_gan = self.discriminator(encoded)
+        gan_loss = F.binary_cross_entropy(
+            pred_gan,
+            torch.ones(*pred_gan.size()).to(self.device),
+        )
+
+        return gan_loss
 
     def _stl_loss(self, vae_latent, stl_latent, camera, generated):
         mse_loss = F.mse_loss(
-            stl_latent, vae_latent.detach(),
+            stl_latent, vae_latent,
         )
 
         e2e_l1_loss = F.l1_loss(
-            generated, camera.detach(),
+            generated, camera,
         )
         e2e_mse_loss = F.mse_loss(
-            generated, camera.detach(),
+            generated, camera,
         )
         e2e_bce_loss = F.binary_cross_entropy(
-            generated, camera.detach(),
+            generated, camera,
         )
 
         return mse_loss, e2e_l1_loss, e2e_mse_loss, e2e_bce_loss
@@ -264,8 +266,10 @@ class Synthetic:
                 self.discriminator.set_requires_grad(True)
                 self.discriminator_optimizer.zero_grad()
 
+                # Detach `encoded` as we don't want the gradients to flow to
+                # the generator.
                 fake_loss, real_loss = self._discriminator_loss(
-                    camera, encoded,
+                    camera.detach(), encoded.detach(),
                 )
 
                 discriminator_loss = (
@@ -280,8 +284,19 @@ class Synthetic:
                 self.discriminator.set_requires_grad(False)
                 self.vae_optimizer.zero_grad()
 
-                vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+                vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss = self._vae_loss(
                     camera, encoded, vae_mean, vae_logvar,
+                )
+
+                # Do not let the gradient flow from the discriminator to the
+                # encoder of the generator and do not detach `encoded` as we
+                # want the gradients to flow from the discriminator to the
+                # decoder part of the generator.
+                _, encoded, _, _ = self.vae(
+                    camera.detach(), deterministic=True, detach_latent=True,
+                )
+                vae_gan_loss = self._vae_gan_loss(
+                    encoded,
                 )
 
                 vae_loss = (
@@ -294,6 +309,18 @@ class Synthetic:
                 vae_loss.backward()
 
                 self.vae_optimizer.step()
+
+                if i % 100 == 0:
+                    if self.save_dir:
+                        cv2.imwrite(
+                            os.path.join(self.save_dir, '{}_synthetic_original.jpg'.format(i)),
+                            (255 * camera[0][0].to('cpu')).detach().numpy(),
+                        )
+                        cv2.imwrite(
+                            os.path.join(self.save_dir, '{}_synthetic_encoded.jpg'.format(i)),
+                            (255 * encoded[0][0].to('cpu')).detach().numpy(),
+                        )
+
 
                 print(
                     ("TRAIN_VAE {} batch {}-{} " + \
@@ -334,7 +361,7 @@ class Synthetic:
                 self.stl_optimizer.zero_grad()
 
                 stl_mse_loss, stl_e2e_l1_loss, stl_e2e_mse_loss, stl_e2e_bce_loss = self._stl_loss(
-                    vae_latent, stl_latent, camera, generated,
+                    vae_latent.detach(), stl_latent, camera.detach(), generated,
                 )
 
                 stl_loss = (
@@ -400,8 +427,11 @@ class Synthetic:
             generated = self.vae.decode(stl_latent.detach())
 
             # VAE loss.
-            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss, vae_gan_loss = self._vae_loss(
+            vae_l1_loss, vae_mse_loss, vae_bce_loss, vae_kld_loss = self._vae_loss(
                 camera, encoded, vae_mean, vae_logvar,
+            )
+            vae_gan_loss = self._vae_gan_loss(
+                encoded,
             )
 
             vae_loss = (
