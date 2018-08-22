@@ -29,7 +29,8 @@ class Track:
         ))
 
         self.points = self.script.points()
-        self.track_width = self.script.width
+        #width is use as half width in the unity script
+        self.track_width = self.script.width 
         self.track_span = self.script.span
 
         # interpolate to first point
@@ -312,16 +313,22 @@ class Script:
                 # print("{}-{}".format(command, arg))
 
                 e = None
+                #GPS value define span distance
                 if command == "GSP":
                     self.span = float(arg)
+                #GTW value define track width
                 if command == "GTW":
                     self.width = float(arg)
+                #DY define the angle difference between two spans in degreee 
                 if command == "DY":
                     e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
+                #L number of spans rotating to the left 
                 if command == "L":
                     e = ScriptElem(ScriptElemState.CURVE, -1.0, int(arg))
+                #L number of spans rotating to the right 
                 if command == "R":
                     e = ScriptElem(ScriptElemState.CURVE, 1.0, int(arg))
+                #S is go straingth for N span
                 if command == "S":
                     e = ScriptElem(ScriptElemState.STRAIGHT, 0, int(arg))
 

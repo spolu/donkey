@@ -8,7 +8,7 @@ public class RoadBuilder : MonoBehaviour {
 
 	public GameObject roadPrefabMesh;
 
-	public int iRoadTexture = 0;
+	public int iRoadTexture = 1;
 	public Texture2D[] roadTextures;
 
 	Texture2D customRoadTexure;
