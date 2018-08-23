@@ -109,4 +109,20 @@ class InputFilter():
         if self.input_filter == 'canny':
             img = cv2.Canny(np.uint8(img), 50, 150, apertureSize = 3,)
 
+        if self.input_filter == 'warp_canny':
+            pts1 = np.float32([
+                [13, 33], [54, 8], [147, 33], [107, 8]
+            ])
+            pts2 = np.float32([
+                [60, 80], [60, 20], [120, 80], [120, 20]
+            ])
+            M = cv2.getPerspectiveTransform(pts1, pts2)
+
+            img = cv2.warpPerspective(
+                    img, M, (160,90),
+                )
+
+            img = cv2.Canny(np.uint8(img), 50, 150, apertureSize = 3,)
+
+
         return img
