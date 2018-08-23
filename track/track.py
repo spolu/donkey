@@ -29,18 +29,18 @@ class Track:
         ))
 
         self.points = self.script.points()
-        #width is use as half width in the unity script
-        self.track_width = self.script.width 
+        # `track_width` is used as half width in the unity script.
+        self.track_width = self.script.width
         self.track_span = self.script.span
 
-        # interpolate to first point
+        # Iinterpolate to first point.
         self.points.append(np.array([
             0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
             0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
             0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
         ]))
 
-        # recompute length
+        # Recompute length.
         self.track_length = 0.0
         for i in range(len(self.points)):
             self.track_length += np.linalg.norm(
@@ -87,14 +87,14 @@ class Track:
                 self.points[j] = np.dot(rot_y(theta), self.points[j] - v)
             self.points = self.points[1:] + self.points[:1]
 
-        # interpolate to first point
+        # Interpolate to first point.
         self.points.append([
             0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
             0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
             0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
         ])
 
-        # recompute length
+        # Recompute length.
         self.track_length = 0.0
         for i in range(len(self.points)):
             self.track_length += np.linalg.norm(
@@ -313,22 +313,22 @@ class Script:
                 # print("{}-{}".format(command, arg))
 
                 e = None
-                #GPS value define span distance
+                # GPS value define span distance.
                 if command == "GSP":
                     self.span = float(arg)
-                #GTW value define track width
+                # GTW value define track (half) width.
                 if command == "GTW":
                     self.width = float(arg)
-                #DY define the angle difference between two spans in degreee 
+                # DY define the angle difference between two spans in degreee.
                 if command == "DY":
                     e = ScriptElem(ScriptElemState.ANGLE, float(arg), 0)
-                #L number of spans rotating to the left 
+                # L number of spans rotating to the left.
                 if command == "L":
                     e = ScriptElem(ScriptElemState.CURVE, -1.0, int(arg))
-                #L number of spans rotating to the right 
+                # L number of spans rotating to the right.
                 if command == "R":
                     e = ScriptElem(ScriptElemState.CURVE, 1.0, int(arg))
-                #S is go straingth for N span
+                # S is go straingth for N span.
                 if command == "S":
                     e = ScriptElem(ScriptElemState.STRAIGHT, 0, int(arg))
 
