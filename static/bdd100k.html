@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <script src="/static/jquery-3.3.1.min.js"></script>
+    <script src="/static/bdd100k.js"></script>
+    <style>
+      .selectors .selector {
+        margin-left: 10px;
+        background-color: #eee;
+        cursor: pointer;
+      }
+      .selectors .selector.selected {
+        background-color: #aaa;
+      }
+
+      #data {
+        margin-top: 10px;
+      }
+      #pagination {
+        margin-top: 10px;
+      }
+
+      #image {
+        position: fixed;
+        top: 50px;
+        left: 700px;
+        background-size: 100%;
+        width: 640px;
+        height: 360px;
+        border: 1px solid #eee;
+        z-index: 1;
+      }
+      #annotation {
+        position: fixed;
+        top: 50px;
+        left: 700px;
+        width: 640px;
+        height: 360px;
+        z-index: 2;
+      }
+      #annotation-canvas {
+        width: 640px;
+        height: 360px;
+        border: 1px solid blue;
+      }
+
+      #data {
+        border-collapse: collapse;
+      }
+      #data td {
+        border: 1px solid #eee;
+        padding: 4px;
+      }
+      #data .active {
+        background-color: #eee;
+        cursor: pointer;
+      }
+      #data .true.active.selected {
+        background-color: #aae;
+      }
+      #data .false.active.selected {
+        background-color: #eaa;
+      }
+      #data .view {
+        text-decoration: underline;
+        cursor: zoom-in;
+      }
+      #data .objects {
+        text-decoration: underline;
+        cursor: zoom-in;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="dataset">
+      dataset: <span class="selectors"></span>
+    </div>
+    <div id="weather">
+      weather: <span class="selectors"></span>
+    </div>
+    <div id="scene">
+      scene: <span class="selectors"></span>
+    </div>
+    <div id="timeofday">
+      timeofday: <span class="selectors"></span>
+    </div>
+    <div id="active">
+      active: <span class="selectors"></span>
+    </div>
+
+    <div id="image"></div>
+    <div id="annotation">
+      <canvas id="annotation-canvas" width="640" height="360"></canvas>
+    </div>
+
+    <div id="pagination">
+      <span id="visible">0-0</span> / <span id="total">0</span> 
+    </div>
+    <table id="data" cellspacing=0></table>
+  </body>
+</html>

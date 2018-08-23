@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <script src="/static/jquery-3.3.1.min.js"></script>
+    <script src="/static/viewer.js"></script>
+  </head>
+  <body>
+    <div style="">
+      <canvas
+        id="track"
+        width="800" height="800"
+        style="
+          border:1px solid #d3d3d3;
+          transform: scalex(0.8) scaley(0.8);
+        "></canvas>
+    </div>
+
+    <div style="
+        position: absolute;
+        left: 800px;
+        top: 100px;
+        border: 1px solid $d3d3d3;
+      " id="annotator">
+      <div>
+        delta: <input type="number" name="delta" id="delta" value="9999">
+      </div>
+      <div>
+        min: <input type="number" name="min" id="min" value="0">
+      </div>
+      <div>
+        camera: <input type="number" name="index" id="index" value="0">
+      <div id="camera" style="
+        margin-top: 10px;
+        width: 160px;
+        height: 70px;
+        background-color: grey;
+      "></div>
+      <div id="landmarks" style="
+        margin-top: 20px;
+      "></div>
+    </div>
+
+  </body>
+</html>

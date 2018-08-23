@@ -10,7 +10,7 @@
 
   "stl_layer_count": 4,
   "stl_latent_size": 8,
-  "stl_hidden_size": 512,
+  "stl_hidden_size": 1024,
   "frame_stack_size": 1,
 
   "simulation_type": "synthetic",
