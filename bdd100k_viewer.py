@@ -125,7 +125,11 @@ SELECT dataset FROM labels WHERE name=?
     with open(os.path.join(_data_dir, 'labels/100k/' + dataset + '/' + name + '.json'), "r") as f:
         label = json.load(f)
         for o in label['frames'][0]['objects']:
-            if o['category'] == 'car' or o['category'] == 'truck':
+            if o['category'] in [
+                    'traffic sign',
+                    'car', 'truck', 'bus',
+                    'lane/road curb', 'lane/single white', 'lane/single yellow',
+            ] and ('direction' not in o['attributes'] or o['attributes']['direction'] == 'parallel'):
                 objects.append(o)
 
     return jsonify(objects)

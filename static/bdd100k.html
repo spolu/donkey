@@ -29,15 +29,16 @@
         border: 1px solid #eee;
         z-index: 1;
       }
-      #annotation {
+      #objects {
         position: fixed;
         top: 50px;
         left: 700px;
         width: 640px;
         height: 360px;
         z-index: 2;
+        opacity: 0.4;
       }
-      #annotation-canvas {
+      #objects-canvas {
         width: 640px;
         height: 360px;
         border: 1px solid blue;
@@ -88,8 +89,8 @@
     </div>
 
     <div id="image"></div>
-    <div id="annotation">
-      <canvas id="annotation-canvas" width="640" height="360"></canvas>
+    <div id="objects">
+      <canvas id="objects-canvas" width="640" height="360"></canvas>
     </div>
 
     <div id="pagination">

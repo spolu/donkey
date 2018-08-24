@@ -1,4 +1,10 @@
 PAGE_SIZE = 100
+COLOR_FOR_CATEGORIES = {
+  'traffic sign': '#0f0',
+  'car': '#f00',
+  'truck': '#f40',
+  'bus': '#f80',
+}
 
 _data = []
 _page = 0
@@ -30,7 +36,7 @@ var page_refresh = function() {
     );
 
     (function(row, r) {
-      t = document.getElementById("annotation-canvas");
+      t = document.getElementById("objects-canvas");
       row.mouseover(function() {
         url = '/images/' + r[0] + '.jpg';
         $('#image').css('background-image', 'url(' + url + ')');
@@ -41,16 +47,52 @@ var page_refresh = function() {
       row.find('.objects').mouseover(function() {
         $.get("/videos/" + r[0] + '/objects', function(data) {
           ctx = t.getContext("2d");
-          // console.log(data[0]);
           for (i in data) {
-            console.log(data[i])
-            ctx.fillStyle="red";
-            ctx.fillRect(
-              Math.floor(data[i].box2d['x1'] / 2),
-              Math.floor(data[i].box2d['y1'] / 2),
-              Math.floor((data[i].box2d['x2'] - data[i].box2d['x1']) / 2),
-              Math.floor((data[i].box2d['y2'] - data[i].box2d['y1']) / 2),
-            );
+            if (data[i]['box2d']) {
+              ctx.fillStyle=COLOR_FOR_CATEGORIES[data[i]['category']];
+              ctx.fillRect(
+                Math.floor(data[i].box2d['x1'] / 2),
+                Math.floor(data[i].box2d['y1'] / 2),
+                Math.floor((data[i].box2d['x2'] - data[i].box2d['x1']) / 2),
+                Math.floor((data[i].box2d['y2'] - data[i].box2d['y1']) / 2),
+              );
+            }
+            if (data[i]['poly2d']) {
+              ctx.strokeStyle = "#00f"
+              ctx.beginPath()
+              data[i].poly2d = data[i].poly2d.reverse()
+              ctx.moveTo(
+                Math.floor(data[i].poly2d[0][0] / 2),
+                Math.floor(data[i].poly2d[0][1] / 2),
+              )
+              for (j = 0; j < data[i].poly2d.length;) {
+                if (data[i].poly2d[j][2] == "L") {
+                  ctx.lineTo(
+                    Math.floor(data[i].poly2d[j][0] / 2),
+                    Math.floor(data[i].poly2d[j][1] / 2),
+                  )
+                  j += 1
+                  continue
+                }
+                if (data[i].poly2d[j][2] == "C") {
+                   ctx.bezierCurveTo(
+                     Math.floor(data[i].poly2d[j][0] / 2),
+                     Math.floor(data[i].poly2d[j][1] / 2),
+                     Math.floor(data[i].poly2d[j+1][0] / 2),
+                     Math.floor(data[i].poly2d[j+1][1] / 2),
+                     Math.floor(data[i].poly2d[j+2][0] / 2),
+                     Math.floor(data[i].poly2d[j+2][1] / 2),
+                   )
+                  // ctx.lineTo(
+                  //   Math.floor(data[i].poly2d[j][0] / 2),
+                  //   Math.floor(data[i].poly2d[j][1] / 2),
+                  // )
+                  j += 3
+                  continue
+                }
+              }
+              ctx.stroke()
+            }
           }
         })
       });
