@@ -22,6 +22,7 @@ _attributes = {
     'weather': [],
     'scene': [],
     'timeofday': [],
+    'segmented': [],
     'active': [],
 }
 
@@ -52,12 +53,14 @@ WHERE
   AND weather IN ({})
   AND scene IN ({})
   AND timeofday IN ({})
+  AND segmented IN ({})
   AND active IN ({})
 '''.format(
     ','.join(['?']*len(query['dataset'])),
     ','.join(['?']*len(query['weather'])),
     ','.join(['?']*len(query['scene'])),
     ','.join(['?']*len(query['timeofday'])),
+    ','.join(['?']*len(query['segmented'])),
     ','.join(['?']*len(query['active'])),
 )
     results = []
@@ -67,6 +70,7 @@ WHERE
             query['weather'] +
             query['scene'] +
             query['timeofday'] +
+            query['segmented'] +
             query['active']
     ):
         results += [r]
