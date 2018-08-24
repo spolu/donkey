@@ -298,12 +298,12 @@ class Donkey:
                 camera_raw,
                 {
                     'time': observation.time,
-                    'simulation_track_randomization': self.track.randomization,
+                    'simulation_track_rotation_randomization': self.track.rotation_randomization,
                     'simulation_position': observation.position.tolist(),
                     'simulation_velocity': observation.velocity.tolist(),
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
                     'simulation_track_coordinates': self.track.coordinates(
-                        observation.position, derandomized=True,
+                        observation.position,
                     ).tolist(),
                     'simulation_track_angle': observation.track_angles[0],
                 },
@@ -402,8 +402,8 @@ class Donkey:
         self.step_count += 1
 
         # print("PROGRESS/POSITION: {} {}".format(
-        #     self.track.progress(self.track.coordinates(observation.position, derandomized=True)),
-        #     self.track.position(self.track.coordinates(observation.position, derandomized=True)),
+        #     self.track.progress(self.track.coordinates(observation.position)),
+        #     self.track.position(self.track.coordinates(observation.position)),
         # ))
 
         if not done and self.do_capture:
@@ -412,12 +412,12 @@ class Donkey:
                 camera_raw,
                 {
                     'time': observation.time,
-                    'simulation_track_randomization': self.track.randomization,
+                    'simulation_track_rotation_randomization': self.track.rotation_randomization,
                     'simulation_position': observation.position.tolist(),
                     'simulation_velocity': observation.velocity.tolist(),
                     'simulation_angular_velocity': observation.angular_velocity.tolist(),
                     'simulation_track_coordinates': self.track.coordinates(
-                        observation.position, derandomized=True,
+                        observation.position,
                     ).tolist(),
                     'simulation_track_angle': observation.track_angles[0],
                 },

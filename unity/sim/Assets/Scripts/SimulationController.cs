@@ -238,17 +238,30 @@ public class SimulationController : MonoBehaviour
 		// Parse track
 		string trackPath = ev.data.GetField("track_path").str;
 		float trackWidth = float.Parse(ev.data.GetField("track_width").str);
-        
+		string startPosition = ev.data.GetField("start_position").str;
+		float startAngle = float.Parse(ev.data.GetField("start_angle").str);
+
 		// Redraw the track
 		roadBuilder.DestroyRoad();
 		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth);
 
 		Vector3 trackStartPos = Vector3.zero;
-		if (path != null)
-			trackStartPos = path.nodes[0].pos;
+        // if (path != null):
+        //    trackStartPos = path.nodes[0].pos;
+		if (startPosition.Length > 0)
+		{
+			string[] tokens = startPosition.Split(',');
+			if (tokens.Length == 3)
+			{
+				trackStartPos.x = float.Parse(tokens[0]);
+				trackStartPos.z = float.Parse(tokens[2]);
+			}
+		}
 		trackStartPos.y = carStartY;
 
-		car.Set(trackStartPos, Quaternion.identity);
+		Debug.Log("Received: type=open sid=" + _socket.sid);
+
+		car.Set(trackStartPos, Quaternion.AngleAxis(Mathf.Rad2Deg * startAngle, Vector3.up));
 
 		Resume ();
 	}

@@ -29,7 +29,7 @@ _synthetic = None
 
 def transition():
     state = State(
-        _d.track.randomization,
+        _d.track.rotation_randomization,
         _observations.position,
         _observations.velocity,
         _observations.angular_velocity,

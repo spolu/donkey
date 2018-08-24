@@ -130,7 +130,7 @@ class Engine:
         track_angle = self.track.angle(position, velocity, 0)
 
         return State(
-            self.track.randomization,
+            self.track.rotation_randomization,
             position,
             velocity,
             angular_velocity,

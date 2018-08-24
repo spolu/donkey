@@ -70,7 +70,7 @@ class Synthetic:
     def _generator_capture_loader(self, items):
         states = [
             torch.from_numpy(State(
-                item['simulation_track_randomization'],
+                item['simulation_track_rotation_randomization'],
                 item['simulation_position'],
                 item['simulation_velocity'],
                 item['simulation_angular_velocity'],

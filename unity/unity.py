@@ -222,6 +222,10 @@ class Unity:
             _sio.emit('reset', data={
                 'track_path': track.serialize(),
                 'track_width': str(track.width()),
+                'start_position': np.array2string(
+                    track.start_position, separator=',',
+                )[1:][:-1],
+                'start_angle': str(track.start_angle),
             }, room=self.client['sid'])
 
         self.client['condition'].wait()
@@ -245,6 +249,10 @@ class Unity:
             _sio.emit('reset', data={
                 'track_path': track.serialize(),
                 'track_width': str(track.width()),
+                'start_position': np.array2string(
+                    track.start_position, separator=',',
+                )[1:][:-1],
+                'start_angle': str(track.start_angle),
             }, room=self.client['sid'])
 
         self.client['condition'].wait()

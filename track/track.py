@@ -48,6 +48,27 @@ class Track:
             )
         self.randomization = 0
 
+        # Center the track in space.
+        min_x = 0;
+        max_x = 0;
+        min_z = 0;
+        max_z = 0;
+        for p in self.points:
+            min_x = min(min_x, p[0])
+            max_x = max(max_x, p[0])
+            min_z = min(min_z, p[2])
+            max_z = max(max_z, p[2])
+        for i in range(len(self.points)):
+            self.points[i] = self.points[i] + np.array(
+                [-(max_x+min_x)/2.0, 0, -(max_z+min_z)/2.0]
+            )
+
+        self.start_angle = 0.0
+        self.start_position = self.points[0]
+        self.rotation_randomization = 0.0
+        self.start_position_randomization = 0.0
+        self.initial_points = np.copy(self.points)
+
     def width(self):
         return self.track_width
 
@@ -57,50 +78,54 @@ class Track:
     def length(self):
         return self.track_length
 
-    def randomize(self, symmetry=False):
+    def randomize(self, start_position=True, rotation=True):
         """
         Randomize track by randomly applying symetry to the track and picking
         translating such that the starting location is picked randomly.
         """
-        self.points = self.script.points()
+        self.points = np.copy(self.initial_points)
+        self.start_angle = 0.0
+        self.start_position = self.points[0]
 
-        if symmetry:
-            if random.randint(0, 1) == 1:
-                for i in range(len(self.points)):
-                    self.points[i][0] = -self.points[i][0]
-            if random.randint(0, 1) == 1:
-                for i in range(len(self.points)):
-                    self.points[i][2] = -self.points[i][2]
-
-        self.randomization = random.randint(0, len(self.points)-1)
-
-        for i in range(self.randomization):
-            v = self.points[1] - self.points[0]
+        if rotation:
+            self.rotation_randomization = random.uniform(0, 1)
+            theta = self.rotation_randomization * 2 * math.pi
             for j in range(len(self.points)):
-                u = [0, 0, 1]
+                self.points[j] = np.dot(rot_y(theta), self.points[j])
+            self.start_angle = theta
+            self.start_position = self.points[0]
+        else:
+            self.rotation_randomization = 0.0
+
+        if start_position:
+            self.start_position_randomization = random.uniform(0, 1)
+            start_index = int(
+                self.start_position_randomization * len(self.points)
+            ) % len(self.points)
+
+            u = self.points[1]-self.points[0]
+            u = u / np.linalg.norm(u)
+            for i in range(1, start_index+1):
+                v = self.points[i] - self.points[i-1]
                 w = v / np.linalg.norm(v)
                 theta = -np.sign(np.linalg.det([
                     u,
                     w,
                     [0,1,0],
-                ])) * np.arccos(np.dot(u, w))
-                self.points[j] = np.dot(rot_y(theta), self.points[j] - v)
-            self.points = self.points[1:] + self.points[:1]
+                ])) * np.arccos(min(1.0, np.dot(u, w)))
+                self.start_angle -= theta
+                u = w
+            self.start_position = self.points[start_index]
+        else:
+            self.start_position_randomization = 0.0
 
-        # Interpolate to first point.
-        self.points.append([
-            0.001 * self.points[-1][0] + 0.999 * self.points[0][0],
-            0.001 * self.points[-1][1] + 0.999 * self.points[0][1],
-            0.001 * self.points[-1][2] + 0.999 * self.points[0][2],
-        ])
-
-        # Recompute length.
-        self.track_length = 0.0
-        for i in range(len(self.points)):
-            self.track_length += np.linalg.norm(
-                self.points[self.next(i)] - self.points[i],
-            )
-
+        # if symmetry:
+        #     if random.randint(0, 1) == 1:
+        #         for i in range(len(self.points)):
+        #             self.points[i][0] = -self.points[i][0]
+        #     if random.randint(0, 1) == 1:
+        #         for i in range(len(self.points)):
+        #             self.points[i][2] = -self.points[i][2]
 
     def prev(self, point):
         if point - 1 < 0:
@@ -187,16 +212,10 @@ class Track:
         t = self.unity(position, offset)
         return np.cross(t, velocity)[1]
 
-    def coordinates(self, position, derandomized=False):
+    def coordinates(self, position):
         closests = self.closests(position, 0)
 
         p = 0.0
-        if derandomized:
-            for i in range(len(self.points)-self.randomization, len(self.points)):
-                p += np.linalg.norm(
-                    self.points[self.next(i)] - self.points[i],
-                )
-
         for i in range(closests[1]):
             p += np.linalg.norm(
                 self.points[self.next(i)] - self.points[i],
@@ -365,7 +384,4 @@ class Script:
         return points
 
 if __name__ == "__main__":
-    track = Track("newworld")
-    print(track.invert(track.progress(np.array([0, 0, 0])), 1.0))
-    print(track.invert(track.progress(np.array([1.0, 0, 0])), track.position(np.array([1.0, 0, 0]))))
-    print(track.invert(track.progress(np.array([1.0, 0, 5.0])), track.position(np.array([1.0, 0, 5.0]))))
+    track = Track("renault_digital_season3")

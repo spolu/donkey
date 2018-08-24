@@ -10,7 +10,7 @@ import torch.utils.data as data
 
 _stored_params = [
     'time',
-    'simulation_track_randomization',
+    'simulation_track_rotation_randomization',
     'simulation_position',
     'simulation_velocity',
     'simulation_angular_velocity',
