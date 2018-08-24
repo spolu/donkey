@@ -21,11 +21,11 @@ class JetsonCamera(BaseCamera):
         gst_str = ('nvcamerasrc ! '
                         'video/x-raw(memory:NVMM), '
                         'width=(int)1280, height=(int)720, '
-                        'format=(string)I420, framerate=(fraction)120/1 ! '
+                        'format=(string)I420, framerate=(fraction){}/1 ! '
                         'nvvidconv ! '
                         'video/x-raw, width=(int){}, height=(int){}, '
                         'format=(string)BGRx ! '
-                        'videoconvert ! appsink').format(resolution[0], resolution[1])
+                        'videoconvert ! appsink').format(framerate,resolution[0], resolution[1])
         self.videoCapture = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
         # initialize the frame and the variable used to indicate

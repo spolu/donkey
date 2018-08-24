@@ -30,9 +30,15 @@ class Driver:
         self.load_dir = cfg.get('reinforce_load_dir')
         assert self.load_dir is not None
 
-        self.policy.load_state_dict(
-            torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
-        )
+        if cfg.get('device') != 'cpu':
+            self.policy.load_state_dict(
+                torch.load(self.load_dir + "/policy.pt"),
+            )
+        else:
+            self.policy.load_state_dict(
+                torch.load(self.load_dir + "/policy.pt", map_location='cpu'),
+            )
+
         self.policy.eval()
 
         self.hiddens = torch.zeros(1, self.hidden_size).to(self.device)
@@ -50,7 +56,6 @@ class Driver:
 
         camera = self.input_filter.apply(camera) / 127.5 - 1
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
-
         _, action, hiddens, _, _ = self.policy.action(
             camera.unsqueeze(0).detach(),
             self.hiddens.detach(),

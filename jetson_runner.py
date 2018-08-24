@@ -15,7 +15,7 @@ from track import Track
 
 #import parts
 from jetson.parts.camera import JetsonCamera
-# from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
+from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.driver import Driver
 from raspi.parts.capturer import Capturer
 from raspi.parts.web_controller.web import LocalWebController
@@ -44,15 +44,15 @@ THROTTLE_REVERSE_PWM = 320
 
 def drive(args):
     cfg = Config(args.config_path)
+    # cfg.override('cuda', True)
 
-    cfg.override('cuda', False)
     if args.reinforce_load_dir != None:
         cfg.override('reinforce_load_dir', args.reinforce_load_dir)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
 
-    cam = JetsonCamera(resolution=CAMERA_RESOLUTION)
+    cam = JetsonCamera(resolution=CAMERA_RESOLUTION, framerate=CAMERA_FRAMERATE)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
     if args.reinforce_load_dir is not None and cfg is not None:
