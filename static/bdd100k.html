@@ -43,6 +43,17 @@
         height: 360px;
         border: 1px solid blue;
       }
+      #segmentation {
+        position: fixed;
+        top: 50px;
+        left: 700px;
+        background-size: 100%;
+        width: 640px;
+        height: 360px;
+        border: 1px solid #eee;
+        opacity: 0.4;
+        z-index: 3;
+      }
 
       #data {
         border-collapse: collapse;
@@ -62,11 +73,15 @@
         background-color: #eaa;
       }
       #data .view {
-        text-decoration: underline;
+        background-color: #eee;
         cursor: zoom-in;
       }
       #data .objects {
-        text-decoration: underline;
+        background-color: #eee;
+        cursor: zoom-in;
+      }
+      #data .segmentation {
+        background-color: #eee;
         cursor: zoom-in;
       }
     </style>
@@ -95,6 +110,7 @@
     <div id="objects">
       <canvas id="objects-canvas" width="640" height="360"></canvas>
     </div>
+    <div id="segmentation"></div>
 
     <div id="pagination">
       <span id="visible">0-0</span> / <span id="total">0</span> 

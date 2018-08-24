@@ -32,7 +32,8 @@ var page_refresh = function() {
       '  <span data-name='+r[0]+' class="active false">n</span>'+
       '</td>'+
       '<td><span class="view">view</span></td>' +
-      '<td><span class="objects">objects</span></td>'
+      '<td><span class="objects">objects</span></td>' +
+      '<td><span class="segmentation"></span></td>'
     );
 
     (function(row, r) {
@@ -44,6 +45,40 @@ var page_refresh = function() {
       row.mouseout(function() {
         $('#image').css('background-image', 'none');
       });
+    })(row, r);
+
+    (function(row, r) {
+      if (r[5] == 'true') {
+        row.find('.active.true').addClass('selected')
+      } else {
+        row.find('.active.false').addClass('selected')
+      }
+
+      row.find('.active.true').click(function() {
+        if (row.find('.active.false').hasClass('selected')) {
+          row.find('.active.true').toggleClass('selected');
+          row.find('.active.false').toggleClass('selected');
+          $.ajax({
+            type: 'POST',
+            url: '/videos/'+row.find('.active.false').attr('data-name'),
+            contentType: 'application/json',
+            data: JSON.stringify({ active: 'true' }),
+          });
+        }
+      });
+      row.find('.active.false').click(function() {
+        if (row.find('.active.true').hasClass('selected')) {
+          row.find('.active.true').toggleClass('selected');
+          row.find('.active.false').toggleClass('selected');
+          $.ajax({
+            type: 'POST',
+            url: '/videos/'+row.find('.active.false').attr('data-name'),
+            contentType: 'application/json',
+            data: JSON.stringify({ active: 'false' }),
+          });
+        }
+      })
+
       row.find('.objects').mouseover(function() {
         $.get("/videos/" + r[0] + '/objects', function(data) {
           ctx = t.getContext("2d");
@@ -101,40 +136,21 @@ var page_refresh = function() {
         ctx.clearRect(0, 0, t.width, t.height)
       });
     })(row, r);
-    row.appendTo('#data');
 
-    (function(row) {
-      if (r[5] == 'true') {
-        row.find('.active.true').addClass('selected')
-      } else {
-        row.find('.active.false').addClass('selected')
+    (function(row, r) {
+      if (r[6] == 'true') {
+        row.find('.segmentation').text('segmentation')
+        row.find('.segmentation').mouseover(function() {
+          url = '/segmentations/' + r[0] + '.png';
+          $('#segmentation').css('background-image', 'url(' + url + ')');
+        });
+        row.find('.segmentation').mouseout(function() {
+          $('#segmentation').css('background-image', 'none');
+        });
       }
+    })(row, r)
 
-      row.find('.active.true').click(function() {
-        if (row.find('.active.false').hasClass('selected')) {
-          row.find('.active.true').toggleClass('selected');
-          row.find('.active.false').toggleClass('selected');
-          $.ajax({
-            type: 'POST',
-            url: '/videos/'+row.find('.active.false').attr('data-name'),
-            contentType: 'application/json',
-            data: JSON.stringify({ active: 'true' }),
-          });
-        }
-      });
-      row.find('.active.false').click(function() {
-        if (row.find('.active.true').hasClass('selected')) {
-          row.find('.active.true').toggleClass('selected');
-          row.find('.active.false').toggleClass('selected');
-          $.ajax({
-            type: 'POST',
-            url: '/videos/'+row.find('.active.false').attr('data-name'),
-            contentType: 'application/json',
-            data: JSON.stringify({ active: 'false' }),
-          });
-        }
-      })
-    })(row);
+    row.appendTo('#data');
   }
 
   $('#visible').text(PAGE_SIZE*_page + '-' + (PAGE_SIZE*(_page+1)-1))

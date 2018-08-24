@@ -104,12 +104,29 @@ SELECT dataset FROM labels WHERE name=?
     ''',(
         name,
     )).fetchone()[0]
-    print(dataset)
 
     return send_file(
         os.path.join(_data_dir, 'images/100k', dataset, name + '.jpg'),
         attachment_filename='%s.jpg'.format(name),
         mimetype='image/jpeg',
+    )
+
+@_app.route('/segmentations/<name>.png', methods=['GET'])
+def retrieve_segmentation(name):
+    global _data_dir
+    global _conn
+
+    c = _conn.cursor()
+    dataset = c.execute('''
+SELECT dataset FROM labels WHERE name=?
+    ''',(
+        name,
+    )).fetchone()[0]
+
+    return send_file(
+        os.path.join(_data_dir, 'seg/color_labels', dataset, name + '_train_color.png'),
+        attachment_filename='%s.png'.format(name),
+        mimetype='image/png',
     )
 
 @_app.route('/videos/<name>/objects', methods=['GET'])
