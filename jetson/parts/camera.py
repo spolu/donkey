@@ -1,8 +1,12 @@
 import os
 import time
 import numpy as np
-from PIL import Image
 import glob
+import sys
+import argparse
+import cv2
+
+ # import pdb; pdb.set_trace()
 
 class BaseCamera:
 
@@ -10,42 +14,40 @@ class BaseCamera:
         return self.frame
 
 class JetsonCamera(BaseCamera):
-    def __init__(self, resolution=(120, 160), framerate=20):
-        from picamera.array import PiRGBArray
-        from picamera import PiCamera
+    def __init__(self, resolution=(1280, 720), framerate=120):
         resolution = (resolution[1], resolution[0])
+        framerate = framerate
         # initialize the camera and stream
-        self.camera = PiCamera() #PiCamera gets resolution (height, width)
-        self.camera.resolution = resolution
-        self.camera.framerate = framerate
-        self.rawCapture = PiRGBArray(self.camera, size=resolution)
-        self.stream = self.camera.capture_continuous(self.rawCapture,
-            format="rgb", use_video_port=True)
+        gst_str = ('nvcamerasrc ! '
+                        'video/x-raw(memory:NVMM), '
+                        'width=(int)1280, height=(int)720, '
+                        'format=(string)I420, framerate=(fraction)120/1 ! '
+                        'nvvidconv ! '
+                        'video/x-raw, width=(int){}, height=(int){}, '
+                        'format=(string)BGRx ! '
+                        'videoconvert ! appsink').format(resolution[0], resolution[1])
+        self.videoCapture = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
 
         # initialize the frame and the variable used to indicate
         # if the thread should be stopped
-        self.frame = None
         self.on = True
-
+        self.frame = None
         print('JetsonCamera loaded... warming camera')
         time.sleep(2)
 
 
     def run(self):
-        f = next(self.stream)
-        frame = f.array
-        self.rawCapture.truncate(0)
+        _, frame = self.videoCapture.read()
         return frame
 
     def update(self):
         print("JetsonCamera update")
         # keep looping infinitely until the thread is stopped
-        for f in self.stream:
+        while self.on:
             # grab the frame from the stream and clear the stream in
             # preparation for the next frame
-            self.frame = f.array
-            self.rawCapture.truncate(0)
-
+            _, img = self.videoCapture.read()
+            self.frame = img
             # if the thread indicator variable is set, stop the thread
             if not self.on:
                 break
@@ -55,6 +57,65 @@ class JetsonCamera(BaseCamera):
         self.on = False
         print('stoping JetsonCamera')
         time.sleep(.5)
-        self.stream.close()
-        self.rawCapture.close()
-        self.camera.close()
+        self.videoCapture.release ()
+
+
+
+WINDOW_NAME = 'CameraDemo'
+
+def read_cam(cap):
+    show_help = True
+    full_scrn = False
+    help_text = '"Esc" to Quit, "H" for Help, "F" to Toggle Fullscreen'
+    font = cv2.FONT_HERSHEY_PLAIN
+    while True:
+        if cv2.getWindowProperty(WINDOW_NAME, 0) < 0:
+            # Check to see if the user has closed the window
+            # If yes, terminate the program
+            break
+        _, img = cap.read() # grab the next image frame from camera
+        if show_help:
+            cv2.putText(img, help_text, (11, 20), font,
+                        1.0, (32, 32, 32), 4, cv2.LINE_AA)
+            cv2.putText(img, help_text, (10, 20), font,
+                        1.0, (240, 240, 240), 1, cv2.LINE_AA)
+        cv2.imshow(WINDOW_NAME, img)
+        key = cv2.waitKey(10)
+        if key == 27: # ESC key: quit program
+            break
+        elif key == ord('H') or key == ord('h'): # toggle help message
+            show_help = not show_help
+        elif key == ord('F') or key == ord('f'): # toggle fullscreen
+            full_scrn = not full_scrn
+            if full_scrn:
+                cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN,
+                                      cv2.WINDOW_FULLSCREEN)
+            else:
+                cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN,
+                                      cv2.WINDOW_NORMAL)
+
+
+if __name__ == '__main__':
+    print('Called with args:')
+    parser = argparse.ArgumentParser(description="")
+    print('OpenCV version: {}'.format(cv2.__version__))
+
+    parser.add_argument('--width', dest='image_width',
+                        help='image width [1280]',
+                        default=1280, type=int)
+    parser.add_argument('--height', dest='image_height',
+                        help='image height [720]',
+                        default=720, type=int)
+    args = parser.parse_args()
+
+    camera = JetsonCamera(resolution=(args.image_width,
+                               args.image_height))
+
+    if not camera.videoCapture.isOpened():
+        sys.exit('Failed to open camera!')
+
+    # open_window(args.image_width, args.image_height)
+    img = read_cam(camera.videoCapture)
+
+    camera.videoCapture.release()
+    cv2.destroyAllWindows()

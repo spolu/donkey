@@ -10,20 +10,18 @@ import os
 import argparse
 
 import raspi.vehicle
-from utils import Config
+from utils.utils import Config
 from track import Track
 
 #import parts
-from raspi.parts.camera import PiCamera
-from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
-from raspi.parts.localizer import Localizer
-from raspi.parts.planner import Planner
+from jetson.parts.camera import JetsonCamera
+# from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.driver import Driver
-# from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
+from raspi.parts.web_controller.web import LocalWebController
 
 # VEHICLE
-DRIVE_LOOP_HZ = 30
+DRIVE_LOOP_HZ = 120
 MAX_LOOPS = 100000
 
 # CAMERA
@@ -54,22 +52,8 @@ def drive(args):
     #Initialize car
     V = raspi.vehicle.Vehicle()
 
-    cam = PiCamera(resolution=CAMERA_RESOLUTION)
+    cam = JetsonCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
-
-    # if cfg is not None:
-    #     if args.load_dir is not None:
-    #         lclzr = Localizer(cfg, args.load_dir)
-    #         V.add(lclzr,
-    #           inputs=['cam/image_array'],
-    #           outputs=['track_coordinates'],
-    #           threaded=False)
-
-    #     plnr = Planner(cfg)
-    #     V.add(plnr,
-    #         inputs=['track_coordinates'],
-    #         outputs=['angle', 'throttle'],
-    #         threaded=False)
 
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)
@@ -89,22 +73,28 @@ def drive(args):
             ],
             threaded=False,
         )
+
+    web = LocalWebController()
+    V.add(web, 
+        inputs=['cam/image_array'],
+        outputs=['angle', 'throttle'],
+        threaded=True,)
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
-    steering_controller = PCA9685(STEERING_CHANNEL)
-    steering = PWMSteering(controller=steering_controller,
-                                    left_pulse=STEERING_LEFT_PWM,
-                                    right_pulse=STEERING_RIGHT_PWM)
+    # steering_controller = PCA9685(STEERING_CHANNEL)
+    # steering = PWMSteering(controller=steering_controller,
+    #                                 left_pulse=STEERING_LEFT_PWM,
+    #                                 right_pulse=STEERING_RIGHT_PWM)
 
-    throttle_controller = PCA9685(THROTTLE_CHANNEL)
-    throttle = PWMThrottle(controller=throttle_controller,
-                                    max_pulse=THROTTLE_FORWARD_PWM,
-                                    zero_pulse=THROTTLE_STOPPED_PWM,
-                                    min_pulse=THROTTLE_REVERSE_PWM)
+    # throttle_controller = PCA9685(THROTTLE_CHANNEL)
+    # throttle = PWMThrottle(controller=throttle_controller,
+    #                                 max_pulse=THROTTLE_FORWARD_PWM,
+    #                                 zero_pulse=THROTTLE_STOPPED_PWM,
+    #                                 min_pulse=THROTTLE_REVERSE_PWM)
 
-    V.add(steering, inputs=['angle'])
-    V.add(throttle, inputs=['throttle'])
+    # V.add(steering, inputs=['angle'])
+    # V.add(throttle, inputs=['throttle'])
 
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
