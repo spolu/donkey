@@ -9,7 +9,6 @@ import torch.nn.functional as F
 class ResidualBlock(nn.Module):
     def __init__(self, config, dim):
         super(ResidualBlock, self).__init__()
-
         self.res_dropout = config.get('res_dropout')
 
         layers = [
@@ -45,12 +44,12 @@ class Generator(nn.Module):
         self.gen_residual_block_count = config.get('gen_residual_block_count')
         self.gen_first_conv_filters_count = config.get('gen_first_conv_filters_count')
 
-        ngf = self.gen_first_conv_filter
+        nf = self.gen_first_conv_filter
 
         layers = [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(input_channel_count, ngf, kernel_size=7, padding=0),
-            nn.InstanceNorm2d(ngf),
+            nn.Conv2d(input_channel_count, nf, kernel_size=7, padding=0),
+            nn.InstanceNorm2d(nf),
             nn.ReLU(True),
         ]
 
@@ -58,8 +57,8 @@ class Generator(nn.Module):
         for i in range(self.gen_downsampling_count):
             mult = 2 ** i
             layers += [
-                nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
-                nn.InstanceNorm2d(ngf * mult * 2),
+                nn.Conv2d(nf * mult, nf * mult * 2, kernel_size=3, stride=2, padding=1),
+                nn.InstanceNorm2d(nf * mult * 2),
                 nn.ReLU(True),
             ]
 
@@ -67,21 +66,21 @@ class Generator(nn.Module):
         mult = 2**n_downsampling
         for i in range(self.gen_residual_block_count):
             layers += [
-                ResidualBlock(config, ngf * mult),
+                ResidualBlock(config, nf * mult),
             ]
 
         # Upsampling.
         for i in range(self.gen_downsampling_count):
             mult = 2 ** (self.gen_downsampling_count - i)
             layers += [
-                nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
-                nn.InstanceNorm2d(int(ngf * mult / 2)),
+                nn.ConvTranspose2d(nf * mult, int(nf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
+                nn.InstanceNorm2d(int(nf * mult / 2)),
                 nn.ReLU(True),
             ]
 
         layers += [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(ngf, 3, kernel_size=7, padding=0),
+            nn.Conv2d(nf, 3, kernel_size=7, padding=0),
             nn.Tanh(),
         ]
 

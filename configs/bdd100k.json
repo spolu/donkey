@@ -13,6 +13,9 @@
   "gen_residual_block_count": 9,
   "gen_first_conv_filters_count": 64,
 
+  "gan_first_conv_filters_count": 64,
+  "gan_layers_count": 3,
+
   "enc_downsampling_count": 4,
   "enc_first_conv_filters_count": 16,
   "enc_feature_count": 3
