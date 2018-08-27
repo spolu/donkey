@@ -1,6 +1,6 @@
 {
   "track_name": "stationfxl",
-  "track_randomized": false,
+  "track_randomized": true,
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
@@ -9,7 +9,7 @@
   "algorithm": "ppo_vae",
   "ppo_policy": "ppo_vae_controller",
   "vae_policy": "vae",
-  "input_filter": "warp_line_detector",
+  "input_filter": "canny",
   "device": "cuda:0",
   "seed": 1,
 
@@ -43,7 +43,7 @@
 
   "grad_norm_max": 0.0,
 
-  "simulation_type": "synthetic",
+  "simulation_type": "unity",
 
   "unity_headless": true,
   "unity_time_scale": 4.0,

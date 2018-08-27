@@ -1,6 +1,6 @@
 {
   "track_name": "renault_digital_season3",
-  "track_randomized": false,
+  "track_randomized": true,
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
   "speed_limit": 0.0,
