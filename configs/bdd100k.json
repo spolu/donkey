@@ -1,0 +1,19 @@
+{
+  "device": "cuda:0",
+  "seed": 1,
+
+  "loader_input_type": "segmentation_instance",
+
+  "batch_size": 4,
+  "learning_rate": 0.0002,
+
+  "res_use_dropout": 0.0,
+
+  "gen_downsampling_count": 4,
+  "gen_residual_block_count": 9,
+  "gen_first_conv_filters_count": 64,
+
+  "enc_downsampling_count": 4,
+  "enc_first_conv_filters_count": 16,
+  "enc_feature_count": 3
+}
