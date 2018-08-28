@@ -12,14 +12,14 @@ class Encoder(nn.Module):
 
         self.enc_downsampling_count = config.get('enc_downsampling_count')
         self.enc_feature_count = config.get('enc_feature_count')
-        self.enc_first_conv_filters_count = config.get('enc_first_conv_filters_count')
+        self.enc_first_conv_filter_count = config.get('enc_first_conv_filter_count')
 
-        ngf = self.enc_first_conv_filter
+        nf = self.enc_first_conv_filter_count
 
         layers = [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(input_channel_count, ngf, kernel_size=7, padding=0),
-            nn.InstanceNorm2d(ngf),
+            nn.Conv2d(input_channel_count, nf, kernel_size=7, padding=0),
+            nn.InstanceNorm2d(nf),
             nn.ReLU(True),
         ]
 
@@ -27,8 +27,8 @@ class Encoder(nn.Module):
         for i in range(self.enc_downsampling_count):
             mult = 2 ** i
             layers += [
-                nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1),
-                nn.InstanceNorm2d(ngf * mult * 2),
+                nn.Conv2d(nf * mult, nf * mult * 2, kernel_size=3, stride=2, padding=1),
+                nn.InstanceNorm2d(nf * mult * 2),
                 nn.ReLU(True),
             ]
 
@@ -36,14 +36,14 @@ class Encoder(nn.Module):
         for i in range(self.gen_downsampling_count):
             mult = 2 ** (self.gen_downsampling_count - i)
             layers += [
-                nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
-                nn.InstanceNorm2d(int(ngf * mult / 2)),
+                nn.ConvTranspose2d(nf * mult, int(nf * mult / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
+                nn.InstanceNorm2d(int(nf * mult / 2)),
                 nn.ReLU(True),
             ]
 
         layers += [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(ngf, self.enc_feature_count, kernel_size=7, padding=0),
+            nn.Conv2d(nf, self.enc_feature_count, kernel_size=7, padding=0),
             nn.Tanh(),
         ]
 

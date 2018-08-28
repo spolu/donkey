@@ -42,9 +42,9 @@ class Generator(nn.Module):
 
         self.gen_downsampling_count = config.get('gen_downsampling_count')
         self.gen_residual_block_count = config.get('gen_residual_block_count')
-        self.gen_first_conv_filters_count = config.get('gen_first_conv_filters_count')
+        self.gen_first_conv_filter_count = config.get('gen_first_conv_filter_count')
 
-        nf = self.gen_first_conv_filter
+        nf = self.gen_first_conv_filter_count
 
         layers = [
             nn.ReflectionPad2d(3),

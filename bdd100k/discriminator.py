@@ -11,12 +11,12 @@ class PatchGAN(nn.Module):
         super(PatchGAN, self).__init__()
         self.device = torch.device(config.get('device'))
 
-        self.gan_first_conv_filters_count = config.get('gan_first_conv_filters_count')
-        self.gan_layers_count = config.get('gan_layers_count')
+        self.gan_first_conv_filter_count = config.get('gan_first_conv_filter_count')
+        self.gan_layer_count = config.get('gan_layer_count')
 
-        nf = self.gan_first_conv_filter
+        nf = self.gan_first_conv_filter_count
 
-        sequences = [[
+        layer_groups = [[
             nn.Conv2d(
                 input_channel_count,
                 nf,
@@ -26,9 +26,9 @@ class PatchGAN(nn.Module):
         ]]
 
         # Layers Stride 2
-        for i in range(1, self.gen_layers_count):
+        for i in range(1, self.gan_layer_count):
             mult = 2 ** i
-            sequences += [[
+            layer_groups += [[
                 nn.Conv2d(
                     min(nf * mult, 512),
                     min(nf * mult * 2, 512),
@@ -39,10 +39,10 @@ class PatchGAN(nn.Module):
             ]]
 
         # Layer Stride 1
-        sequences += [[
+        layer_groups += [[
             nn.Conv2d(
-                min(nf * (2 ** (self.gen_layers_count - 1)), 512),
-                min(nf * (2 ** self.gen_layers_count), 512),
+                min(nf * (2 ** (self.gan_layer_count - 1)), 512),
+                min(nf * (2 ** self.gan_layer_count), 512),
                 kernel_size=4, stride=1, padding=1,
             ),
             nn.InstanceNorm2d(nf * mult * 2),
@@ -50,19 +50,68 @@ class PatchGAN(nn.Module):
         ]]
 
         # Filter 1 layer.
-        sequences += [[
+        layer_groups += [[
             nn.Conv2d(
-                min(nf * (2 ** self.gen_layers_count), 512),
+                min(nf * (2 ** self.gan_layer_count), 512),
                 1,
                 kernel_size=4, stride=1, padding=1),
         ]]
 
-        for n in range(len(sequences)):
-            setattr(self, 'model'+str(n), nn.Sequential(*sequence[n]))
+        for n in range(len(layer_groups)):
+            setattr(
+                self,
+                'layer'+str(n),
+                nn.Sequential(*layer_groups[n]),
+            )
 
     def forward(self, x):
         res = [x]
-        for n in range(self.gen_layers_count + 2):
-            model = getattr(self, 'model'+str(n))
-            res.append(model(res[-1]))
+        for n in range(self.gan_layer_count + 2):
+            layer = getattr(self, 'layer'+str(n))
+            res.append(layer(res[-1]))
         return res[1:]
+
+class MultiscalePatchGAN(nn.Module):
+    def __init__(self, config, input_channel_count):
+        super(MultiscalePatchGAN, self).__init__()
+        self.device = torch.device(config.get('device'))
+
+        self.gan_scale_count = config.get('gan_scale_count')
+        self.gan_layer_count = config.get('gan_layer_count')
+
+        for i in range(self.gan_scale_count):
+            d = PatchGAN(config, input_channel_count)
+            for n in range(self.gan_layer_count + 2):
+                setattr(
+                    self,
+                    'scale'+str(i)+'_layer'+str(j),
+                    getattr(d, 'layer'+str(j)),
+                )
+
+        self.downsample = nn.AvgPool2d(
+            3, stride=2, padding=[1, 1], count_include_pad=False,
+        )
+
+    def scale_forward(self, layers, x):
+        res = [x]
+        for i in range(len(layers)):
+            res.append(layers[i](res[-1]))
+        return res[1:]
+
+    def forward(self, x):
+        res = []
+        downsampled = x
+
+        for i in range(self.gan_scale_count):
+            layers = [
+                getattr(
+                    self,
+                    'scale'+str(self.gan_scale_count-1-i)+'_layer'+str(j)
+                ) for j in range(self.gan_layer_count + 2)
+            ]
+            res.append(self.scale_forward(layers, downsampled))
+
+            if i != (self.gan_scale_count-1):
+                downsampled = self.downsample(downsampled)
+
+        return res
