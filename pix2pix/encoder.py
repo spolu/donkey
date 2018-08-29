@@ -74,3 +74,6 @@ class Encoder(nn.Module):
                     pool[indices[:,0] + b, indices[:,1] + j, indices[:,2], indices[:,3]] = mean
 
         return pool
+
+    def feature_count():
+        return self.enc_feature_count

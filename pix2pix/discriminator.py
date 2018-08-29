@@ -71,9 +71,9 @@ class PatchGAN(nn.Module):
             res.append(layer(res[-1]))
         return res[1:]
 
-class MultiscalePatchGAN(nn.Module):
+class Discriminator(nn.Module):
     def __init__(self, config, input_channel_count):
-        super(MultiscalePatchGAN, self).__init__()
+        super(Discriminator, self).__init__()
         self.device = torch.device(config.get('device'))
 
         self.gan_scale_count = config.get('gan_scale_count')

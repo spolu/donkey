@@ -36,7 +36,7 @@ class ResidualBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, config, input_channel_count):
+    def __init__(self, config, input_channel_count, output_channel_count):
         super(Generator, self).__init__()
         self.device = torch.device(config.get('device'))
 
@@ -80,7 +80,7 @@ class Generator(nn.Module):
 
         layers += [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(nf, 3, kernel_size=7, padding=0),
+            nn.Conv2d(nf, output_channel_count, kernel_size=7, padding=0),
             nn.Tanh(),
         ]
 
