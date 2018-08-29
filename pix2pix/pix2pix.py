@@ -1,4 +1,3 @@
-import cv2
 import sys
 import os
 
@@ -8,8 +7,12 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from bdd100k import Generator, Discriminator, VGG19, Encoder
+from tensorboardX import SummaryWriter
+
+from pix2pix import Generator, Discriminator, VGG19, Encoder
+from bdd100k import BDD100kSegInst
 from utils import Meter
+
 
 # import pdb; pdb.set_trace()
 
@@ -122,7 +125,14 @@ class Pix2Pix:
             num_workers=0,
         )
 
+        self.tb_writer = None
+        if self.save_dir:
+            self.tb_writer = SummaryWriter(
+                log_dir=os.path.join(self.save_dir, 'tensorboard/'),
+            )
+
         self.iter = 0
+        self.batch_count = 0
 
     def batch_train(self):
         self.generator.train()
@@ -211,6 +221,8 @@ class Pix2Pix:
             loss_gen_gan_feat_meter.update(loss_gen_gan_feat.item())
             loss_gen_vgg_feat_meter.update(loss_gen_vgg_feat.item())
 
+            self.iter += 1
+
         print(
             ("TRAIN {} " + \
              "loss_dis_fake {:.5f} " + \
@@ -219,16 +231,24 @@ class Pix2Pix:
              "loss_gen_gan_feat {:.5f} " + \
              "loss_gen_vgg_feat {:.5f}").
             format(
-                self.iter,
+                self.batch_count,
                 loss_dis_fake_meter.avg(),
                 loss_dis_real_meter.avg(),
                 loss_gen_gan_meter.avg(),
                 loss_gen_gan_feat_meter.avg(),
                 loss_gen_vgg_feat_meter.avg(),
             ))
+
+        if self.tb_writer is not None:
+            self.tb_writer.add_scalar('loss/dis/fake', loss_dis_fake_meter.avg(), self.batch_count)
+            self.tb_writer.add_scalar('loss/dis/real', loss_dis_real_meter.avg(), self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/gan', loss_gen_gan_meter.avg(), self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/gan_feat', loss_gen_gan_feat_meter.avg(), self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg(), self.batch_count)
+
         sys.stdout.flush()
 
-        self.iter += 1
+        self.batch_count += 1
 
     def batch_test(self):
         self.generator.train()
@@ -265,7 +285,7 @@ class Pix2Pix:
              "loss_gen_l1 {:.5f} " + \
              "loss_gen_vgg_feat {:.5f}").
             format(
-                self.iter,
+                self.batch_count,
                 loss_gen_l1_meter.avg(),
                 loss_gen_vgg_feat_meter.avg(),
             ))
@@ -277,7 +297,7 @@ class Pix2Pix:
                  "loss_gen_l1={} " + \
                  "loss_gen_vgg_feat={}").
                 format(
-                    self.iter,
+                    self.batch_count,
                     loss_gen_l1_meter.avg(),
                     loss_gen_vgg_feat_meter.avg(),
                 ))

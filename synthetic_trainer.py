@@ -54,6 +54,7 @@ def run(args):
         sys.stdout.flush()
 
         episode += 1
+
 if __name__ == "__main__":
     os.environ['OMP_NUM_THREADS'] = '1'
 
