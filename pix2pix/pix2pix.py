@@ -231,20 +231,20 @@ class Pix2Pix:
              "loss_gen_vgg_feat {:.5f}").
             format(
                 self.batch_count,
-                loss_dis_fake_meter.avg(),
-                loss_dis_real_meter.avg(),
-                loss_gen_gan_meter.avg(),
-                loss_gen_gan_feat_meter.avg(),
-                loss_gen_vgg_feat_meter.avg(),
+                loss_dis_fake_meter.avg,
+                loss_dis_real_meter.avg,
+                loss_gen_gan_meter.avg,
+                loss_gen_gan_feat_meter.avg,
+                loss_gen_vgg_feat_meter.avg,
             ))
         sys.stdout.flush()
 
         if self.tb_writer is not None:
-            self.tb_writer.add_scalar('loss/dis/fake', loss_dis_fake_meter.avg(), self.batch_count)
-            self.tb_writer.add_scalar('loss/dis/real', loss_dis_real_meter.avg(), self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/gan', loss_gen_gan_meter.avg(), self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/gan_feat', loss_gen_gan_feat_meter.avg(), self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg(), self.batch_count)
+            self.tb_writer.add_scalar('loss/dis/fake', loss_dis_fake_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('loss/dis/real', loss_dis_real_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/gan', loss_gen_gan_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/gan_feat', loss_gen_gan_feat_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg, self.batch_count)
 
         self.batch_count += 1
 
@@ -284,8 +284,8 @@ class Pix2Pix:
              "loss_gen_vgg_feat {:.5f}").
             format(
                 self.batch_count,
-                loss_gen_l1_meter.avg(),
-                loss_gen_vgg_feat_meter.avg(),
+                loss_gen_l1_meter.avg,
+                loss_gen_vgg_feat_meter.avg,
             ))
         sys.stdout.flush()
 
@@ -296,8 +296,8 @@ class Pix2Pix:
                  "loss_gen_vgg_feat={}").
                 format(
                     self.batch_count,
-                    loss_gen_l1_meter.avg(),
-                    loss_gen_vgg_feat_meter.avg(),
+                    loss_gen_l1_meter.avg,
+                    loss_gen_vgg_feat_meter.avg,
                 ))
             torch.save(self.generator.state_dict(), self.save_dir + "/generator.pt")
             torch.save(self.discriminator.state_dict(), self.save_dir + "/discriminator.pt")
