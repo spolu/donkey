@@ -8,7 +8,6 @@ public class RoadBuilder : MonoBehaviour {
 
 	public GameObject roadPrefabMesh;
 
-	public int iRoadTexture = 1;
 	public Texture2D[] roadTextures;
 
 	Texture2D customRoadTexure;
@@ -81,19 +80,19 @@ public class RoadBuilder : MonoBehaviour {
 		return path;
 	}
 
-	public CarPath BuildRoad(string pathData, float roadWidth)
+	public CarPath BuildRoad(string pathData, float roadWidth, int roadTexture)
 	{
 		CarPath path = MakePointPath(pathData);
 
 		if (path != null)
-			InitRoad(path, roadWidth);
+			InitRoad(path, roadWidth, roadTexture);
 
 		return path;
 	}
 
-	public void InitRoad(CarPath path, float roadWidth)
+	public void InitRoad(CarPath path, float roadWidth, int roadTexture)
 	{
-		SetRoadVariation (iRoadTexture % roadTextures.Length);
+		SetRoadVariation (roadTexture % roadTextures.Length);
 
 		GameObject go = GameObject.Instantiate(roadPrefabMesh);
 		MeshRenderer mr = go.GetComponent<MeshRenderer>();

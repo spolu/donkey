@@ -79,6 +79,7 @@ class Donkey:
             self.unity_time_scale = config.get('unity_time_scale')
             self.unity_step_interval = config.get('unity_step_interval')
             self.unity_capture_frame_rate = config.get('unity_capture_frame_rate')
+            self.unity_road_texture = config.get('unity_road_texture')
 
             self.simulation = Unity(
                 True,
@@ -86,6 +87,7 @@ class Donkey:
                 self.unity_time_scale,
                 self.unity_step_interval,
                 self.unity_capture_frame_rate,
+                self.unity_road_texture,
                 None,
             )
         if self.simulation_type == 'synthetic':

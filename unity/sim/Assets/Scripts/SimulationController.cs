@@ -240,10 +240,11 @@ public class SimulationController : MonoBehaviour
 		float trackWidth = float.Parse(ev.data.GetField("track_width").str);
 		string startPosition = ev.data.GetField("start_position").str;
 		float startAngle = float.Parse(ev.data.GetField("start_angle").str);
+		int roadTexture = int.Parse(ev.data.GetField("road_texture").str);
 
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth);
+		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth, roadTexture);
 
 		Vector3 trackStartPos = Vector3.zero;
         // if (path != null):

@@ -139,6 +139,7 @@ class Unity:
             time_scale,
             step_interval,
             capture_frame_rate,
+            road_texture,
             callback,
     ):
         global _lock
@@ -148,6 +149,7 @@ class Unity:
         self.time_scale = time_scale
         self.step_interval = step_interval
         self.capture_frame_rate = capture_frame_rate
+        self.road_texture = road_texture
         self.env = os.environ.copy()
         self.process = None
 
@@ -226,6 +228,7 @@ class Unity:
                     track.start_position, separator=',',
                 )[1:][:-1],
                 'start_angle': str(track.start_angle),
+                'road_texture': str(self.road_texture),
             }, room=self.client['sid'])
 
         self.client['condition'].wait()
@@ -253,6 +256,7 @@ class Unity:
                     track.start_position, separator=',',
                 )[1:][:-1],
                 'start_angle': str(track.start_angle),
+                'road_texture': str(self.road_texture),
             }, room=self.client['sid'])
 
         self.client['condition'].wait()
