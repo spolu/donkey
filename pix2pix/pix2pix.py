@@ -39,6 +39,7 @@ class Pix2Pix:
 
         self.save_dir = config.get('pix2pix_save_dir')
         self.load_dir = config.get('pix2pix_load_dir')
+        self.tensorboard_log_dir = config.get('tensorboard_log_dir')
 
         if self.load_dir:
             if config.get('device') != 'cpu':
@@ -125,10 +126,8 @@ class Pix2Pix:
         )
 
         self.tb_writer = None
-        if self.save_dir:
-            self.tb_writer = SummaryWriter(
-                log_dir=os.path.join(self.save_dir, 'tensorboard/'),
-            )
+        if self.tensorboard_log_dir:
+            self.tb_writer = SummaryWriter(self.tensorboard_log_dir)
 
         self.iter = 0
         self.batch_count = 0

@@ -26,5 +26,7 @@
   "pix2pix_load_dir": null,
 
   "bdd100k_data_dir": null,
-  "bdd100k_sqlite_path": null
+  "bdd100k_sqlite_path": null,
+
+  "tensorboard_log_dir": null
 }

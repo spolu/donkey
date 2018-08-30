@@ -22,6 +22,8 @@ def run(args):
         cfg.override('bdd100k_data_dir', args.bdd100k_data_dir)
     if args.bdd100k_sqlite_path != None:
         cfg.override('bdd100k_sqlite_path', args.bdd100k_sqlite_path)
+    if args.tensorboard_log_dir != None:
+        cfg.override('tensorboard_log_dir', args.tensorboard_log_dir)
 
     torch.manual_seed(cfg.get('seed'))
     random.seed(cfg.get('seed'))
@@ -50,6 +52,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--bdd100k_data_dir', type=str, help="config override")
     parser.add_argument('--bdd100k_sqlite_path', type=str, help="config override")
+
+    parser.add_argument('--tensorboard_log_dir', type=str, help="config override")
 
     parser.add_argument('--device', type=str, help="config override")
 
