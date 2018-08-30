@@ -143,7 +143,7 @@ class Pix2Pix:
         loss_gen_gan_feat_meter = Meter()
         loss_gen_vgg_feat_meter = Meter()
 
-        for i, (labels, real_images) in enumerate(self.train_loader):
+        for it, (labels, real_images) in enumerate(self.train_loader):
             fake_images = self.generator(labels.to(self.device))
 
             pred_dis_fake = self.discriminator(torch.cat((labels, fake_images.detach()), dim=1))
@@ -221,6 +221,12 @@ class Pix2Pix:
             loss_gen_vgg_feat_meter.update(loss_gen_vgg_feat.item())
 
             self.iter += 1
+
+            if it == 0:
+                # return self.train_dataset.postprocess(fake_images[0]).cpu().numpy()
+                print("Saving Image")
+                self.tb_writer.add_image('train/generated', ((fake_images[0] + 1.0) * 127.5).cpu(), self.batch_count)
+
 
         print(
             ("TRAIN {} " + \
