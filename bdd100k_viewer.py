@@ -124,7 +124,7 @@ SELECT dataset FROM labels WHERE name=?
     )).fetchone()[0]
 
     return send_file(
-        os.path.join(_data_dir, 'seg/color_labels', dataset, name + '_train_color.png'),
+        os.path.join(_data_dir, 'seg/color_labels', 'train', name + '_train_color.png'),
         attachment_filename='%s.png'.format(name),
         mimetype='image/png',
     )

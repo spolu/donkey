@@ -62,7 +62,7 @@ WHERE scene='highway'
         labels = cv2.resize(
             cv2.imread(
                 os.path.join(
-                    self.data_dir, 'seg/color_labels', self.dataset, name + '_train_color.png'
+                    self.data_dir, 'seg/color_labels', 'train', name + '_train_color.png'
                 ),
             ),
             (1024, 576),
