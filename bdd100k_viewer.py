@@ -148,7 +148,7 @@ SELECT dataset FROM labels WHERE name=?
         for o in label['frames'][0]['objects']:
             if o['category'] in [
                     'traffic sign',
-                    'car', 'truck', 'bus',
+                    'car', 'truck', 'bus', 'caravan', 'motorcycle', 'trailer',
                     'lane/road curb', 'lane/single white', 'lane/single yellow',
             ] and ('direction' not in o['attributes'] or o['attributes']['direction'] == 'parallel'):
                 objects.append(o)

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 class ResidualBlock(nn.Module):
     def __init__(self, config, dim):
         super(ResidualBlock, self).__init__()
-        self.res_dropout = config.get('res_dropout')
+        self.gen_residual_dropout = config.get('gen_residual_dropout')
 
         layers = [
             nn.ReflectionPad2d(1),
@@ -18,9 +18,9 @@ class ResidualBlock(nn.Module):
             nn.ReLU(True),
         ]
 
-        if self.res_dropout > 0.0:
+        if self.gen_residual_dropout > 0.0:
             layers += [
-                nn.Dropout(self.res_dropout)
+                nn.Dropout(self.gen_residual_dropout)
             ]
 
         layers = [
@@ -63,7 +63,7 @@ class Generator(nn.Module):
             ]
 
         # Residual Blocks:
-        mult = 2**n_downsampling
+        mult = 2**self.gen_downsampling_count
         for i in range(self.gen_residual_block_count):
             layers += [
                 ResidualBlock(config, nf * mult),

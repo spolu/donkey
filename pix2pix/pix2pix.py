@@ -13,7 +13,6 @@ from pix2pix import Generator, Discriminator, VGG19, Encoder
 from bdd100k import BDD100kSegInst
 from utils import Meter
 
-
 # import pdb; pdb.set_trace()
 
 class Pix2Pix:
@@ -21,9 +20,9 @@ class Pix2Pix:
         self.config = config
         self.device = torch.device(config.get('device'))
 
-        if config.get('policy') == 'bdd100k_segmentation+instance':
+        if config.get('dataset') == 'bdd100k_segmentation+instance':
             self.train_dataset = BDD100kSegInst(config, validation=False)
-            self.train_dataset = BDD100kSegInst(config, validation=True)
+            self.test_dataset = BDD100kSegInst(config, validation=True)
 
         assert self.train_dataset is not None
         assert self.test_dataset is not None
@@ -64,7 +63,7 @@ class Pix2Pix:
 
     def initialize_training(self):
         self.discriminator = Discriminator(
-            config,
+            self.config,
             self.train_dataset.input_channel_count() + \
             self.train_dataset.output_channel_count(),
         ).to(self.device)
@@ -72,12 +71,12 @@ class Pix2Pix:
         self.gen_optimizer = optim.Adam(
             self.generator.parameters(),
             lr=self.config.get('learning_rate'),
-            betas=(config.get('adam_beta_1'), 0.999),
+            betas=(self.config.get('adam_beta_1'), 0.999),
         )
-        self.discriminator_optimizer = optim.Adam(
+        self.dis_optimizer = optim.Adam(
             self.discriminator.parameters(),
             lr=self.config.get('learning_rate'),
-            betas=(config.get('adam_beta_1'), 0.999),
+            betas=(self.config.get('adam_beta_1'), 0.999),
         )
         self.vgg = VGG19().to(self.device)
 
@@ -151,16 +150,16 @@ class Pix2Pix:
             pred_dis_real = self.discriminator(torch.cat((labels, real_images), dim=1))
 
             # Discriminator fake loss (fake images detached).
-            targ_dis_fake = torch.zeros(*pred_dis_fake.size()).to(self.device).detach()
             loss_dis_fake = 0.0
             for scale in pred_dis_fake:
+                targ_dis_fake = torch.zeros(*scale[-1].size()).to(self.device).detach()
                 output = scale[-1]
                 loss_dis_fake += F.mse_loss(output, targ_dis_fake)
 
             # Discriminator real loss.
-            targ_dis_real = torch.ones(*pred_dis_real.size()).to(self.device).detach()
             loss_dis_real = 0.0
             for scale in pred_dis_real:
+                targ_dis_real = torch.ones(*scale[-1].size()).to(self.device).detach()
                 output = scale[-1]
                 loss_dis_real += F.mse_loss(output, targ_dis_real)
 
@@ -168,16 +167,16 @@ class Pix2Pix:
             pred_gen_fake = self.discriminator(torch.cat((labels, fake_images), dim=1))
 
             # Generator GAN loss.
-            targ_dis_real = torch.ones(*pred_dis_real.size()).to(self.device).detach()
             loss_gen_gan = 0.0
             for scale in pred_gen_fake:
+                targ_dis_real = torch.ones(*scale[-1].size()).to(self.device).detach()
                 output = scale[-1]
                 loss_gen_gan += F.mse_loss(output, targ_dis_real)
 
             # Generator GAN feature matching loss.
             loss_gen_gan_feat = 0.0
             layer_weights = 4.0 / (self.config.get('gan_layer_count') + 1)
-            scale_weights = 1.0 / config.get('gan_scale_count')
+            scale_weights = 1.0 / self.config.get('gan_scale_count')
             for i in range(len(pred_gen_fake)):
                 for j in range(len(pred_gen_fake[i]) - 1):
                     loss_gen_gan_feat += layer_weights * scale_weights * \
@@ -199,21 +198,21 @@ class Pix2Pix:
                     )
 
             # Generator backpropagation.
-            self.gen_discriminator.zero_grad()
+            self.gen_optimizer.zero_grad()
             (
                 loss_gen_gan +
                 loss_gen_gan_feat * self.gan_layers_loss_coeff +
                 loss_gen_vgg_feat * self.gan_layers_loss_coeff
             ).backward()
-            self.gen_discriminator.step()
+            self.gen_optimizer.step()
 
             # Discriminator backpropagation.
-            self.dis_discriminator.zero_grad()
+            self.dis_optimizer.zero_grad()
             (
                 loss_dis_real +
                 loss_dis_fake
             ).backward()
-            self.dis_discriminator.step()
+            self.dis_optimizer.step()
 
             loss_dis_fake_meter.update(loss_dis_fake.item())
             loss_dis_real_meter.update(loss_dis_real.item())
@@ -222,6 +221,8 @@ class Pix2Pix:
             loss_gen_vgg_feat_meter.update(loss_gen_vgg_feat.item())
 
             self.iter += 1
+            print("iter {}".format(self.iter))
+            sys.stdout.flush()
 
         print(
             ("TRAIN {} " + \
@@ -238,6 +239,7 @@ class Pix2Pix:
                 loss_gen_gan_feat_meter.avg(),
                 loss_gen_vgg_feat_meter.avg(),
             ))
+        sys.stdout.flush()
 
         if self.tb_writer is not None:
             self.tb_writer.add_scalar('loss/dis/fake', loss_dis_fake_meter.avg(), self.batch_count)
@@ -245,8 +247,6 @@ class Pix2Pix:
             self.tb_writer.add_scalar('loss/gen/gan', loss_gen_gan_meter.avg(), self.batch_count)
             self.tb_writer.add_scalar('loss/gen/gan_feat', loss_gen_gan_feat_meter.avg(), self.batch_count)
             self.tb_writer.add_scalar('loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg(), self.batch_count)
-
-        sys.stdout.flush()
 
         self.batch_count += 1
 

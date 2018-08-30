@@ -27,7 +27,7 @@ class PatchGAN(nn.Module):
 
         # Layers Stride 2
         for i in range(1, self.gan_layer_count):
-            mult = 2 ** i
+            mult = 2 ** (i-1)
             layer_groups += [[
                 nn.Conv2d(
                     min(nf * mult, 512),
@@ -66,8 +66,8 @@ class PatchGAN(nn.Module):
 
     def forward(self, x):
         res = [x]
-        for n in range(self.gan_layer_count + 2):
-            layer = getattr(self, 'layer'+str(n))
+        for j in range(self.gan_layer_count + 2):
+            layer = getattr(self, 'layer'+str(j))
             res.append(layer(res[-1]))
         return res[1:]
 
@@ -81,7 +81,7 @@ class Discriminator(nn.Module):
 
         for i in range(self.gan_scale_count):
             d = PatchGAN(config, input_channel_count)
-            for n in range(self.gan_layer_count + 2):
+            for j in range(self.gan_layer_count + 2):
                 setattr(
                     self,
                     'scale'+str(i)+'_layer'+str(j),

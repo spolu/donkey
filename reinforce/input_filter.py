@@ -40,7 +40,7 @@ class InputFilter():
             h_kernel = np.stack(arrays, axis=0)
 
             v_kernel = h_kernel.T
-            
+
             d1_kernel = [
                 [2*x,2*x, -x, -x, -x, -x, -x, -x, -x,  0,  0,  0],
                 [2*x,2*x,2*x, -x, -x, -x, -x, -x, -x, -x,  0,  0],
@@ -58,17 +58,17 @@ class InputFilter():
 
             d2_kernel = np.fliplr(d1_kernel)
             average_kernel = (h_kernel + v_kernel + d1_kernel + d2_kernel)
-            
+
             img = cv2.warpPerspective(
                     img, M, (160,90),
                 )
-            
+
             img = cv2.filter2D(
                 img,
                 -1,
                 average_kernel,
             )
-            
+
             # normalize img between 0 and 1
             img = np.divide( np.subtract(
                                      img, 

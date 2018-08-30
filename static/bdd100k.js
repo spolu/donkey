@@ -4,6 +4,9 @@ COLOR_FOR_CATEGORIES = {
   'car': '#f00',
   'truck': '#f40',
   'bus': '#f80',
+  'caravan': '#00f',
+  'motorcycle': '#04f',
+  'trailer': '#08f',
 }
 
 _data = []
