@@ -69,8 +69,8 @@ WHERE scene='highway'
             interpolation = cv2.INTER_NEAREST,
         )[32:544, :] / 127.5 - 1.0
 
-        image = torch.from_numpy(image).float().transpose(2, 0).to(self.device)
-        labels = torch.from_numpy(labels).float().transpose(2, 0).to(self.device)
+        image = torch.from_numpy(image).float().transpose(2, 0).transpose(1, 2).to(self.device)
+        labels = torch.from_numpy(labels).float().transpose(2, 0).transpose(1, 2).to(self.device)
 
         return (labels, image)
 

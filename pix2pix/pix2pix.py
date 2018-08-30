@@ -222,12 +222,6 @@ class Pix2Pix:
 
             self.iter += 1
 
-            if it == 0:
-                # return self.train_dataset.postprocess(fake_images[0]).cpu().numpy()
-                print("Saving Image")
-                self.tb_writer.add_image('train/generated', ((fake_images[0] + 1.0) * 127.5).cpu(), self.batch_count)
-
-
         print(
             ("TRAIN {} " + \
              "loss_dis_fake {:.5f} " + \
@@ -246,11 +240,11 @@ class Pix2Pix:
         sys.stdout.flush()
 
         if self.tb_writer is not None:
-            self.tb_writer.add_scalar('loss/dis/fake', loss_dis_fake_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('loss/dis/real', loss_dis_real_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/gan', loss_gen_gan_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/gan_feat', loss_gen_gan_feat_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('train/loss/dis/fake', loss_dis_fake_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('train/loss/dis/real', loss_dis_real_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('train/loss/gen/gan', loss_gen_gan_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('train/loss/gen/gan_feat', loss_gen_gan_feat_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('train/loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg, self.batch_count)
 
         self.batch_count += 1
 
@@ -260,7 +254,7 @@ class Pix2Pix:
         loss_gen_l1_meter = Meter()
         loss_gen_vgg_feat_meter = Meter()
 
-        for i, (labels, real_images) in enumerate(self.test_loader):
+        for it, (labels, real_images) in enumerate(self.test_loader):
             fake_images = self.generator(labels)
 
             # Generator VGG feature matching loss.
@@ -284,6 +278,13 @@ class Pix2Pix:
             loss_gen_vgg_feat_meter.update(loss_gen_vgg_feat.item())
             loss_gen_l1_meter.update(loss_gen_l1.item())
 
+            if self.tb_writer is not None:
+                self.tb_writer.add_image(
+                    'test/fake_images/{}'.format(it),
+                    ((fake_images[0] + 1.0) * 127.5).cpu(),
+                    self.batch_count,
+                )
+
         print(
             ("TEST {} " + \
              "loss_gen_l1 {:.5f} " + \
@@ -294,6 +295,10 @@ class Pix2Pix:
                 loss_gen_vgg_feat_meter.avg,
             ))
         sys.stdout.flush()
+
+        if self.tb_writer is not None:
+            self.tb_writer.add_scalar('test/loss/gen/l1', loss_gen_l1_meter.avg, self.batch_count)
+            self.tb_writer.add_scalar('test/loss/gen/vgg_feat', loss_gen_vgg_feat_meter.avg, self.batch_count)
 
         if self.save_dir:
             print(
