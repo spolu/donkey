@@ -12,6 +12,8 @@ import torch.utils.data as data
 class BDD100kSegInst(data.Dataset):
     def __init__(self, config, validation=False):
         super(BDD100kSegInst, self).__init__()
+        self.device = torch.device(config.get('device'))
+        self.config = config
 
         self.data_dir = config.get('bdd100k_data_dir')
         self.sqlite_path = config.get('bdd100k_sqlite_path')
@@ -67,8 +69,8 @@ WHERE scene='highway'
             interpolation = cv2.INTER_NEAREST,
         )[32:544, :] / 127.5 - 1.0
 
-        image = torch.from_numpy(image).float().transpose(2, 0)
-        labels = torch.from_numpy(labels).float().transpose(2, 0)
+        image = torch.from_numpy(image).float().transpose(2, 0).to(self.device)
+        labels = torch.from_numpy(labels).float().transpose(2, 0).to(self.device)
 
         return (labels, image)
 

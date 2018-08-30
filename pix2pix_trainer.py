@@ -35,6 +35,7 @@ def run(args):
 
     while True:
         pix2pix.batch_train()
+        pix2pix.batch_test()
         episode += 1
 
 if __name__ == "__main__":
