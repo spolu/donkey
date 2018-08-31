@@ -4,6 +4,7 @@ import os
 import numpy as np
 
 import torch
+import torchvision
 import torch.optim as optim
 import torch.nn.functional as F
 
@@ -280,9 +281,18 @@ class Pix2Pix:
             if self.tb_writer is not None:
                 self.tb_writer.add_image(
                     'test/fake_images/{}'.format(it),
-                    ((fake_images[0] + 1.0) * 127.5).cpu(),
+                    torchvision.utils.make_grid([
+                        ((labels[0] + 1.0) * 127.5).cpu(),
+                        ((real_images[0] + 1.0) * 127.5).cpu(),
+                        ((fake_images[0] + 1.0) * 127.5).cpu(),
+                    ]),
                     self.batch_count,
                 )
+                torchvision.utils.save_image(
+                    ((fake_images[0] + 1.0) * 127.5).cpu(),
+                    self.save_dir + '/test_fake_images.png',
+                )
+
 
         print(
             ("TEST {} " + \
