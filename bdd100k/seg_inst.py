@@ -34,7 +34,6 @@ WHERE scene='highway'
   AND segmented='true'
   AND active='true'
   AND dataset=?
-LIMIT 8
         ''', [self.dataset]):
             self.images.append(r[0])
 
@@ -45,7 +44,6 @@ LIMIT 8
         return 3
 
     def __len__(self):
-        print("LEN {}".format(len(self.images)))
         return len(self.images)
 
     def __getitem__(self, index):

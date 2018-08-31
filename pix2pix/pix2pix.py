@@ -1,5 +1,6 @@
 import sys
 import os
+import cv2
 
 import numpy as np
 
@@ -279,20 +280,16 @@ class Pix2Pix:
             loss_gen_l1_meter.update(loss_gen_l1.item())
 
             if self.tb_writer is not None:
+                grid = torchvision.utils.make_grid([
+                    ((labels[0].cpu() + 1.0) * 127.5).to(torch.uint8),
+                    ((real_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
+                    ((fake_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
+                ])
                 self.tb_writer.add_image(
                     'test/fake_images/{}'.format(it),
-                    torchvision.utils.make_grid([
-                        ((labels[0] + 1.0) * 127.5).cpu(),
-                        ((real_images[0] + 1.0) * 127.5).cpu(),
-                        ((fake_images[0] + 1.0) * 127.5).cpu(),
-                    ]),
+                    np.flip(grid.numpy(), axis=0),
                     self.batch_count,
                 )
-                torchvision.utils.save_image(
-                    ((fake_images[0] + 1.0) * 127.5).cpu(),
-                    self.save_dir + '/test_fake_images.png',
-                )
-
 
         print(
             ("TEST {} " + \
