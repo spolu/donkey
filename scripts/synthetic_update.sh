@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEMP=/tmp/$1
+TEMP=~/tmp/$1
 
 echo "[Update] experiment=$1 tempdir=$TEMP"
 grep TRAIN_VAE $TEMP/out.log | cut -d' ' -f 6 | gnuplot -p -e 'set terminal png; set output "'$TEMP'/fake_loss.png"; plot "/dev/stdin";'
