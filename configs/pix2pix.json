@@ -2,7 +2,7 @@
   "device": "cuda:0",
   "seed": 1,
 
-  "dataset": "bdd100k_segmentation+instance",
+  "dataset": "bdd100k_bbox",
 
   "batch_size": 1,
   "learning_rate": 0.0002,
