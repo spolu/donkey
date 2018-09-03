@@ -284,7 +284,7 @@ class Pix2Pix:
 
             if self.tb_writer is not None:
                 grid = torchvision.utils.make_grid([
-                    ((labels[0].cpu() + 1.0) * 127.5).to(torch.uint8),
+                    # ((labels[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                     ((real_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                     ((fake_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                 ])
