@@ -140,8 +140,10 @@ WHERE scene='highway'
             data = np.fromstring(agg.tostring_rgb(), dtype=np.uint8, sep='')
             data = data.reshape(agg.get_width_height()[::-1] + (3,))
 
-            # cv2.imwrite("test_{}.png".format(i), data)
+            cv2.imwrite("test_{}.png".format(i), data)
             raw_labels[:,:,i:i+1] = np.copy(data[:,:,0:1])
+
+            plt.close(fig)
 
         labels = cv2.resize(
             raw_labels,
