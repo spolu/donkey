@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 
 from pix2pix import Generator, Discriminator, VGG19, Encoder
-from bdd100k import BDD100kSegInst
+from bdd100k import BDD100kSegInst, BDD100kBBox
 from utils import Meter
 
 # import pdb; pdb.set_trace()
@@ -25,6 +25,9 @@ class Pix2Pix:
         if config.get('dataset') == 'bdd100k_segmentation+instance':
             self.train_dataset = BDD100kSegInst(config, validation=False)
             self.test_dataset = BDD100kSegInst(config, validation=True)
+        if config.get('dataset') == 'bdd100k_bbox':
+            self.train_dataset = BDD100kBBox(config, validation=False)
+            self.test_dataset = BDD100kBBox(config, validation=True)
 
         assert self.train_dataset is not None
         assert self.test_dataset is not None

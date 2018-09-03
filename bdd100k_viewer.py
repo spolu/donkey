@@ -140,7 +140,6 @@ SELECT dataset FROM labels WHERE name=?
     ''',(
         name,
     )).fetchone()[0]
-    print(dataset)
 
     objects = []
     with open(os.path.join(_data_dir, 'labels/100k/' + dataset + '/' + name + '.json'), "r") as f:
