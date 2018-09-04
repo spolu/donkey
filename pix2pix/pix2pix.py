@@ -162,7 +162,6 @@ class Pix2Pix:
         gbl_loss_dis_real_meter = [Meter() for _ in config.get('gan_scale_count')]
         gbl_loss_gen_gan_meter = [Meter() for _ in config.get('gan_scale_count')]
         gbl_loss_gen_gan_feat_meter = Meter()
-        gbl_loss_gen_vgg_feat_meter = Meter()
 
         for it, (labels, real_images) in enumerate(self.train_loader):
             lcl_labels = labels.to(self.device)
@@ -263,7 +262,7 @@ class Pix2Pix:
             (
                 lcl_loss_gen_gan +
                 lcl_loss_gen_gan_feat * self.gan_layers_loss_coeff +
-                loss_gen_vgg_feat * self.gan_layers_loss_coeff
+                lcl_loss_gen_vgg_feat * self.gan_layers_loss_coeff
             ).backward()
             self.lcl_gen_optimizer.step()
 
@@ -292,7 +291,6 @@ class Pix2Pix:
             lcl_loss_gen_vgg_feat_meter.update(lcl_loss_gen_vgg_feat.item())
             gbl_loss_gen_gan_meter.update(gbl_loss_gen_gan.item())
             gbl_loss_gen_gan_feat_meter.update(gbl_loss_gen_gan_feat.item())
-            gbl_loss_gen_vgg_feat_meter.update(gbl_loss_gen_vgg_feat.item())
 
             self.iter += 1
 
@@ -310,15 +308,12 @@ class Pix2Pix:
             self.tb_writer.add_scalar('train/loss/lcl/gen/vgg_feat', lcl_loss_gen_vgg_feat_meter.avg, self.batch_count)
             self.tb_writer.add_scalar('train/loss/gbl/gen/gan', gbl_loss_gen_gan_meter.avg, self.batch_count)
             self.tb_writer.add_scalar('train/loss/gbl/gen/gan_feat', gbl_loss_gen_gan_feat_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('train/loss/gbl/gen/vgg_feat', gbl_loss_gen_vgg_feat_meter.avg, self.batch_count)
 
         self.batch_count += 1
 
     def batch_test(self):
-        self.gen.train()
-
-        lcl_loss_gen_l1_meter = Meter()
-        lcl_loss_gen_vgg_feat_meter = Meter()
+        self.lcl_gen.train()
+        self.gbl_gen.train()
 
         for it, (labels, real_images) in enumerate(self.test_loader):
             lcl_labels = labels.to(self.device)
@@ -327,27 +322,6 @@ class Pix2Pix:
 
             lcl_real_images = real_images
             gbl_real_images = self.gbl_gen.downsample(lcl_real_images)
-
-            # Generator VGG feature matching loss.
-            loss_gen_vgg_feat = 0.0
-            vgg_weights = [1.0/32, 1.0/16, 1.0/8, 1.0/4, 1.0]
-            out_vgg_fake = self.vgg(lcl_fake_images)
-            out_vgg_real = self.vgg(lcl_real_images)
-            for i in range(len(vgg_weights)):
-                loss_gen_vgg_feat += vgg_weights[i] * \
-                    F.l1_loss(
-                        out_vgg_fake[i],
-                        out_vgg_real[i],
-                    )
-
-            # Generator L1 loss.
-            loss_gen_l1 = F.l1_loss(
-                lcl_fake_images,
-                lcl_real_images,
-            )
-
-            lcl_loss_gen_vgg_feat_meter.update(loss_gen_vgg_feat.item())
-            lcl_loss_gen_l1_meter.update(loss_gen_l1.item())
 
             if self.tb_writer is not None:
                 lcl_grid = torchvision.utils.make_grid([
@@ -371,31 +345,8 @@ class Pix2Pix:
                     self.batch_count,
                 )
 
-        print(
-            ("TEST {} " + \
-             "loss_gen_l1 {:.5f} " + \
-             "loss_gen_vgg_feat {:.5f}").
-            format(
-                self.batch_count,
-                lcl_loss_gen_l1_meter.avg,
-                lcl_loss_gen_vgg_feat_meter.avg,
-            ))
-        sys.stdout.flush()
-
-        if self.tb_writer is not None:
-            self.tb_writer.add_scalar('test/loss/lcl/gen/l1', lcl_loss_gen_l1_meter.avg, self.batch_count)
-            self.tb_writer.add_scalar('test/loss/lcl/gen/vgg_feat', lcl_loss_gen_vgg_feat_meter.avg, self.batch_count)
-
         if self.save_dir:
-            print(
-                ("Saving models and optimizers: iter={} " + \
-                 "lcl_loss_gen_l1={} " + \
-                 "lcl_loss_gen_vgg_feat={}").
-                format(
-                    self.batch_count,
-                    lcl_loss_gen_l1_meter.avg,
-                    lcl_loss_gen_vgg_feat_meter.avg,
-                ))
+            print("Saving models and optimizers: iter={}".format(self.batch_count))
             torch.save(self.lcl_gen.state_dict(), self.save_dir + "/lcl_gen.pt")
             torch.save(self.lcl_dis.state_dict(), self.save_dir + "/lcl_dis.pt")
             torch.save(self.lcl_gen_optimizer.state_dict(), self.save_dir + "/lcl_gen_optimizer.pt")
