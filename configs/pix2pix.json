@@ -9,14 +9,15 @@
   "adam_beta_1": 0.5,
   "gan_layers_loss_coeff": 10.0,
 
-  "gen_downsampling_count": 4,
-  "gen_residual_block_count": 9,
   "gen_first_conv_filter_count": 64,
+  "gen_global_downsampling_count": 4,
+  "gen_global_residual_block_count": 9,
+  "gen_local_residual_block_count": 3,
   "gen_residual_dropout": 0.0,
 
   "gan_first_conv_filter_count": 64,
   "gan_layer_count": 3,
-  "gan_scale_count": 2,
+  "gan_scale_count": 3,
 
   "enc_downsampling_count": 4,
   "enc_first_conv_filter_count": 16,
