@@ -80,17 +80,18 @@ public class RoadBuilder : MonoBehaviour {
 		return path;
 	}
 
-	public CarPath BuildRoad(string pathData, float roadWidth, int roadTexture)
+    public CarPath BuildRoad(string pathData, float roadWidth, int roadTexture, float roadTextureLength)
 	{
+        //roadTextureLength is the distance in meters of the texture pattern in reality
 		CarPath path = MakePointPath(pathData);
 
 		if (path != null)
-			InitRoad(path, roadWidth, roadTexture);
+			InitRoad(path, roadWidth, roadTexture, roadTextureLength);
 
 		return path;
 	}
 
-	public void InitRoad(CarPath path, float roadWidth, int roadTexture)
+    public void InitRoad(CarPath path, float roadWidth, int roadTexture, float roadTextureLength)
 	{
 		SetRoadVariation (roadTexture % roadTextures.Length);
 
@@ -176,8 +177,8 @@ public class RoadBuilder : MonoBehaviour {
 			vertices [iVert] = leftPos;
 			vertices [iVert + 1] = rightPos;
 
-			uv[iVert] = new Vector2(0.2f * iNode, 0.0f);
-			uv[iVert + 1] = new Vector2(0.2f * iNode, 1.0f);
+            uv[iVert] = new Vector2(vLength.magnitude / roadTextureLength * iNode, 0.0f);
+            uv[iVert + 1] = new Vector2(vLength.magnitude / roadTextureLength * iNode, 1.0f);
 
 			iNode++;
 		}

@@ -19,7 +19,8 @@
   "unity_time_scale": 1.0,
   "unity_step_interval": 0.030,
   "unity_capture_frame_rate": 30,
-  "unity_road_texture": 0,
+  "unity_road_texture": 3,
+  "unity_road_texture_length": 0.40,
 
   "synthetic_step_interval": 0.04,
   "synthetic_braque_torque_max": 0.03,
