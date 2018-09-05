@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from tensorboardX import SummaryWriter
 
-from pix2pix import Generator, Discriminator, VGG19, Encoder
+from pix2pix import LocalGenerator, GlobalGenerator, Discriminator, VGG19, Encoder
 from bdd100k import BDD100kSegInst, BDD100kBBox
 from utils import Meter
 
@@ -87,7 +87,7 @@ class Pix2Pix:
             betas=(self.config.get('adam_beta_1'), 0.999),
         )
         self.gbl_dis_optimizer = optim.Adam(
-            self.glb_dis.parameters(),
+            self.gbl_dis.parameters(),
             lr=self.config.get('learning_rate'),
             betas=(self.config.get('adam_beta_1'), 0.999),
         )
@@ -152,22 +152,22 @@ class Pix2Pix:
         self.lcl_dis.train()
         self.gbl_dis.train()
 
-        lcl_loss_dis_fake_meter = Meter()
-        lcl_loss_dis_real_meter = [Meter() for _ in config.get('gan_scale_count')]
-        lcl_loss_gen_gan_meter = [Meter() for _ in config.get('gan_scale_count')]
+        lcl_loss_dis_fake_meter = [Meter() for _ in range(self.config.get('gan_scale_count'))]
+        lcl_loss_dis_real_meter = [Meter() for _ in range(self.config.get('gan_scale_count'))]
+        lcl_loss_gen_gan_meter = Meter()
         lcl_loss_gen_gan_feat_meter = Meter()
         lcl_loss_gen_vgg_feat_meter = Meter()
 
-        gbl_loss_dis_fake_meter = Meter()
-        gbl_loss_dis_real_meter = [Meter() for _ in config.get('gan_scale_count')]
-        gbl_loss_gen_gan_meter = [Meter() for _ in config.get('gan_scale_count')]
+        gbl_loss_dis_fake_meter = [Meter() for _ in range(self.config.get('gan_scale_count'))]
+        gbl_loss_dis_real_meter = [Meter() for _ in range(self.config.get('gan_scale_count'))]
+        gbl_loss_gen_gan_meter = Meter()
         gbl_loss_gen_gan_feat_meter = Meter()
 
         for it, (labels, real_images) in enumerate(self.train_loader):
             lcl_labels = labels.to(self.device)
 
             gbl_labels, gbl_output, gbl_fake_images = self.gbl_gen(lcl_labels)
-            _, lcl_fake_images = self.lcl_gen(lcl_labels, gbl_output)
+            _, lcl_fake_images = self.lcl_gen(lcl_labels, gbl_output.detach())
 
             lcl_real_images = real_images
             gbl_real_images = self.gbl_gen.downsample(lcl_real_images)
@@ -281,7 +281,7 @@ class Pix2Pix:
             ).backward()
             self.gbl_dis_optimizer.step()
 
-            for i in range(config.get('gan_scale_count')):
+            for i in range(self.config.get('gan_scale_count')):
                 lcl_loss_dis_fake_meter[i].update(lcl_loss_dis_fake[i].item())
                 lcl_loss_dis_real_meter[i].update(lcl_loss_dis_real[i].item())
                 gbl_loss_dis_fake_meter[i].update(gbl_loss_dis_fake[i].item())
@@ -298,7 +298,7 @@ class Pix2Pix:
         sys.stdout.flush()
 
         if self.tb_writer is not None:
-            for i in range(config.get('gan_scale_count')):
+            for i in range(self.config.get('gan_scale_count')):
                 self.tb_writer.add_scalar("train/loss/lcl/dis/fake/{}".format(i), lcl_loss_dis_fake_meter[i].avg, self.batch_count)
                 self.tb_writer.add_scalar("train/loss/lcl/dis/real".format(i), lcl_loss_dis_real_meter[i].avg, self.batch_count)
                 self.tb_writer.add_scalar("train/loss/gbl/dis/fake/{}".format(i), gbl_loss_dis_fake_meter[i].avg, self.batch_count)
@@ -334,14 +334,14 @@ class Pix2Pix:
                     np.flip(lcl_grid.numpy(), axis=0),
                     self.batch_count,
                 )
-                grid = torchvision.utils.make_grid([
+                gbl_grid = torchvision.utils.make_grid([
                     # ((labels[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                     ((gbl_real_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                     ((gbl_fake_images[0].cpu() + 1.0) * 127.5).to(torch.uint8),
                 ])
                 self.tb_writer.add_image(
                     'test/gbl/fake_images/{}'.format(it),
-                    np.flip(lcl_grid.numpy(), axis=0),
+                    np.flip(gbl_grid.numpy(), axis=0),
                     self.batch_count,
                 )
 

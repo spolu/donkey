@@ -4,7 +4,7 @@
 
   "dataset": "bdd100k_bbox",
 
-  "batch_size": 1,
+  "batch_size": 2,
   "learning_rate": 0.0002,
   "adam_beta_1": 0.5,
   "gan_layers_loss_coeff": 10.0,

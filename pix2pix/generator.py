@@ -37,7 +37,7 @@ class ResidualBlock(nn.Module):
 
 class GlobalGenerator(nn.Module):
     def __init__(self, config, input_channel_count, output_channel_count):
-        super(Generator, self).__init__()
+        super(GlobalGenerator, self).__init__()
         self.device = torch.device(config.get('device'))
 
         self.gen_first_conv_filter_count = config.get('gen_first_conv_filter_count')
@@ -112,7 +112,7 @@ class GlobalGenerator(nn.Module):
 
 class LocalGenerator(nn.Module):
     def __init__(self, config, input_channel_count, output_channel_count):
-        super(Generator, self).__init__()
+        super(LocalGenerator, self).__init__()
         self.device = torch.device(config.get('device'))
 
         self.gen_first_conv_filter_count = config.get('gen_first_conv_filter_count')
@@ -122,14 +122,14 @@ class LocalGenerator(nn.Module):
 
         local_downsample =[
             nn.ReflectionPad2d(3),
-            nn.Conv2d(input_channel_count, nf / 2, kernel_size=7, padding=0),
+            nn.Conv2d(input_channel_count, int(nf / 2), kernel_size=7, padding=0),
             nn.InstanceNorm2d(nf),
             nn.ReLU(True),
         ]
 
         # Downsampling.
         local_downsample += [
-            nn.Conv2d(nf / 2, nf, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(int(nf / 2), nf, kernel_size=3, stride=2, padding=1),
             nn.InstanceNorm2d(nf),
             nn.ReLU(True),
         ]
@@ -143,14 +143,14 @@ class LocalGenerator(nn.Module):
 
         # Upsampling.
         local_layers += [
-            nn.ConvTranspose2d(nf, nf / 2, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.InstanceNorm2d(nf / 2),
+            nn.ConvTranspose2d(nf, int(nf / 2), kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.InstanceNorm2d(int(nf / 2)),
             nn.ReLU(True),
         ]
 
         local_head = [
             nn.ReflectionPad2d(3),
-            nn.Conv2d(nf / 2, output_channel_count, kernel_size=7, padding=0),
+            nn.Conv2d(int(nf / 2), output_channel_count, kernel_size=7, padding=0),
             nn.Tanh(),
         ]
 
@@ -170,7 +170,7 @@ class LocalGenerator(nn.Module):
 
     def forward(self, x, global_output):
         output = self.local_layers(self.local_downsample(x) + global_output)
-        images = self.local_head(output)
+        image = self.local_head(output)
 
         return output, image
 
