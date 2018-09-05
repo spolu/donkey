@@ -46,7 +46,7 @@ public class SimulationController : MonoBehaviour
 
 	private float carStartY = 0.001f;
 
-    private Vector3 prevVelocity = Vector3.zero;
+	private Vector3 prevVelocity = Vector3.zero;
 
 	void Awake()
 	{
@@ -175,7 +175,7 @@ public class SimulationController : MonoBehaviour
 				velocity.AddField ("y", car.GetVelocity ().y);
 				velocity.AddField ("z", car.GetVelocity ().z);
 				m.json.AddField ("velocity", velocity);
-                
+
 				JSONObject acceleration = new JSONObject (JSONObject.Type.OBJECT);
 				acceleration.AddField ("x", acc.x);
 				acceleration.AddField ("y", acc.y);
@@ -241,15 +241,15 @@ public class SimulationController : MonoBehaviour
 		string startPosition = ev.data.GetField("start_position").str;
 		float startAngle = float.Parse(ev.data.GetField("start_angle").str);
 		int roadTexture = int.Parse(ev.data.GetField("road_texture").str);
-        float roadTextureLength = float.Parse(ev.data.GetField("road_texture_length").str);
+		float roadTextureLength = float.Parse(ev.data.GetField("road_texture_length").str);
 
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth, roadTexture, roadTextureLength);
+		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth, roadTextureLength, roadTexture);
 
 		Vector3 trackStartPos = Vector3.zero;
-        // if (path != null):
-        //    trackStartPos = path.nodes[0].pos;
+		//if (path != null):
+		//	trackStartPos = path.nodes[0].pos;
 		if (startPosition.Length > 0)
 		{
 			string[] tokens = startPosition.Split(',');
@@ -281,7 +281,7 @@ public class SimulationController : MonoBehaviour
 		lastRequestedThrottle = float.Parse(ev.data.GetField("throttle").str);
 		lastRequestedSteering = float.Parse(ev.data.GetField("steering").str);
 		lastRequestedBrake = float.Parse(ev.data.GetField("brake").str);
-        
+
 		Resume ();
 	}
 
