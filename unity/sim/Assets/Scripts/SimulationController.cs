@@ -245,7 +245,7 @@ public class SimulationController : MonoBehaviour
 
 		// Redraw the track
 		roadBuilder.DestroyRoad();
-		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth, roadTextureLength, roadTexture);
+		CarPath path = roadBuilder.BuildRoad(trackPath, trackWidth, roadTexture, roadTextureLength);
 
 		Vector3 trackStartPos = Vector3.zero;
 		//if (path != null):
