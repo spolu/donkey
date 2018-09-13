@@ -11,6 +11,7 @@ import socket
 import atexit
 import cv2
 import base64
+import random
 
 import numpy as np
 
@@ -230,7 +231,7 @@ class Unity:
                     track.start_position, separator=',',
                 )[1:][:-1],
                 'start_angle': str(track.start_angle),
-                'road_texture': str(self.road_texture),
+                'road_texture': str(random.choice(self.road_texture)),
                 'road_texture_length': str(self.road_texture_length),
             }, room=self.client['sid'])
 
@@ -259,7 +260,7 @@ class Unity:
                     track.start_position, separator=',',
                 )[1:][:-1],
                 'start_angle': str(track.start_angle),
-                'road_texture': str(self.road_texture),
+                'road_texture': str(random.choice(self.road_texture)),
                 'road_texture_length': str(self.road_texture_length),
             }, room=self.client['sid'])
 
