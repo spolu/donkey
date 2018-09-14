@@ -85,6 +85,10 @@ class Vehicle():
             print('Starting vehicle...')
             time.sleep(1)
 
+            print("Vehicule ready. Go? [Y/n]")
+            if input().lower() not in {'yes', 'y', ''}:
+                self.on = False
+
             loop_count = 0
             while self.on:
                 start_time = time.time()

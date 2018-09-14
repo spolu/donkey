@@ -18,6 +18,7 @@ class Driver:
     def __init__(self, cfg, load_dir = None):
         self.track_name = cfg.get('track_name')
         self.hidden_size = cfg.get('hidden_size')
+        self.driver_fixed_throttle = cfg.get('driver_fixed_throttle')
         self.device = torch.device('cpu')
 
         self.input_filter = InputFilter(cfg)
@@ -64,7 +65,7 @@ class Driver:
         )
 
         steering = action[0][0].item()
-        throttle = 0.62
+        throttle = self.driver_fixed_throttle
 
         print(">>> COMMANDS: {:.2f} {:.2f}".format(
             steering, throttle

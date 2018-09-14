@@ -16,8 +16,6 @@ from track import Track
 #import parts
 from raspi.parts.camera import PiCamera
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
-from raspi.parts.localizer import Localizer
-from raspi.parts.planner import Planner
 from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
@@ -50,26 +48,14 @@ def drive(args):
     cfg.override('cuda', False)
     if args.reinforce_load_dir != None:
         cfg.override('reinforce_load_dir', args.reinforce_load_dir)
+    if args.driver_fixed_throttle != None:
+        cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
 
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
-
-    # if cfg is not None:
-    #     if args.load_dir is not None:
-    #         lclzr = Localizer(cfg, args.load_dir)
-    #         V.add(lclzr,
-    #           inputs=['cam/image_array'],
-    #           outputs=['track_coordinates'],
-    #           threaded=False)
-
-    #     plnr = Planner(cfg)
-    #     V.add(plnr,
-    #         inputs=['track_coordinates'],
-    #         outputs=['angle', 'throttle'],
-    #         threaded=False)
 
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)
@@ -111,9 +97,11 @@ def drive(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
+    parser.add_argument('config_path', type=str, help="path to the config file")
 
-    parser.add_argument('--config_path', type=str, help="path to the config file")
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
+    parser.add_argument('--driver_fixed_throttle', type=str, help="config override")
+
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()

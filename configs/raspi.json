@@ -8,6 +8,7 @@
   "fixed_action_std": 0.0,
   "hidden_size": 128,
   "recurring_cell": "gru",
+  "driver_fixed_throttle": 0.55,
 
   "device": "cpu",
 
