@@ -42,11 +42,13 @@ class OpticalFlow:
         self.speed = dx, dy
 
     def run_threaded(self):
-        return self.speed
+        old_speed = self.speed 
+        self.speed = { 'dx' : 0., 'dy' : 0.}
+        return old_speed
 
     def run(self):
-        self.poll()
-        return self.speed
+        dx, dy = self.sensor.mousecam_read_motion() 
+        return dx, dy
 
     def shutdown(self):
         self.on = False
