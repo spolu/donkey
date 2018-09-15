@@ -22,7 +22,7 @@ ADNS3080_MOTION  = 0x02
 ADNS3080_MOTION_CLEAR = 0x12
 
 
-class optical_flow:
+class OpticalFlow:
     def __init__(self, addr=0x68, poll_delay=0.05):
         from mpu6050 import mpu6050
         self.sensor = ADNS3080(addr)
