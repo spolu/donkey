@@ -10,6 +10,8 @@
   "ppo_policy": "ppo_vae_controller",
   "vae_policy": "vae",
   "input_filter": "canny",
+  "input_filter_canny_low": 50,
+  "input_filter_canny_high": 150,
   "device": "cuda:0",
   "seed": 1,
 

@@ -9,6 +9,8 @@
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn",
   "input_filter": "canny",
+  "input_filter_canny_low": 50,
+  "input_filter_canny_high": 150,
   "device": "cuda:0",
   "seed": 1,
 

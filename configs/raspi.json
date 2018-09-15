@@ -4,6 +4,8 @@
 
   "policy": "ppo_pixels_cnn",
   "input_filter": "canny",
+  "input_filter_canny_low": 200,
+  "input_filter_canny_high": 250,
 
   "fixed_action_std": 0.0,
   "hidden_size": 128,

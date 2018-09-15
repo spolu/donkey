@@ -11,6 +11,8 @@ import reinforce
 class InputFilter():
     def __init__(self, config):
         self.input_filter = config.get('input_filter')
+        self.input_filter_canny_low = config.get('input_filter_canny_low')
+        self.input_filter_canny_high = config.get('input_filter_canny_low')
 
     def shape(self):
         if self.input_filter == 'warp_line_detector':
@@ -107,7 +109,12 @@ class InputFilter():
             img = cv2.filter2D(img, -1, average_kernel)
 
         if self.input_filter == 'canny':
-            img = cv2.Canny(np.uint8(img), 50, 150, apertureSize = 3,)
+            img = cv2.Canny(
+                    np.uint8(img),
+                    self.input_filter_canny_low,
+                    self.input_filter_canny_high,
+                    apertureSize = 3,
+                    )
 
         if self.input_filter == 'warp_canny':
             pts1 = np.float32([
