@@ -45,7 +45,7 @@ class Driver:
         self.hiddens = torch.zeros(1, self.hidden_size).to(self.device)
         self.masks = torch.ones(1, 1).to(self.device)
 
-    def run(self, img_array = None):
+    def run(self, img_array = None, flow_dx=None, flow_dy=None):
         b,g,r = cv2.split(img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
         rgb_img = cv2.merge([r,g,b])
 
@@ -65,6 +65,7 @@ class Driver:
         )
 
         steering = action[0][0].item()
+        # steering = 0.0
         throttle = self.driver_fixed_throttle
 
         print(">>> COMMANDS: {:.2f} {:.2f}".format(

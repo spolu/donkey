@@ -59,12 +59,25 @@ def drive(args):
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
+    flow = OpticalFlow(cfg)
+    V.add(
+        flow,
+        inputs=[],
+        ouputs=['flow/dx', 'flow/dy']
+    )
+
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)
-        V.add(driver,
-          inputs=['cam/image_array'],
-          outputs=['angle', 'throttle'],
-          threaded=False)
+        V.add(
+            driver,
+            inputs=[
+                'cam/image_array',
+                'flow/dx',
+                'flow/dy',
+            ],
+            outputs=['angle', 'throttle'],
+            threaded=False,
+        )
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
