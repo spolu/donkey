@@ -51,20 +51,11 @@ def drive(args):
     if args.driver_fixed_throttle != None:
         cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
 
-    print(cfg.get('driver_fixed_throttle'))
-
     #Initialize car
     V = raspi.vehicle.Vehicle()
 
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
-
-    flow = OpticalFlow(cfg)
-    V.add(
-        flow,
-        inputs=[],
-        ouputs=['flow/dx', 'flow/dy']
-    )
 
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)

@@ -8,8 +8,8 @@ PIN_MOSI  	= 10
 PIN_SCK   	= 11
 PIN_RESET 	= 22
 PIN_CHIPSELECT = 7
-ADNS_PRODUCT_ID = 0x00 
-ADNS_PRODUCT_ID_VAL = 0x17 
+ADNS_PRODUCT_ID = 0x00
+ADNS_PRODUCT_ID_VAL = 0x17
 ADNS3080_CONFIGURATION_BITS = 0x0a
 ADNS3080_MOTION_BURST = 0x50
 ADNS3080_FRAME_CAPTURE  = 0x13
@@ -20,7 +20,6 @@ ADNS3080_PIXELS_Y   = 30
 ADNS3080_PIXEL_SUM  = 0x06
 ADNS3080_MOTION  = 0x02
 ADNS3080_MOTION_CLEAR = 0x12
-
 
 class OpticalFlow:
     def __init__(self, addr=0x68, poll_delay=0.05):
@@ -42,7 +41,7 @@ class OpticalFlow:
         self.speed = dx, dy
 
     def run_threaded(self):
-        old_speed = self.speed 
+        old_speed = self.speed
         self.speed = { 'dx' : 0., 'dy' : 0.}
         return old_speed
 
@@ -66,12 +65,12 @@ class ADNS3080:
 
         pid = self.mousecam_read_reg(ADNS_PRODUCT_ID)
         assert(pid == [ADNS_PRODUCT_ID_VAL])
-        print("initializing CJMCU110...")
-        self.mousecam_write_reg(ADNS3080_MOTION_CLEAR, 0xFF) 
+        print("initializing ADNS3080...")
+        self.mousecam_write_reg(ADNS3080_MOTION_CLEAR, 0xFF)
         print("clearing motion values...")
 
-        # turn on sensitive mode	
-        self.mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x09) 
+        # turn on sensitive mode
+        self.mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x09)
         # 0x09 is 400 counts resolution
         # 0x19 is 1600 counts resolution
 
@@ -89,7 +88,7 @@ class ADNS3080:
         return
 
     def mousecam_read_motion(self):
-        val, motion, dx, dy, squal, shutter_lower, shutter_upper, max_pix = self.spi.xfer2([ADNS3080_MOTION_BURST,255, 255, 255, 255, 255, 255, 255])        
+        val, motion, dx, dy, squal, shutter_lower, shutter_upper, max_pix = self.spi.xfer2([ADNS3080_MOTION_BURST,255, 255, 255, 255, 255, 255, 255])
         self.md  = { 'motion' : motion, 'dx' : dx, 'dy' : dy, 'squal' : squal, 'shutter_lower' : shutter_lower, 'shutter_upper' : shutter_upper, 'max_pix' : max_pix}
         print("(" + str(dx), "," + str(dy) + ") " + str(squal))
         return dx, dy
@@ -101,9 +100,8 @@ class ADNS3080:
 
 if __name__ == "__main__":
     iter = 0
-    cimcu = CJMCU110()
+    cimcu = ADNS3080()
     while iter < 100:
         val = cimcu.mousecam_read_motion()
         time.sleep(0.1)
         iter += 1
-# 
