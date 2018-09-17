@@ -25,15 +25,14 @@ class PPOPixelsCNN(nn.Module):
 
         self.input_filter = reinforce.InputFilter(config)
 
-        self.cv1 = nn.Conv2d(1, 12, 5, stride=2)
-        self.cv2 = nn.Conv2d(12, 16, 5, stride=3)
+        self.cv1 = nn.Conv2d(1, 8, 6, stride=3)
+        self.cv2 = nn.Conv2d(8, 16, 8, stride=4)
         # self.cv3 = nn.Conv2d(32, 64, 3, stride=2)
         # self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
         # self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
+        # self.dp1 = nn.Dropout(p=0.1)
 
-        self.dp1 = nn.Dropout(p=0.1)
-
-        self.fc1 = nn.Linear(4000, self.hidden_size)
+        self.fc1 = nn.Linear(768, self.hidden_size)
 
         if self.recurring_cell == "gru":
             self.gru = nn.GRUCell(self.hidden_size, self.hidden_size)
@@ -83,9 +82,9 @@ class PPOPixelsCNN(nn.Module):
         # x = F.elu(self.cv3(x))
         # x = F.elu(self.cv4(x))
         # x = F.elu(self.cv5(x))
-        x = self.dp1(x)
+        # x = self.dp1(x)
 
-        x = x.view(-1, 4000)
+        x = x.view(-1, 768)
         x = F.elu(self.fc1(x))
 
         if self.recurring_cell == "gru":
@@ -132,7 +131,7 @@ class PPOPixelsCNN(nn.Module):
             ),
             axis=-1,
         )
-        observation = torch.from_numpy(observation).float().unsqueeze(1)
+        observation = torch.from_numpy(observation).half().unsqueeze(1)
 
         return observation
 
@@ -159,7 +158,7 @@ class PPOPixelsCNN(nn.Module):
             if self.fixed_action_std > 0.0:
                 action_std = (
                     self.fixed_action_std *
-                    torch.ones(action_mean.size()).float()
+                    torch.ones(action_mean.size()).half()
                 ).to(self.device)
                 action_logstd = action_std.log()
 
@@ -202,7 +201,7 @@ class PPOPixelsCNN(nn.Module):
             if self.fixed_action_std > 0.0:
                 action_std = (
                     self.fixed_action_std *
-                    torch.ones(action_mean.size()).float()
+                    torch.ones(action_mean.size()).half()
                 ).to(self.device)
                 action_logstd = action_std.log()
 
