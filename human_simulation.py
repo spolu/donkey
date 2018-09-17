@@ -41,6 +41,10 @@ def transition():
     # if _synthetic is not None:
     #     generated = _synthetic.generate([state])[0][0].tolist()
     # import pdb; pdb.set_trace()
+    camera = _observations.camera
+    edges = cv2.Canny(
+        camera.astype(np.uint8), 200, 250, apertureSize = 3,
+    )
 
     message =  {
         'done': _done,
@@ -49,7 +53,7 @@ def transition():
             'track_coordinates': _observations.track_coordinates.tolist(),
             'time': _observations.time,
             'track_linear_speed': _observations.track_linear_speed,
-            'camera': _observations.camera.tolist(),
+            'camera': edges.tolist(),
             'generated': generated,
             'position': _observations.position.tolist(),
         },

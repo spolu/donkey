@@ -6,6 +6,8 @@
   "speed_limit": 0.0,
 
   "input_filter": "none",
+  "input_filter_canny_low": 50,
+  "input_filter_canny_high": 150,
   "device": "cpu",
 
   "stl_layer_count": 4,
@@ -19,8 +21,8 @@
   "unity_time_scale": 1.0,
   "unity_step_interval": 0.030,
   "unity_capture_frame_rate": 30,
-  "unity_road_texture": [2],
-  "unity_road_texture_length": 0.40,
+  "unity_road_texture": [3],
+  "unity_road_texture_length": 0.20,
 
   "synthetic_step_interval": 0.04,
   "synthetic_braque_torque_max": 0.03,
