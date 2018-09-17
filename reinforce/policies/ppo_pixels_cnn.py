@@ -76,13 +76,7 @@ class PPOPixelsCNN(nn.Module):
             self.gru.bias_ih.data.fill_(0)
             self.gru.bias_hh.data.fill_(0)
 
-        self.half()
-
     def forward(self, inputs, hiddens, masks):
-        inputs = inputs.half()
-        hiddens = hiddens.half()
-        masks = masks.half()
-
         x = F.elu(self.cv1(inputs))
         x = F.elu(self.cv2(x))
         # x = F.elu(self.cv3(x))
@@ -117,7 +111,7 @@ class PPOPixelsCNN(nn.Module):
         v = F.tanh(self.fc1_v(x))
         v = self.fc2_v(v)
 
-        return v.float(), a.float(), hiddens.float()
+        return v, a, hiddens
 
     def input_shape(self):
         return (
