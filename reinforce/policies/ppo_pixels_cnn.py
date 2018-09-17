@@ -131,7 +131,7 @@ class PPOPixelsCNN(nn.Module):
             ),
             axis=-1,
         )
-        observation = torch.from_numpy(observation).unsqueeze(1)
+        observation = torch.from_numpy(observation).float().unsqueeze(1)
 
         return observation
 
