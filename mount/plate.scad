@@ -29,7 +29,7 @@ handlePinSpacingY = plateL - 2 * 10;
 handlePinW = 3.1;
 //Meccano Dimensions0
 meccanoPinW = 4.1;
-meccanoSpacing = 6.3 + meccanoPinW;
+meccanoSpacing = 12.7;
 
 donkeyPlate();
 
