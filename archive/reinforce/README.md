@@ -206,7 +206,7 @@ https://jkjung-avt.github.io/opencv3-on-tx2/ (make sure to follow comment on usi
 Add package to virtual env, by executing
 `cp /usr/local/lib/python3.5/dist-packages/cv2.cpython-35m-aarch64-linux-gnu.so /home/nvidia/Envs/dr1ve/lib/python3.5/site-packages`
 
-### Launc Environment 
+### Launch Environment 
 
 Launch env
 'workon dr1ve'
