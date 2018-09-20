@@ -43,7 +43,7 @@ def transition():
     # import pdb; pdb.set_trace()
     camera = _observations.camera
     edges = cv2.Canny(
-        camera.astype(np.uint8), 200, 250, apertureSize = 3,
+        camera.astype(np.uint8), 50, 150, apertureSize = 3,
     )
 
     message =  {
