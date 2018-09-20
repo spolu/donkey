@@ -50,19 +50,60 @@ def camera( capture, index):
         abort(400)
     if index > capture.size()-1:
         abort(400)
+    if index <= 0:
+        abort(400)
     if 'camera' not in capture.get_item(index):
         abort(400)
 
+    feature_params = dict( maxCorners = 100,
+                          qualityLevel = 0.3,
+                          minDistance = 7,
+                          blockSize = 7 )
+
+    lk_params = dict( winSize  = (15,15),
+                     maxLevel = 2,
+                     criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
+
     ib = capture.get_item(index)['camera']
+    ib_prev = capture.get_item(index-1)['camera']
 
     camera = cv2.imdecode(
         np.fromstring(ib, np.uint8),
-        cv2.IMREAD_GRAYSCALE,
-    ).astype(np.float)[50:]
+        cv2.CV_8UC1
+    )[50:]
+
+    camera_prev = cv2.imdecode(
+        np.fromstring(ib_prev, np.uint8),
+        cv2.CV_8UC1
+    )[50:]
+
+    # p0 = cv2.goodFeaturesToTrack(camera_prev, mask = None, **feature_params)
+    # print("{}".format(p0))
+    p0 = np.array([
+        [[50,10]],[[75,10]],[[100, 10]],
+        [[50,20]],[[75,20]],[[100, 20]],
+    ], dtype=np.float32)
+    p1, st, err = cv2.calcOpticalFlowPyrLK(camera_prev, camera, p0, None, **lk_params)
+
+    good_new = p1[st==1]
+    good_old = p0[st==1]
+
+    color = np.random.randint(0,255,(100,3))
+
+    mask = np.zeros_like(camera)
+
+    for i,(new,old) in enumerate(zip(good_new,good_old)):
+        a,b = new.ravel()
+        c,d = old.ravel()
+        mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
+        # camera = cv2.circle(camera,(a,b),5,color[i].tolist(),-1)
+    camera = cv2.add(camera, mask)
+
     edges = cv2.Canny(
-        camera.astype(np.uint8), 200, 250, apertureSize = 3,
+        camera.astype(np.uint8), 50, 150, apertureSize = 7,
     )
-    _, encoded = cv2.imencode('.jpeg', edges)
+    _, encoded = cv2.imencode('.jpeg', camera)
 
     # import pdb; pdb.set_trace()
 
