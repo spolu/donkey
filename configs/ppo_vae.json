@@ -24,8 +24,8 @@
   "hidden_size": 128,
   "recurring_cell": "gru",
 
-  "rollout_size": 128,
-  "worker_count": 32,
+  "rollout_size": 64,
+  "worker_count": 16,
   "mini_batch_count": 32,
 
   "ppo_learning_rate": 0.0005,
@@ -48,10 +48,10 @@
   "simulation_type": "unity",
 
   "unity_headless": true,
-  "unity_time_scale": 4.0,
-  "unity_step_interval": 0.039,
-  "unity_capture_frame_rate": 120,
-  "unity_road_texture": [2],
+  "unity_time_scale": 2.0,
+  "unity_step_interval": 0.015,
+  "unity_capture_frame_rate": 150,
+  "unity_road_texture": [2,3],
   "unity_road_texture_length": 0.20,
 
   "synthetic_step_interval": 0.04,
