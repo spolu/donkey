@@ -8,12 +8,7 @@ import cv2
 
  # import pdb; pdb.set_trace()
 
-class BaseCamera:
-
-    def run_threaded(self):
-        return self.frame
-
-class JetsonCamera(BaseCamera):
+class JetsonCamera:
     def __init__(self, resolution=(1280, 720), framerate=120):
         resolution = (resolution[1], resolution[0])
         framerate = framerate
@@ -36,9 +31,26 @@ class JetsonCamera(BaseCamera):
         time.sleep(2)
 
 
+    def output_from_frame(self, frame):
+        # get b,g,r as cv2 uses BGR and not RGB for colors
+        b,g,r = cv2.split(frame)
+        rgb_img = cv2.merge([r,g,b])
+
+        raw = cv2.imencode(".jpg", rgb_img)[1].tostring()
+
+        camera = cv2.imdecode(
+            np.fromstring(raw, np.uint8),
+            cv2.IMREAD_GRAYSCALE,
+        )
+
+        return raw, camera
+
+    def run_threaded(self):
+        return self.raw, self.camera
+
     def run(self):
         _, frame = self.videoCapture.read()
-        return frame
+        return self.output_from_frame(frame)
 
     def update(self):
         print("JetsonCamera update")
@@ -46,8 +58,8 @@ class JetsonCamera(BaseCamera):
         while self.on:
             # grab the frame from the stream and clear the stream in
             # preparation for the next frame
-            _, img = self.videoCapture.read()
-            self.frame = img
+            _, frame = self.videoCapture.read()
+            self.raw, self.camera = self.output_from_frame(frame)
             # if the thread indicator variable is set, stop the thread
             if not self.on:
                 break

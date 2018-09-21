@@ -129,7 +129,6 @@ if __name__ == '__main__':
 
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
     parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
-
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()

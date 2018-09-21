@@ -18,6 +18,7 @@ from jetson.parts.camera import JetsonCamera
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.driver import Driver
 from raspi.parts.capturer import Capturer
+from raspi.parts.camera_flow import CameraFlow
 from raspi.parts.web_controller.web import LocalWebController
 
 # VEHICLE
@@ -53,14 +54,43 @@ def drive(args):
     V = raspi.vehicle.Vehicle()
 
     cam = JetsonCamera(resolution=CAMERA_RESOLUTION, framerate=CAMERA_FRAMERATE)
-    V.add(cam, outputs=['cam/image_array'], threaded=True)
+    V.add(
+        cam,
+        outputs=[
+            'cam/raw',
+            'cam/camera',
+        ],
+        threaded=True,
+    )
+
+    flow = CameraFlow()
+    V.add(
+        flow,
+        inputs=[
+            'cam/raw',
+        ],
+        outputs=[
+            'flow/dx',
+            'flow/dy',
+            'flow/speed',
+        ],
+        threaded=False,
+    )
 
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)
-        V.add(driver,
-          inputs=['cam/image_array'],
-          outputs=['angle', 'throttle'],
-          threaded=False)
+        V.add(
+            driver,
+            inputs=[
+                'cam/camera',
+                'flow/speed',
+            ],
+            outputs=[
+                'angle',
+                'throttle'
+            ],
+            threaded=False,
+        )
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
@@ -69,16 +99,18 @@ def drive(args):
             inputs=[
                 'angle',
                 'throttle',
-                'cam/image_array',
+                'cam/raw',
             ],
             threaded=False,
         )
 
-    web = LocalWebController()
-    V.add(web, 
-        inputs=['cam/image_array'],
-        outputs=['angle', 'throttle'],
-        threaded=True,)
+    # web = LocalWebController()
+    # V.add(
+    #     web,
+    #     inputs=['cam/image_array'],
+    #     outputs=['angle', 'throttle'],
+    #     threaded=True,
+    # )
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
@@ -102,8 +134,10 @@ def drive(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
 
-    parser.add_argument('--config_path', type=str, help="path to the config file")
+    parser.add_argument('config_path', type=str, help="path to the config file")
+
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
+    parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
     args = parser.parse_args()
