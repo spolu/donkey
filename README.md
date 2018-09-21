@@ -46,3 +46,8 @@ sudo bash
 ./scripts/trainer_setup_root.sh
 ```
 
+## Raspberry
+
+```
+OMP_NUM_THREADS=2 python3 raspi_runner.py ./configs/raspi.json --reinforce_load_dir=/home/pi/models/reinforce_20180831_1100/ --driver_fixed_throttle=0.55
+```

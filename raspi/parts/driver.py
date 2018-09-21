@@ -47,7 +47,7 @@ class Driver:
         self.start_time = time.time()
         self.throttle = self.driver_fixed_throttle
 
-    def run(self, camera = None, flow_dx=None, flow_dy=None):
+    def run(self, camera = None, flow_speed = None):
         camera = self.input_filter.apply(camera) / 127.5 - 1
 
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
@@ -63,10 +63,22 @@ class Driver:
         throttle = self.throttle
 
         # Step increase of throttle command.
-        if time.time() - self.start_time > 30.0:
-            self.start_time = time.time()
-            if self.throttle < 0.65:
-                self.throttle += 0.01
+        # if time.time() - self.start_time > 30.0:
+        #     self.start_time = time.time()
+        #     if self.throttle < 0.65:
+        #         self.throttle += 0.01
+
+        SPEED = 22
+
+        if flow_speed < SPEED-5:
+            self.throttle += 0.001
+        elif flow_speed < SPEED:
+            self.throttle += 0.0005
+
+        if flow_speed > SPEED:
+            self.throttle -= 0.0005
+        elif flow_speed > SPEED+5:
+            self.throttle -= 0.001
 
         print(">>> COMMANDS: {:.2f} {:.2f}".format(
             steering, throttle

@@ -74,6 +74,7 @@ def drive(args):
         outputs=[
             'flow/dx',
             'flow/dy',
+            'flow/speed',
         ],
         threaded=False,
     )
@@ -84,8 +85,7 @@ def drive(args):
             driver,
             inputs=[
                 'cam/camera',
-                'flow/dx',
-                'flow/dy',
+                'flow/speed',
             ],
             outputs=[
                 'angle',

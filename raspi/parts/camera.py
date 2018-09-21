@@ -45,7 +45,7 @@ class PiCamera:
         raw = cv2.imencode(".jpg", rgb_img)[1].tostring()
 
         camera = cv2.imdecode(
-            np.fromstring(camera_raw, np.uint8),
+            np.fromstring(raw, np.uint8),
             cv2.IMREAD_GRAYSCALE,
         )
 
@@ -59,7 +59,7 @@ class PiCamera:
             # preparation for the next frame
             self.frame = f.array
             self.rawCapture.truncate(0)
-            self.camera, self.raw = self.output_from_frame(self.frame)
+            self.raw, self.camera = self.output_from_frame(self.frame)
 
             # if the thread indicator variable is set, stop the thread
             if not self.on:

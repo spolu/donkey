@@ -78,11 +78,10 @@ def camera( capture, index):
         cv2.CV_8UC1
     )[50:]
 
-    # p0 = cv2.goodFeaturesToTrack(camera_prev, mask = None, **feature_params)
-    # print("{}".format(p0))
     p0 = np.array([
         [[50,10]],[[75,10]],[[100, 10]],
         [[50,20]],[[75,20]],[[100, 20]],
+        [[10,40]], [[50,40]],[[75,40]],[[100, 40]],[[140, 40]],
     ], dtype=np.float32)
     p1, st, err = cv2.calcOpticalFlowPyrLK(camera_prev, camera, p0, None, **lk_params)
 
@@ -97,13 +96,13 @@ def camera( capture, index):
         a,b = new.ravel()
         c,d = old.ravel()
         mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-        # camera = cv2.circle(camera,(a,b),5,color[i].tolist(),-1)
     camera = cv2.add(camera, mask)
 
     edges = cv2.Canny(
-        camera.astype(np.uint8), 50, 150, apertureSize = 7,
+        camera.astype(np.uint8), 100, 150, apertureSize = 3,
     )
-    _, encoded = cv2.imencode('.jpeg', camera)
+    _, encoded = cv2.imencode('.jpeg', edges)
+    # _, encoded = cv2.imencode('.jpeg', camera)
 
     # import pdb; pdb.set_trace()
 
