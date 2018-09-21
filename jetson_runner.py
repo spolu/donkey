@@ -114,19 +114,19 @@ def drive(args):
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
-    # steering_controller = PCA9685(STEERING_CHANNEL)
-    # steering = PWMSteering(controller=steering_controller,
-    #                                 left_pulse=STEERING_LEFT_PWM,
-    #                                 right_pulse=STEERING_RIGHT_PWM)
+    steering_controller = PCA9685(STEERING_CHANNEL)
+    steering = PWMSteering(controller=steering_controller,
+                                    left_pulse=STEERING_LEFT_PWM,
+                                    right_pulse=STEERING_RIGHT_PWM)
 
-    # throttle_controller = PCA9685(THROTTLE_CHANNEL)
-    # throttle = PWMThrottle(controller=throttle_controller,
-    #                                 max_pulse=THROTTLE_FORWARD_PWM,
-    #                                 zero_pulse=THROTTLE_STOPPED_PWM,
-    #                                 min_pulse=THROTTLE_REVERSE_PWM)
+    throttle_controller = PCA9685(THROTTLE_CHANNEL)
+    throttle = PWMThrottle(controller=throttle_controller,
+                                    max_pulse=THROTTLE_FORWARD_PWM,
+                                    zero_pulse=THROTTLE_STOPPED_PWM,
+                                    min_pulse=THROTTLE_REVERSE_PWM)
 
-    # V.add(steering, inputs=['angle'])
-    # V.add(throttle, inputs=['throttle'])
+    V.add(steering, inputs=['angle'])
+    V.add(throttle, inputs=['throttle'])
 
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
