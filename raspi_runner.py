@@ -16,6 +16,7 @@ from track import Track
 #import parts
 from raspi.parts.camera import PiCamera
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
+from raspi.parts.camera_flow import CameraFlow
 from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
@@ -55,18 +56,41 @@ def drive(args):
     V = raspi.vehicle.Vehicle()
 
     cam = PiCamera(resolution=CAMERA_RESOLUTION)
-    V.add(cam, outputs=['cam/image_array'], threaded=True)
+    V.add(
+        cam,
+        outputs=[
+            'cam/raw',
+            'cam/camera',
+        ],
+        threaded=True,
+    )
+
+    flow = CameraFlow()
+    V.add(
+        flow,
+        inputs=[
+            'cam/raw',
+        ],
+        outputs=[
+            'flow/dx',
+            'flow/dy',
+        ],
+        threaded=False,
+    )
 
     if args.reinforce_load_dir is not None and cfg is not None:
         driver = Driver(cfg)
         V.add(
             driver,
             inputs=[
-                'cam/image_array',
+                'cam/camera',
                 'flow/dx',
                 'flow/dy',
             ],
-            outputs=['angle', 'throttle'],
+            outputs=[
+                'angle',
+                'throttle'
+            ],
             threaded=False,
         )
 
@@ -77,12 +101,10 @@ def drive(args):
             inputs=[
                 'angle',
                 'throttle',
-                'cam/image_array',
+                'cam/raw',
             ],
             threaded=False,
         )
-    # sense = Sense()
-    # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
     steering_controller = PCA9685(STEERING_CHANNEL)
     steering = PWMSteering(controller=steering_controller,

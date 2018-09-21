@@ -47,18 +47,11 @@ class Driver:
         self.start_time = time.time()
         self.throttle = self.driver_fixed_throttle
 
-    def run(self, img_array = None, flow_dx=None, flow_dy=None):
-        b,g,r = cv2.split(img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
-        rgb_img = cv2.merge([r,g,b])
-
-        camera_raw = cv2.imencode(".jpg", rgb_img)[1].tostring()
-        camera = cv2.imdecode(
-            np.fromstring(camera_raw, np.uint8),
-            cv2.IMREAD_GRAYSCALE,
-        )
-
+    def run(self, camera = None, flow_dx=None, flow_dy=None):
         camera = self.input_filter.apply(camera) / 127.5 - 1
+
         camera = torch.from_numpy(camera).float().unsqueeze(0).to(self.device)
+
         _, action, hiddens, _, _ = self.policy.action(
             camera.unsqueeze(0).detach(),
             self.hiddens.detach(),
@@ -69,6 +62,7 @@ class Driver:
         steering = action[0][0].item()
         throttle = self.throttle
 
+        # Step increase of throttle command.
         if time.time() - self.start_time > 30.0:
             self.start_time = time.time()
             if self.throttle < 0.65:

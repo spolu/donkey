@@ -21,7 +21,7 @@ ADNS3080_PIXEL_SUM  = 0x06
 ADNS3080_MOTION  = 0x02
 ADNS3080_MOTION_CLEAR = 0x12
 
-class OpticalFlow:
+class ADNSFlow:
     def __init__(self, addr=0x68, poll_delay=0.05):
         self.sensor = ADNS3080(addr)
         self.speed = { 'dx' : 0., 'dy' : 0.}

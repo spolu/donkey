@@ -18,7 +18,7 @@ class Capturer:
             self,
             angle = None,
             throttle = None,
-            cam_img_array = None,
+            camera_raw = None,
             imu_accel = None,
             imu_gyro = None,
             imu_stack = None,
@@ -32,10 +32,6 @@ class Capturer:
         to disk.
         '''
         t = time.time() - self.start_time
-
-        b,g,r = cv2.split(cam_img_array)       # get b,g,r as cv2 uses BGR and not RGB for colors
-        rgb_img = cv2.merge([r,g,b])
-        camera = cv2.imencode(".jpg", rgb_img)[1].tostring()
 
         item = {
             'time': t,
@@ -112,7 +108,7 @@ class Capturer:
 
         for it in items:
             self.capture.add_item(None, it, save=False)
-        self.capture.add_item(camera, item, save=False)
+        self.capture.add_item(camera_raw, item, save=False)
 
     def shutdown(self):
         self.capture.save()
