@@ -6,6 +6,7 @@ plateL=240;
 
 platePinW = 2.7; // actual mount hole diameter
 platePinH = 3;
+standoffFN = 30;
 
 //PWM Dimensions
 PWMspacingX = 56;
