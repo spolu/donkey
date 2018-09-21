@@ -22,6 +22,7 @@ from raspi.parts.planner import Planner
 from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
+from raspi.parts.flow import OpticalFlow
 
 # VEHICLE
 DRIVE_LOOP_HZ = 30
@@ -72,6 +73,11 @@ def drive(args):
     #         outputs=['angle', 'throttle'],
     #         threaded=False)
 
+    flow = OpticalFlow()
+    V.add(flow, 
+        outputs=['flow/dx', 'flow/dy'],
+        threaded=False)
+
     web = LocalWebController()
     V.add(web, 
         inputs=['cam/image_array'],
@@ -119,7 +125,7 @@ def drive(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
 
-    parser.add_argument('--config_path', type=str, help="path to the config file")
+    parser.add_argument('config_path', type=str, help="path to the config file")
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
 
