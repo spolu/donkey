@@ -14,7 +14,7 @@ import reinforce
 
 # import pdb; pdb.set_trace()
 
-CONV_OUT_WIDTH = 3
+CONV_OUT_WIDTH = 2
 CONV_OUT_HEIGHT = 8
 
 class VAE(nn.Module):
