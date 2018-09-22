@@ -1,5 +1,5 @@
 {
-  "track_name": "stationfxl",
+  "track_name": "renault_digital_season3",
   "track_randomized": true,
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
@@ -10,8 +10,8 @@
   "ppo_policy": "ppo_vae_controller",
   "vae_policy": "vae",
   "input_filter": "canny",
-  "input_filter_canny_low": 50,
-  "input_filter_canny_high": 150,
+  "input_filter_canny_low": 100,
+  "input_filter_canny_high": 200,
   "device": "cuda:0",
   "seed": 1,
 
