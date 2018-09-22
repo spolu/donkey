@@ -28,7 +28,7 @@
   "worker_count": 16,
   "mini_batch_count": 32,
 
-  "ppo_learning_rate": 0.0005,
+  "ppo_learning_rate": 0.0002,
   "vae_learning_rate": 0.001,
   "gamma": 0.99,
   "tau": 0.95,
