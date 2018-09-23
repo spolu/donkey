@@ -9,8 +9,8 @@
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn",
   "input_filter": "canny",
-  "input_filter_canny_low": 50,
-  "input_filter_canny_high": 150,
+  "input_filter_canny_low": 100,
+  "input_filter_canny_high": 200,
   "device": "cuda:0",
   "seed": 1,
 
@@ -22,9 +22,9 @@
   "hidden_size": 128,
   "recurring_cell": "gru",
 
-  "rollout_size": 64,
+  "rollout_size": 32,
   "worker_count": 16,
-  "mini_batch_count": 32,
+  "mini_batch_count": 4,
 
   "learning_rate": 0.0002,
   "gamma": 0.99,

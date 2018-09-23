@@ -24,9 +24,9 @@
   "hidden_size": 128,
   "recurring_cell": "gru",
 
-  "rollout_size": 64,
+  "rollout_size": 32,
   "worker_count": 16,
-  "mini_batch_count": 32,
+  "mini_batch_count": 4,
 
   "ppo_learning_rate": 0.0002,
   "vae_learning_rate": 0.001,

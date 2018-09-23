@@ -334,7 +334,7 @@ class PPOVAE:
 
         # PPO training on computed latents.
         for e in range(self.ppo_epoch_count):
-            generator = self.rollouts.feed_forward_generator(advantages)
+            generator = self.rollouts.recurrent_generator(advantages)
 
             for sample in generator:
                 _, \
@@ -377,7 +377,7 @@ class PPOVAE:
 
         # VAE training on rollouts.
         for e in range(self.vae_epoch_count):
-            generator = self.rollouts.feed_forward_generator(advantages)
+            generator = self.rollouts.recurrent_generator(advantages)
 
             for sample in generator:
                 observations_batch, \
