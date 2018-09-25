@@ -279,7 +279,7 @@ class PPO:
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         for e in range(self.ppo_epoch_count):
-            generator = self.rollouts.recurrent_generator(advantages)
+            generator = self.rollouts.feed_forward_generator(advantages)
 
             for sample in generator:
                 observations_batch, \

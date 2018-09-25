@@ -20,7 +20,7 @@
 
   "fixed_action_std": 0.0,
   "hidden_size": 128,
-  "recurring_cell": "gru",
+  "recurring_cell": "none",
 
   "rollout_size": 32,
   "worker_count": 16,
@@ -45,7 +45,7 @@
   "unity_time_scale": 4.0,
   "unity_step_interval": 0.039,
   "unity_capture_frame_rate": 120,
-  "unity_road_texture": [2,3],
+  "unity_road_texture": [3],
   "unity_road_texture_length": 0.20,
 
   "synthetic_step_interval": 0.06,
