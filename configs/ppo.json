@@ -24,7 +24,7 @@
 
   "rollout_size": 32,
   "worker_count": 16,
-  "mini_batch_count": 4,
+  "mini_batch_count": 8,
 
   "learning_rate": 0.0002,
   "gamma": 0.99,
