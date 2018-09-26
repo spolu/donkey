@@ -14,8 +14,8 @@ import reinforce
 
 # import pdb; pdb.set_trace()
 
-CONV_OUT_SIZE = 4576
-# CONV_OUT_SIZE = 4000
+# CONV_OUT_SIZE = 4576
+CONV_OUT_SIZE = 9152
 
 class PPOPixelsCNN(nn.Module):
     def __init__(self, config):
@@ -28,12 +28,9 @@ class PPOPixelsCNN(nn.Module):
 
         self.input_filter = reinforce.InputFilter(config)
 
-        # self.cv1 = nn.Conv2d(1, 8, 4, stride=2)
-        # self.cv2 = nn.Conv2d(8, 16, 4, stride=3)
-
         self.cv1 = nn.Conv2d(1, 16, 4, stride=2)
-        self.cv2 = nn.Conv2d(16, 32, 4, stride=2)
-        self.cv3 = nn.Conv2d(32, 64, 4, stride=2)
+        self.cv2 = nn.Conv2d(16, 32, 4, stride=3)
+        self.cv3 = nn.Conv2d(32, 64, 4, stride=3)
 
         # self.cv4 = nn.Conv2d(64, 64, 3, stride=1)
         # self.cv5 = nn.Conv2d(64, 32, 3, stride=1)
@@ -87,7 +84,7 @@ class PPOPixelsCNN(nn.Module):
     def forward(self, inputs, hiddens, masks):
         x = F.elu(self.cv1(inputs))
         x = F.elu(self.cv2(x))
-        x = F.elu(self.cv3(x))
+        # x = F.elu(self.cv3(x))
 
         # x = F.elu(self.cv4(x))
         # x = F.elu(self.cv5(x))
