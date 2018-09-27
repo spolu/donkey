@@ -112,7 +112,7 @@ class Driver:
         #     if self.throttle < 0.65:
         #         self.throttle += 0.01
 
-        SPEED = 22
+        SPEED = 18
 
         if time.time() - self.start_time > 10.0:
             if flow_speed < SPEED-5:
