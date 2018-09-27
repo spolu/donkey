@@ -12,7 +12,9 @@
   "latent_size": 128,
   "hidden_size": 128,
   "recurring_cell": "none",
+
   "driver_fixed_throttle": 0.55,
+  "driver_optical_flow_speed": 18,
 
   "device": "cpu",
 

@@ -20,6 +20,7 @@ class Driver:
         self.track_name = cfg.get('track_name')
         self.hidden_size = cfg.get('hidden_size')
         self.driver_fixed_throttle = cfg.get('driver_fixed_throttle')
+        self.driver_optical_flow_speed = cfg.get('driver_optical_flow_speed')
         self.device = torch.device('cpu')
         self.config = cfg
 
@@ -112,7 +113,7 @@ class Driver:
         #     if self.throttle < 0.65:
         #         self.throttle += 0.01
 
-        SPEED = 18
+        SPEED = self.driver_optical_flow_speed
 
         if time.time() - self.start_time > 10.0:
             if flow_speed < SPEED-5:

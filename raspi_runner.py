@@ -51,6 +51,8 @@ def drive(args):
         cfg.override('reinforce_load_dir', args.reinforce_load_dir)
     if args.driver_fixed_throttle != None:
         cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
+    if args.driver_optical_flow_speed != None:
+        cfg.override('driver_optical_flow_speed', args.driver_optical_flow_speed)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
@@ -128,8 +130,10 @@ if __name__ == '__main__':
     parser.add_argument('config_path', type=str, help="path to the config file")
 
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
-    parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
+
+    parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
+    parser.add_argument('--driver_optical_flow_speed', type=float, help="config override")
 
     args = parser.parse_args()
 
