@@ -42,6 +42,8 @@ class PPOPixelsCNN(nn.Module):
         self.fc1_a = nn.Linear(self.hidden_size, self.hidden_size)
         if self.action_type == 'discrete':
             self.fc2_a = nn.Linear(self.hidden_size, reinforce.DISCRETE_CONTROL_SIZE)
+        elif self.action_type == 'fixed_throttle':
+            self.fc2_a = nn.Linear(self.hidden_size, 2 * reinforce.CONTINUOUS_CONTROL_SIZE_FIXED_THROTTLE)
         else:
             self.fc2_a = nn.Linear(self.hidden_size, 2 * reinforce.CONTINUOUS_CONTROL_SIZE)
 
@@ -152,7 +154,10 @@ class PPOPixelsCNN(nn.Module):
 
             return value, actions, hiddens, action_log_probs, entropy
         else:
-            slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
+            if self.action_type == 'fixed_throttle':
+                slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE_FIXED_THROTTLE, 1)
+            else:
+                slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()
@@ -195,7 +200,10 @@ class PPOPixelsCNN(nn.Module):
 
             return value, hiddens, action_log_probs, entropy
         else:
-            slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
+            if self.action_type == 'fixed_throttle':
+                slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE_FIXED_THROTTLE, 1)
+            else:
+                slices = torch.split(x, reinforce.CONTINUOUS_CONTROL_SIZE, 1)
             action_mean = slices[0]
             action_logstd = slices[1]
             action_std = action_logstd.exp()

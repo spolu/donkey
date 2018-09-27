@@ -49,6 +49,10 @@ class PPOStorage:
             self.actions = torch.zeros(
                 self.rollout_size, self.worker_count, 1,
             ).to(self.device)
+        elif config.get('action_type') == 'fixed_throttle':
+            self.actions = torch.zeros(
+                self.rollout_size, self.worker_count, reinforce.CONTINUOUS_CONTROL_SIZE_FIXED_THROTTLE,
+            ).to(self.device)
         else:
             self.actions = torch.zeros(
                 self.rollout_size, self.worker_count, reinforce.CONTINUOUS_CONTROL_SIZE,
