@@ -20,7 +20,7 @@
 
   "fixed_action_std": 0.0,
   "hidden_size": 128,
-  "recurring_cell": "none",
+  "recurring_cell": "gru",
 
   "rollout_size": 32,
   "worker_count": 16,
