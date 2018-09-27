@@ -20,6 +20,7 @@ from raspi.parts.camera_flow import CameraFlow
 from raspi.parts.driver import Driver
 from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
+from raspi.parts.web_controller.web import LocalWebController
 
 # VEHICLE
 DRIVE_LOOP_HZ = 30
@@ -94,6 +95,14 @@ def drive(args):
                 'throttle'
             ],
             threaded=False,
+        )
+    else:
+        web = LocalWebController()
+        V.add(
+            web,
+            inputs=['cam/camera'],
+            outputs=['angle', 'throttle'],
+            threaded=True,
         )
 
     if args.capture_dir is not None:
