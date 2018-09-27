@@ -43,8 +43,8 @@
 
   "unity_headless": true,
   "unity_time_scale": 4.0,
-  "unity_step_interval": 0.039,
-  "unity_capture_frame_rate": 120,
+  "unity_step_interval": 0.049,
+  "unity_capture_frame_rate": 100,
   "unity_road_texture": [3],
   "unity_road_texture_length": 0.20,
 
