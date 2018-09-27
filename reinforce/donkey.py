@@ -34,6 +34,7 @@ CAMERA_WIDTH = 160
 
 CONTINUOUS_CONTROL_SIZE = 2
 DISCRETE_THROTTLE_SLOW = 0.6
+DISCRETE_THROTTLE_FAST = 0.75
 DISCRETE_CONTROL_COUNT = 9
 
 ANGLES_WINDOW = 5
@@ -359,17 +360,21 @@ class Donkey:
                 throttle = 0.0
                 brake = 0.0
                 steering = -1.0
-        if self.action_type == 'semi_discrete_throttle':
+        elif self.action_type == 'semi_discrete_throttle':
             steering = controls[0]
-            throttle= 0.0
+            throttle = 0.0
             brake = 0.0
             if controls[1] > 0.0:
                 throttle = DISCRETE_THROTTLE_SLOW
+        elif self.action_type == 'fixed_throttle':
+            steering = controls[0]
+            throttle = DISCRETE_THROTTLE_FAST
+            brake = 0.0
         else:
             steering = controls[0]
             throttle_brake = controls[1]
 
-            throttle= 0.0
+            throttle = 0.0
             brake = 0.0
 
             if throttle_brake > 0.0:
