@@ -174,9 +174,9 @@ class Donkey:
         if self.reward_type == "speed":
             return (
                 2 * track_linear_speed -
-                track_lateral_speed -
-                np.linalg.norm(track_position) -
-                10 * max(0, np.linalg.norm(track_position) - 1.0)
+                4 * track_lateral_speed -
+                np.linalg.norm(track_position)
+                # 10 * max(0, np.linalg.norm(track_position) - 1.0)
             ) / MAX_SPEED
 
         if self.reward_type == "speed_cap":
