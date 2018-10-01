@@ -215,7 +215,6 @@ Launch env
 default bus is 1 for i2c on jetson
 chmod a+rw /dev/i2c-1 to authorize i2c not being root 
 
-
 ## Read list
 
 https://www.youtube.com/watch?v=b_lBL2yhU5A&feature=youtu.be

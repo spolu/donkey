@@ -126,9 +126,11 @@ class Vehicle():
                 #print('run_condition', entry['part'], entry.get('run_condition'), run)
 
             if run:
+                # start_time = time.time()
                 p = entry['part']
                 #get inputs from memory
                 inputs = self.mem.get(entry['inputs'])
+
 
                 #run the part
                 if entry.get('thread'):
@@ -139,6 +141,11 @@ class Vehicle():
                 #save the output to memory
                 if outputs is not None:
                     self.mem.put(entry['outputs'], outputs)
+
+                # delta = time.time() - start_time
+                # print(entry['part'])
+                # print("exectution time {}s".format(delta))
+
 
     def stop(self):
         print('Shutting down vehicle and its parts...')

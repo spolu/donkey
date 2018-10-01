@@ -12,17 +12,28 @@ class JetsonCamera:
     def __init__(self, resolution=(1280, 720), framerate=120):
         resolution = (resolution[1], resolution[0])
         framerate = framerate
+        dev = 1
         # initialize the camera and stream
-        gst_str = ('nvcamerasrc ! '
-                        'video/x-raw(memory:NVMM), '
-                        'width=(int)1280, height=(int)720, '
-                        'format=(string)I420, framerate=(fraction){}/1 ! '
-                        'nvvidconv ! '
-                        'video/x-raw, width=(int){}, height=(int){}, '
-                        'format=(string)BGRx ! '
-                        'videoconvert ! appsink').format(framerate,resolution[0], resolution[1])
-        self.videoCapture = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
+        # usb board camera
+        gst_str = ('v4l2src device=/dev/video{} ! '
+                        'video/x-raw, width=640, height=480 !'
+                        'videoscale ! '
+                        'video/x-raw, width=(int){}, height=(int){} !'
+                        'videoconvert !'
+                        'video/x-raw, format=RGBA !'
+                        'videoconvert ! appsink').format(dev, resolution[0], resolution[1])
 
+        # native board camera
+        # gst_str = ('nvcamerasrc ! '
+        #                 'video/x-raw(memory:NVMM), '
+        #                 'width=(int)1280, height=(int)720, '
+        #                 'format=(string)I420, framerate=(fraction){}/1 ! '
+        #                 'nvvidconv ! '
+        #                 'video/x-raw, width=(int){}, height=(int){}, '
+        #                 'format=(string)BGRx ! '
+        #                 'videoconvert ! appsink').format(framerate,resolution[0], resolution[1])
+        self.videoCapture = cv2.VideoCapture(gst_str, cv2.CAP_GSTREAMER)
+        # self.videoCapture = cv2.VideoCapture(1)
         # initialize the frame and the variable used to indicate
         # if the thread should be stopped
         self.on = True
@@ -33,10 +44,9 @@ class JetsonCamera:
 
     def output_from_frame(self, frame):
         # get b,g,r as cv2 uses BGR and not RGB for colors
-        b,g,r = cv2.split(frame)
-        rgb_img = cv2.merge([r,g,b])
-
-        raw = cv2.imencode(".jpg", rgb_img)[1].tostring()
+        # b,g,r = cv2.split(frame)
+        # rgb_img = cv2.merge([r,g,b])
+        raw = cv2.imencode(".jpg", frame)[1].tostring()
 
         camera = cv2.imdecode(
             np.fromstring(raw, np.uint8),
@@ -113,11 +123,11 @@ if __name__ == '__main__':
     print('OpenCV version: {}'.format(cv2.__version__))
 
     parser.add_argument('--width', dest='image_width',
-                        help='image width [1280]',
-                        default=1280, type=int)
+                        help='image width [160]',
+                        default=160, type=int)
     parser.add_argument('--height', dest='image_height',
-                        help='image height [720]',
-                        default=720, type=int)
+                        help='image height [120]',
+                        default=120, type=int)
     args = parser.parse_args()
 
     camera = JetsonCamera(resolution=(args.image_width,
@@ -126,7 +136,7 @@ if __name__ == '__main__':
     if not camera.videoCapture.isOpened():
         sys.exit('Failed to open camera!')
 
-    # open_window(args.image_width, args.image_height)
+    open_window(args.image_width, args.image_height)
     img = read_cam(camera.videoCapture)
 
     camera.videoCapture.release()

@@ -26,7 +26,7 @@ class PCA9685:
     def __init__(self, channel, frequency=60):
         import Adafruit_PCA9685
         # Initialise the PCA9685 using the default address (0x40).
-        self.pwm = Adafruit_PCA9685.PCA9685()
+        self.pwm = Adafruit_PCA9685.PCA9685(busnum=2)
         self.pwm.set_pwm_freq(frequency)
         self.channel = channel
 
