@@ -21,7 +21,7 @@ class Driver:
         self.hidden_size = cfg.get('hidden_size')
         self.driver_fixed_throttle = cfg.get('driver_fixed_throttle')
         self.driver_optical_flow_speed = cfg.get('driver_optical_flow_speed')
-        self.device = torch.device('cpu')
+        self.device = torch.device(cfg.get('device'))
         self.config = cfg
 
         self.input_filter = InputFilter(cfg)
