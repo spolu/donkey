@@ -158,7 +158,7 @@ class Donkey:
             # np.copy(self.camera_stack),
         )
 
-    def reward_from_telemetry(self, telemetry):
+    def reward_from_telemetry(self, telemetry, command):
         position = telemetry.position
         velocity = telemetry.velocity
 
@@ -174,8 +174,9 @@ class Donkey:
         if self.reward_type == "speed":
             return (
                 2 * track_linear_speed -
-                4 * track_lateral_speed -
-                np.linalg.norm(track_position)
+                track_lateral_speed -
+                np.linalg.norm(track_position) -
+                np.linalg.norm(command.steering)
                 # 10 * max(0, np.linalg.norm(track_position) - 1.0)
             ) / MAX_SPEED
 
@@ -405,7 +406,7 @@ class Donkey:
         telemetry = self.simulation.telemetry()
 
         observation = self.observation_from_telemetry(telemetry)
-        reward = self.reward_from_telemetry(telemetry)
+        reward = self.reward_from_telemetry(telemetry, command)
         done = self.done_from_telemetry(telemetry)
 
         self.step_count += 1
