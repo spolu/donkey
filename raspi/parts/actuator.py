@@ -3,8 +3,8 @@ actuators.py
 Classes to control the motors and servos. These classes
 are wrapped in a mixer class before being used in the drive loop.
 """
-
 import time
+from utils import Config
 
 def map_range(x, X_min, X_max, Y_min, Y_max):
     '''
@@ -23,10 +23,12 @@ class PCA9685:
     PWM motor controler using PCA9685 boards.
     This is used for most RC Cars
     '''
-    def __init__(self, channel, frequency=60):
+    def __init__(self, channel, cfg, frequency=60):
         import Adafruit_PCA9685
         # Initialise the PCA9685 using the default address (0x40).
-        self.pwm = Adafruit_PCA9685.PCA9685(busnum=2)
+        # Busnum needs to be specified for jetson as default address is not handled by library
+        busnum = cfg.get('busnum') 
+        self.pwm = Adafruit_PCA9685.PCA9685(busnum=busnum)
         self.pwm.set_pwm_freq(frequency)
         self.channel = channel
 

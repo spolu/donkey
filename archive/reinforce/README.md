@@ -206,14 +206,23 @@ https://jkjung-avt.github.io/opencv3-on-tx2/ (make sure to follow comment on usi
 Add package to virtual env, by executing
 `cp /usr/local/lib/python3.5/dist-packages/cv2.cpython-35m-aarch64-linux-gnu.so /home/nvidia/Envs/dr1ve/lib/python3.5/site-packages`
 
+### i2c
+J26 bus number is 6 if you plug to J26
+autorize write acces to i2c not being root
+`vim  /lib/udev/rules.d/40-i2c-tools.rules` 
+and change it from 
+```KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"```
+to
+```KERNEL=="i2c-6", GROUP="i2c", MODE="0666"
+KERNEL=="i2c-[0-5]*", GROUP="i2c", MODE="0660"
+KERNEL=="i2c-[7-9]*", GROUP="i2c", MODE="0660"```
+
 ### Launch Environment 
 
 Launch env
 'workon dr1ve'
 
-### i2c
-default bus is 1 for i2c on jetson
-chmod a+rw /dev/i2c-1 to authorize i2c not being root 
+
 
 ## Read list
 

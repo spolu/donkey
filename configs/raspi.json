@@ -17,6 +17,7 @@
   "driver_optical_flow_speed": 18,
 
   "device": "cpu",
+  "busnum": 1,
 
   "reinforce_load_dir": null
 }
