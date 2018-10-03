@@ -223,7 +223,6 @@ Launch env
 'workon dr1ve'
 
 
-
 ## Read list
 
 https://www.youtube.com/watch?v=b_lBL2yhU5A&feature=youtu.be
