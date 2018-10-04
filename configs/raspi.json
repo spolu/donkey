@@ -1,6 +1,6 @@
 {
   "track_name": "stationfxl",
-  "action_type": "semi_discrete_throttle",
+  "action_type": "fixed_throttle",
 
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn",
