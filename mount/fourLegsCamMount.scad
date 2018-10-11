@@ -8,15 +8,15 @@ use <MCAD/boxes.scad>
 standoffFN = 30;
 
 // Dimensions of the camera board.
-cameraWidth = 25;
-cameraHeight = 24;
-aperatureWidth = 8;
+cameraWidth = 38;
+cameraHeight = 38;
+aperatureWidth = 22;
 aperatureYOffset = 5.5;
 cameraBoardThickness = 1;
 
 holeYOffset = 9.5;
-holeXSpacing = 21;
-holeYSpacing = 12.5;
+holeXSpacing = 28;
+holeYSpacing = 28;
 holeDiameter = 2;
 
 standoffDiameter = 6;
@@ -24,7 +24,7 @@ standoffHeight = 3;
 
 mountMargin = 3;
 mountBottomMargin = 10; // To accommodate the cable.
-mountWidth = cameraWidth + 4*mountMargin;
+mountWidth = cameraWidth + 2*mountMargin;
 mountHeight = cameraHeight + mountMargin + mountBottomMargin;
 
 mountThickness = 3;
@@ -37,7 +37,7 @@ plateW=200;
 plateL=240;
 structureWidth = 10;
 structureLength = 20;
-structureHeight = 93;
+structureHeight = 107;
 structureBeamHeight = 15;
 nutInsertionHeight = 3;
 
