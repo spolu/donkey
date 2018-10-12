@@ -1,4 +1,25 @@
 
+### Runbook Competition
+
+# Make a capture to check Canny parameters
+
+From `donkey/` directory:
+
+```
+mkdir ../captures/capture_20181012_1514
+OMP_NUM_THREADS=2 python3 raspi_runner.py ./configs/raspi-reinforce_20180927_1200.json --reinforce_load_dir=/home/pi/models/reinforce_20180927_1200/ --driver_optical_flow_speed=16 --driver_fixed_throttle=0.50 --capture_dir=../captures/capture_20181012_1514 
+```
+
+From `donkeuy/` directory:
+```
+python3 capture_viewer.py --capture_set_dir=../captures/ 
+```
+
+Connect from your browser to:
+```
+http://dr1ve.local:9092/static/viewer.html?capture=capture_20181012_1514
+```
+
 ## Setup Google Cloud Compute
 
 ```
