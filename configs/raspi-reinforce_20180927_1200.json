@@ -1,0 +1,23 @@
+{
+  "track_name": "stationfxl",
+  "action_type": "semi_discrete_throttle",
+
+  "algorithm": "ppo",
+  "policy": "ppo_pixels_cnn",
+  "input_filter": "canny",
+  "input_filter_canny_low": 50,
+  "input_filter_canny_high": 150,
+
+  "fixed_action_std": 0.0,
+  "latent_size": 128,
+  "hidden_size": 128,
+  "recurring_cell": "none",
+
+  "driver_fixed_throttle": 0.55,
+  "driver_optical_flow_speed": 18,
+
+  "device": "cpu",
+  "busnum": 1,
+
+  "reinforce_load_dir": null
+}
