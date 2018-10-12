@@ -96,12 +96,16 @@ def camera( capture, index):
         a,b = new.ravel()
         c,d = old.ravel()
         mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-    camera = cv2.add(camera, mask)
+    # camera = cv2.add(camera, mask)
 
     edges = cv2.Canny(
-        camera.astype(np.uint8), 100, 150, apertureSize = 3,
+        camera.astype(np.uint8), 50, 120, apertureSize = 3,
     )
+
+    edges = cv2.add(edges, mask)
+
     _, encoded = cv2.imencode('.jpeg', edges)
+
     # _, encoded = cv2.imencode('.jpeg', camera)
 
     # import pdb; pdb.set_trace()
