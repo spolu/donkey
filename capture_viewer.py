@@ -64,10 +64,10 @@ def camera( capture, index):
                      maxLevel = 2,
                      criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
+    steering = capture.get_item(index)['raspi_steering']
 
     ib = capture.get_item(index)['camera']
     ib_prev = capture.get_item(index-1)['camera']
-
     camera = cv2.imdecode(
         np.fromstring(ib, np.uint8),
         cv2.CV_8UC1
@@ -88,23 +88,24 @@ def camera( capture, index):
     good_new = p1[st==1]
     good_old = p0[st==1]
 
-    color = np.random.randint(0,255,(100,3))
-
-    mask = np.zeros_like(camera)
+    mask = cv2.cvtColor(np.zeros_like(camera),cv2.COLOR_GRAY2RGB)
 
     for i,(new,old) in enumerate(zip(good_new,good_old)):
         a,b = new.ravel()
         c,d = old.ravel()
-        mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-    # camera = cv2.add(camera, mask)
+        mask = cv2.line(mask, (c,d), (a,b), [0,0,255], 2)
+
+    direction_x, direction_y = 80 + int(25*math.sin(steering*3.1415/6.0)), int(35*(2 - math.cos(steering*3.1415/6.0))),
+    mask = cv2.line(mask, (direction_x, direction_y), (80,70), [0,255,0], 2)
 
     edges = cv2.Canny(
-        camera.astype(np.uint8), 50, 120, apertureSize = 3,
+        camera.astype(np.uint8), 100, 180, apertureSize = 3,
     )
 
-    edges = cv2.add(edges, mask)
+    backtorgb = cv2.cvtColor(edges,cv2.COLOR_GRAY2RGB)
+    backtorgb = cv2.add(backtorgb, mask)
 
-    _, encoded = cv2.imencode('.jpeg', edges)
+    _, encoded = cv2.imencode('.jpeg', backtorgb)
 
     # _, encoded = cv2.imencode('.jpeg', camera)
 
