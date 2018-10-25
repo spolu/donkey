@@ -72,6 +72,8 @@ sudo bash
 Connect to raspi
 'ssh pi@dr1ve.local' or 'sssh pi@<your_pi_ip_address>'
 
+Push repo to donkey
+`rsync -arv --exclude '.*' --exclude 'build' --exclude 'sim'  ~/code/donkey   pi@dr1ve.local:~/`
 
 Safe
 ```

@@ -22,9 +22,12 @@ from capture import Capture
 # import pdb; pdb.set_trace()
 
 TRACK_POINTS = 400
+_canny_min = 50
+_canny_max = 150
 
 _app = Flask(__name__)
 _capture_set_dir = '/tmp'
+
 _cache = {}
 
 def fetch_capture(capture):
@@ -99,7 +102,7 @@ def camera( capture, index):
     mask = cv2.line(mask, (direction_x, direction_y), (80,70), [0,255,0], 2)
 
     edges = cv2.Canny(
-        camera.astype(np.uint8), 100, 180, apertureSize = 3,
+        camera.astype(np.uint8), _canny_min, _canny_max, apertureSize = 3,
     )
 
     backtorgb = cv2.cvtColor(edges,cv2.COLOR_GRAY2RGB)
@@ -120,10 +123,16 @@ def camera( capture, index):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_set_dir', type=str, help="path to captured data")
+    parser.add_argument('--canny_min', type=int, help="min in canny parameters, all points below are not detected")
+    parser.add_argument('--canny_max', type=int, help="max in canny parameters, all points above are detected")
 
     args = parser.parse_args()
     if args.capture_set_dir is not None:
         _capture_set_dir = args.capture_set_dir
+    if args.canny_min is not None:
+        _canny_min = 50
+    if args.canny_max is not None:
+        _canny_max = 150
 
     t = threading.Thread(target = run_server)
     t.start()
