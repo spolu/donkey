@@ -69,6 +69,14 @@ sudo bash
 
 ## Raspberry
 
+Connect to raspi
+'ssh pi@dr1ve.local' or 'sssh pi@<your_pi_ip_address>'
+
+
+Safe
 ```
-OMP_NUM_THREADS=2 python3 raspi_runner.py ./configs/raspi.json --reinforce_load_dir=/home/pi/models/reinforce_20180831_1100/ --driver_fixed_throttle=0.55
+OMP_NUM_THREADS=2 python3 raspi_runner.py ./configs/raspi-reinforce_20180927_1200.json --reinforce_load_dir=/home/pi/models/reinforce_20180927_1200/ --driver_optical_flow_speed=18 --driver_fixed_throttle=0.55```
+
+Agressive
 ```
+OMP_NUM_THREADS=2 python3 raspi_runner.py ./configs/raspi-reinforce_20181001_1700.json --reinforce_load_dir=/home/pi/models/reinforce_20181001_1700/ --driver_optical_flow_speed=14 --driver_fixed_throttle=0.80```
