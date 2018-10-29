@@ -54,6 +54,10 @@ def drive(args):
         cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
     if args.driver_optical_flow_speed != None:
         cfg.override('driver_optical_flow_speed', args.driver_optical_flow_speed)
+    if args.canny_min != None:
+        cfg.override('canny_min', args.canny_min)
+    if args.canny_max != None:
+        cfg.override('canny_max', args.canny_max)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
@@ -143,6 +147,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
     parser.add_argument('--driver_optical_flow_speed', type=float, help="config override")
+    parser.add_argument('--canny_min', type=int, help="min in canny parameters, all points below are not detected")
+    parser.add_argument('--canny_max', type=int, help="max in canny parameters, all points above are detected")
 
     args = parser.parse_args()
 
