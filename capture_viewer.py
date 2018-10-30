@@ -130,9 +130,9 @@ if __name__ == "__main__":
     if args.capture_set_dir is not None:
         _capture_set_dir = args.capture_set_dir
     if args.canny_min is not None:
-        _canny_min = 50
+        _canny_min = args.canny_min
     if args.canny_max is not None:
-        _canny_max = 150
+        _canny_max = args.canny_max
 
     t = threading.Thread(target = run_server)
     t.start()

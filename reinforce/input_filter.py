@@ -12,7 +12,7 @@ class InputFilter():
     def __init__(self, config):
         self.input_filter = config.get('input_filter')
         self.input_filter_canny_low = config.get('input_filter_canny_low')
-        self.input_filter_canny_high = config.get('input_filter_canny_low')
+        self.input_filter_canny_high = config.get('input_filter_canny_high')
 
     def shape(self):
         if self.input_filter == 'warp_line_detector':

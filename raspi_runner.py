@@ -55,9 +55,9 @@ def drive(args):
     if args.driver_optical_flow_speed != None:
         cfg.override('driver_optical_flow_speed', args.driver_optical_flow_speed)
     if args.canny_min != None:
-        cfg.override('canny_min', args.canny_min)
+        cfg.override('input_filter_canny_low', args.canny_min)
     if args.canny_max != None:
-        cfg.override('canny_max', args.canny_max)
+        cfg.override('input_filter_canny_high', args.canny_max)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
