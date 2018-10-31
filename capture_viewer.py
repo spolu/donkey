@@ -22,8 +22,8 @@ from capture import Capture
 # import pdb; pdb.set_trace()
 
 TRACK_POINTS = 400
-_canny_min = 50
-_canny_max = 150
+_canny_low = 50
+_canny_high = 150
 
 _app = Flask(__name__)
 _capture_set_dir = '/tmp'
@@ -102,7 +102,7 @@ def camera( capture, index):
     mask = cv2.line(mask, (direction_x, direction_y), (80,70), [0,255,0], 2)
 
     edges = cv2.Canny(
-        camera.astype(np.uint8), _canny_min, _canny_max, apertureSize = 3,
+        camera.astype(np.uint8), _canny_low, _canny_high, apertureSize = 3,
     )
 
     backtorgb = cv2.cvtColor(edges,cv2.COLOR_GRAY2RGB)
@@ -123,16 +123,16 @@ def camera( capture, index):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('--capture_set_dir', type=str, help="path to captured data")
-    parser.add_argument('--canny_min', type=int, help="min in canny parameters, all points below are not detected")
-    parser.add_argument('--canny_max', type=int, help="max in canny parameters, all points above are detected")
+    parser.add_argument('--canny_low', type=int, help="low in canny parameters, all points below are not detected")
+    parser.add_argument('--canny_high', type=int, help="high in canny parameters, all points above are detected")
 
     args = parser.parse_args()
     if args.capture_set_dir is not None:
         _capture_set_dir = args.capture_set_dir
-    if args.canny_min is not None:
-        _canny_min = args.canny_min
-    if args.canny_max is not None:
-        _canny_max = args.canny_max
+    if args.canny_low is not None:
+        _canny_low = args.canny_low
+    if args.canny_high is not None:
+        _canny_high = args.canny_high
 
     t = threading.Thread(target = run_server)
     t.start()

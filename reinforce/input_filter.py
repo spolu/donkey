@@ -121,15 +121,18 @@ class InputFilter():
                 [13, 33], [54, 8], [147, 33], [107, 8]
             ])
             pts2 = np.float32([
-                [60, 80], [60, 20], [120, 80], [120, 20]
+                [60, 80], [60, 40], [120, 80], [120, 40]
             ])
             M = cv2.getPerspectiveTransform(pts1, pts2)
 
             img = cv2.warpPerspective(
-                    img, M, (160,90),
+                    img, M, (160,70),
                 )
 
-            img = cv2.Canny(np.uint8(img), 50, 150, apertureSize = 3,)
+            img = cv2.Canny(np.uint8(img), 
+                self.input_filter_canny_low, 
+                self.input_filter_canny_high, 
+                apertureSize = 3,)
 
 
         return img

@@ -1,5 +1,5 @@
 {
-  "track_name": "renault_digital_season3_half",
+  "track_name": "renault_digital_season3",
   "track_randomized": true,
   "reward_type": "speed",
   "action_type": "fixed_throttle",
@@ -8,9 +8,9 @@
 
   "algorithm": "ppo",
   "policy": "ppo_pixels_cnn",
-  "input_filter": "canny",
-  "input_filter_canny_low": 250,
-  "input_filter_canny_high": 400,
+  "input_filter": "warp_canny",
+  "input_filter_canny_low": 100,
+  "input_filter_canny_high": 200,
   "device": "cuda:0",
   "seed": 1,
 
