@@ -1,5 +1,5 @@
 {
-  "track_name": "renault_digital_season3",
+  "track_name": "renault_digital_season3_half",
   "track_randomized": true,
   "reward_type": "speed",
   "action_type": "semi_discrete_throttle",
