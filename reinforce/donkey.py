@@ -175,8 +175,8 @@ class Donkey:
             return (
                 2 * track_linear_speed -
                 track_lateral_speed -
-                np.linalg.norm(track_position) -
-                np.linalg.norm(command.steering)
+                np.linalg.norm(track_position)
+                # np.linalg.norm(command.steering)
                 # 10 * max(0, np.linalg.norm(track_position) - 1.0)
             ) / MAX_SPEED
 
