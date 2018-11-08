@@ -23,7 +23,7 @@ class ResidualBlock(nn.Module):
                 nn.Dropout(self.gen_residual_dropout)
             ]
 
-        layers = [
+        layers += [
             nn.ReflectionPad2d(1),
             nn.Conv2d(dim, dim, kernel_size=3, padding=0),
             nn.InstanceNorm2d(dim),

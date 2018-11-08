@@ -18,6 +18,7 @@ from raspi.parts.camera import PiCamera
 from raspi.parts.actuator import PCA9685, PWMSteering, PWMThrottle
 from raspi.parts.camera_flow import CameraFlow
 from raspi.parts.driver import Driver
+from raspi.parts.dummy import Dummy
 from raspi.parts.sense import Sense
 from raspi.parts.capturer import Capturer
 from raspi.parts.web_controller.web import LocalWebController
@@ -54,9 +55,9 @@ def drive(args):
         cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
     if args.driver_optical_flow_speed != None:
         cfg.override('driver_optical_flow_speed', args.driver_optical_flow_speed)
-    if args.canny_min != None:
+    if args.canny_low != None:
         cfg.override('input_filter_canny_low', args.canny_low)
-    if args.canny_max != None:
+    if args.canny_high != None:
         cfg.override('input_filter_canny_high', args.canny_high)
 
     #Initialize car
@@ -101,12 +102,18 @@ def drive(args):
             threaded=False,
         )
     else:
-        web = LocalWebController()
+        dummy = Dummy(cfg)
         V.add(
-            web,
-            inputs=['cam/camera'],
-            outputs=['angle', 'throttle'],
-            threaded=True,
+            dummy,
+            inputs=[
+                'cam/camera',
+                'flow/speed',
+            ],
+            outputs=[
+                'angle',
+                'throttle'
+            ],
+            threaded=False,
         )
 
     if args.capture_dir is not None:
