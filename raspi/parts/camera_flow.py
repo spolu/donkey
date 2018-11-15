@@ -72,11 +72,11 @@ class CameraFlow:
 
         speed = int(sum(self.window)/len(self.window))
 
-        print("({}, {}) {}".format(
-            int(dx * 100),
-            int(dy * 100),
-            speed,
-        ))
+        # print("({}, {}) {}".format(
+        #     int(dx * 100),
+        #     int(dy * 100),
+        #     speed,
+        # ))
 
         return dx, dy, speed
 

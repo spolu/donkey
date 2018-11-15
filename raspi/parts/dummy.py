@@ -14,6 +14,7 @@ class Dummy:
 
         self.start_time = time.time()
         self.throttle = self.driver_fixed_throttle
+        self.window = []
 
     def run(self, camera=None, flow_speed=None):
         camera = self.input_filter.apply(camera) / 127.5
@@ -21,7 +22,26 @@ class Dummy:
         left = np.sum(camera[15:, :80])
         right = np.sum(camera[15:, 80:])
         p = left / (left + right)
-        steering = (p-0.5) * 4
+
+        self.window.append([p, time.time()])
+        self.window = self.window[-4:]
+
+        if len(self.window) == 4:
+            dps = [
+                (self.window[i+1][0]-self.window[i][0]) /
+                (self.window[i+1][1]-self.window[i][1])
+                for i in range(3)
+            ]
+            dp = sum(dps) / len(dps)
+            pre = ((p + dp/10) - 0.5)
+            if abs(pre) > 0.25:
+                steering = pre * 4
+            else:
+                steering = pre * 2
+            print("DEBUG: p={} dp={} steering={}".format(p, dp, steering))
+        else:
+            steering = (p-0.5) * 4
+            print("DEBUG: p={}".format(p))
 
         throttle = self.throttle
 
