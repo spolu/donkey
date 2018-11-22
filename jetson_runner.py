@@ -49,6 +49,14 @@ def drive(args):
 
     if args.reinforce_load_dir != None:
         cfg.override('reinforce_load_dir', args.reinforce_load_dir)
+    if args.driver_fixed_throttle != None:
+        cfg.override('driver_fixed_throttle', args.driver_fixed_throttle)
+    if args.driver_optical_flow_speed != None:
+        cfg.override('driver_optical_flow_speed', args.driver_optical_flow_speed)
+    if args.canny_low != None:
+        cfg.override('input_filter_canny_low', args.canny_low)
+    if args.canny_high != None:
+        cfg.override('input_filter_canny_high', args.canny_high)
 
     #Initialize car
     V = raspi.vehicle.Vehicle()
@@ -91,6 +99,20 @@ def drive(args):
             ],
             threaded=False,
         )
+    else:
+        dummy = Dummy(cfg)
+        V.add(
+            dummy,
+            inputs=[
+                'cam/camera',
+                'flow/speed',
+            ],
+            outputs=[
+                'angle',
+                'throttle'
+            ],
+            threaded=False,
+        )
 
     if args.capture_dir is not None:
         capturer = Capturer(args.capture_dir)
@@ -104,13 +126,13 @@ def drive(args):
             threaded=False,
         )
 
-    web = LocalWebController()
-    V.add(
-        web,
-        inputs=['cam/camera'],
-        outputs=['angle', 'throttle'],
-        threaded=True,
-    )
+    # web = LocalWebController()
+    # V.add(
+    #     web,
+    #     inputs=['cam/camera'],
+    #     outputs=['angle', 'throttle'],
+    #     threaded=True,
+    # )
     # sense = Sense()
     # V.add(sense, inputs=['angle', 'throttle'], outputs=['sense/orientation'], threaded=True)
 
@@ -131,14 +153,19 @@ def drive(args):
     V.start(rate_hz=DRIVE_LOOP_HZ,
             max_loop_count=MAX_LOOPS)
 
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument('config_path', type=str, help="path to the config file")
 
     parser.add_argument('--reinforce_load_dir', type=str, help="config override")
-    parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
     parser.add_argument('--capture_dir', type=str, help="path to save training data")
+
+    parser.add_argument('--driver_fixed_throttle', type=float, help="config override")
+    parser.add_argument('--driver_optical_flow_speed', type=float, help="config override")
+    parser.add_argument('--canny_low', type=int, help="low in canny parameters, all points below are not detected")
+    parser.add_argument('--canny_high', type=int, help="high in canny parameters, all points above are detected")
 
     args = parser.parse_args()
 
