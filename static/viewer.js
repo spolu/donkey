@@ -18,6 +18,9 @@ window.onload = function() {
       url = "/capture/" + capture + "/camera/" + $('#index').val() + ".jpeg" +
         "?" + (new Date()).getTime();
       $('#camera').css("background-image", "url(" + url + ")");
+      url = "/capture/" + capture + "/raw/" + $('#index').val() + ".jpeg" +
+        "?" + (new Date()).getTime();
+      $('#raw').css("background-image", "url(" + url + ")");
     })
   }
 };
