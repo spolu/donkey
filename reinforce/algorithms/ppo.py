@@ -283,7 +283,7 @@ class PPO:
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         for e in range(self.ppo_epoch_count):
-            generator = self.rollouts.feed_forward_generator(advantages)
+            generator = self.rollouts.recurrent_generator(advantages)
 
             for sample in generator:
                 observations_batch, \
@@ -294,34 +294,34 @@ class PPO:
                     log_probs_batch, \
                     advantage_targets = sample
 
-            values, hiddens, log_probs, entropy = self.policy.evaluate(
-                observations_batch.detach(),
-                hiddens_batch.detach(),
-                masks_batch.detach(),
-                actions_batch.detach(),
-            )
-
-            ratio = torch.exp(log_probs - log_probs_batch)
-
-            action_loss = -torch.min(
-                ratio * advantage_targets,
-                torch.clamp(ratio, 1.0 - self.ppo_clip, 1.0 + self.ppo_clip) * advantage_targets,
-            ).mean()
-            value_loss = (returns_batch.detach() - values).pow(2).mean()
-            entropy_loss = -entropy.mean()
-
-            self.optimizer.zero_grad()
-
-            (value_loss * self.value_loss_coeff +
-             action_loss * self.action_loss_coeff +
-             entropy_loss * self.entropy_loss_coeff).backward()
-
-            if self.grad_norm_max > 0.0:
-                nn.utils.clip_grad_norm(
-                    self.policy.parameters(), self.grad_norm_max,
+                values, hiddens, log_probs, entropy = self.policy.evaluate(
+                    observations_batch.detach(),
+                    hiddens_batch.detach(),
+                    masks_batch.detach(),
+                    actions_batch.detach(),
                 )
 
-            self.optimizer.step()
+                ratio = torch.exp(log_probs - log_probs_batch)
+
+                action_loss = -torch.min(
+                    ratio * advantage_targets,
+                    torch.clamp(ratio, 1.0 - self.ppo_clip, 1.0 + self.ppo_clip) * advantage_targets,
+                ).mean()
+                value_loss = (returns_batch.detach() - values).pow(2).mean()
+                entropy_loss = -entropy.mean()
+
+                self.optimizer.zero_grad()
+
+                (value_loss * self.value_loss_coeff +
+                 action_loss * self.action_loss_coeff +
+                 entropy_loss * self.entropy_loss_coeff).backward()
+
+                if self.grad_norm_max > 0.0:
+                    nn.utils.clip_grad_norm(
+                        self.policy.parameters(), self.grad_norm_max,
+                    )
+
+                self.optimizer.step()
 
         self.rollouts.after_update()
 

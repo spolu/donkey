@@ -187,7 +187,6 @@ class PPOPixelsCNN(nn.Module):
             log_probs = F.log_softmax(x, dim=1)
 
             m = Categorical(probs)
-            actions = m.sample().view(-1, 1)
 
             action_log_probs = log_probs.gather(1, actions)
             entropy = -(log_probs * probs).sum(-1).mean()
